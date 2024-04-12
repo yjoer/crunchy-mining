@@ -343,3 +343,6 @@ pd.DataFrame(df.groupby('Industry')['MIS_Status'].value_counts()).unstack(level=
 
 
 # %%
+df.to_parquet("data/clean.parquet", engine="pyarrow")
+
+# %%
