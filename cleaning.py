@@ -18,6 +18,8 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import warnings
+import datetime
+from datetime import date
 warnings.filterwarnings("ignore")
 
 # %%
@@ -153,6 +155,9 @@ print(df[['MIS_Status', 'ChgOffDate']].head(10))
 # %%
 df.isnull().sum()
 
+# %% [markdown]
+# Data Transformation
+
 # %%
 #Tranform Data With String to Int/Float
 currency_col = ['DisbursementGross', 'BalanceGross', 'ChgOffPrinGr', 'GrAppv', 'SBA_Appv']
@@ -163,7 +168,7 @@ df[currency_col] = df[currency_col].replace('[\$,]', '', regex=True).astype(floa
 df['LowDoc'].unique()
 
 # %%
-#LowDoc(Y:Yes, N:No): In order to process more loansefficiently, a“LowDoc Loan”program was implemented whereloans under $150,000 can be processed using a one-page appli-cation.“Yes”indicates loans with a one-page application, and“No”indicates loans with more information attached to theapplication
+#Guideline: LowDoc(Y:Yes, N:No): In order to process more loansefficiently, a“LowDoc Loan”program was implemented whereloans under $150,000 can be processed using a one-page appli-cation.“Yes”indicates loans with a one-page application, and“No”indicates loans with more information attached to the application
 df['LowDoc'] = np.where((df['LowDoc'] == np.nan) & (df['DisbursementGross'] < 150000),'Y',df.LowDoc)
 df['LowDoc'] = np.where((df['LowDoc'] == np.nan) & (df['DisbursementGross'] >= 150000),'N',df.LowDoc)
 
@@ -183,6 +188,103 @@ df['ApprovalFY'].replace('1976A', 1976, inplace=True)
 df['ApprovalFY']= df['ApprovalFY'].astype(int)
 
 # %%
+# Change Franchise = Is_Franchise
+df['FranchiseCode'] = df['FranchiseCode'].replace(1,0 )	
+df['FranchiseCode'] = np.where((df.FranchiseCode != 0 ),1,df.FranchiseCode)
+df.rename(columns={"FranchiseCode": "Is_Franchised"}, inplace=True)
+df.Is_Franchised.value_counts()
+
+# %%
+#NAICS, the first 2 numbers represent the Industry
+df['NAICS'] = df['NAICS'].astype(str).str[:2]
+df['NAICS']
+
+# %%
+df['NAICS'].unique()
+
+# %%
+df['Industry'] = df['NAICS'].astype('str').apply(lambda x: x[:2])
+df['Industry'] = df['Industry'].map({
+    '11': 'Ag/For/Fish/Hunt',
+    '21': 'Min/Quar/Oil_Gas_ext',
+    '22': 'Utilities',
+    '23': 'Construction',
+    '31': 'Manufacturing',
+    '32': 'Manufacturing',
+    '33': 'Manufacturing',
+    '42': 'Wholesale_trade',
+    '44': 'Retail_trade',
+    '45': 'Retail_trade',
+    '48': 'Trans/Ware',
+    '49': 'Trans/Ware',
+    '51': 'Information',
+    '52': 'Finance/Insurance',
+    '53': 'RE/Rental/Lease',
+    '54': 'Prof/Science/Tech',
+    '55': 'Mgmt_comp',
+    '56': 'Admin_sup/Waste_Mgmt_Rem',
+    '61': 'Educational',
+    '62': 'Healthcare/Social_assist',
+    '71': 'Arts/Entertain/Rec',
+    '72': 'Accom/Food_serv',
+    '81': 'Other_no_pub',
+    '92': 'Public_Admin'
+})
+
+# %%
+#A lot of null value, do we want to use nltk for this?
+naics_counts = df['NAICS'].value_counts()
+
+if '0' in naics_counts.index:
+    print("Number of occurrences of '0' in the 'NAICS' column:", naics_counts['0'])
+else:
+    print("Number of occurrences of '0' in the 'NAICS' column: 0")
+
+# %%
+df = df.fillna({'Industry':'Others'})
+
+# %%
+#Guideline: 4.1.5. Loans Backed by Real Estate
+df['RealEstate'] = df['Term'].apply(lambda x: 1 if x >= 240 else 0)
+
+# %%
+#Guideline: 4.1.6. Economic Recession
+df['DaysTerm'] =  df['Term']*30
+df['Active'] = df['DisbursementDate'] + pd.TimedeltaIndex(df['DaysTerm'], unit='D')
+
+# %%
+startdate = datetime.datetime.strptime('2007-12-1', "%Y-%m-%d").date()
+enddate = datetime.datetime.strptime('2009-06-30', "%Y-%m-%d").date()
+df['Recession'] = df['Active'].dt.date.apply(lambda x: 1 if startdate <= x <= enddate else 0)
+
+# %%
+#DaysToDisbursement
+df['DaysToDisbursement'] = df['DisbursementDate'] - df['ApprovalDate']
+df['DaysToDisbursement'] = df['DaysToDisbursement'].astype('str').apply(lambda x: x[:x.index('d') - 1]).astype('int64')
+
+# %%
+df['DisbursementFY'] = df['DisbursementDate'].map(lambda x: x.year)
+
+# %%
+#Check if Company state is same as Bank State
+df['StateSame'] = np.where(df['State'] == df['BankState'], 1, 0)
+
+# %%
+#SBA_AppvPct : guaranteed amount is based on a percentage of the gross loan amount
+df['SBA_AppvPct'] = df['SBA_Appv'] / df['GrAppv']
+
+# %%
+#AppvDisbursed: Check loan amount disbursed was equal to the full amount approved
+df['AppvDisbursed'] = np.where(df['DisbursementGross'] == df['GrAppv'], 1, 0)
+
+# %%
 df.info()
+
+# %% [markdown]
+# EDA
+# Questions: 
+# 1. Data Transformation need to transform to boolean?
+# 2. Are we using NAICS while training? Was thinking should we use nltk to map the data.
+# 3. Double check Zip Code
 
 # %%
