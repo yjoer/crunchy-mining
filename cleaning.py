@@ -188,6 +188,11 @@ date_col = ['ApprovalDate', 'ChgOffDate','DisbursementDate']
 df[date_col] = pd.to_datetime(df[date_col].stack(),format='%d-%b-%y').unstack()
 
 # %%
+# Identify the values leading to mixed type
+non_numeric_mask = pd.to_numeric(df["ApprovalFY"], errors="coerce").isna()
+df.loc[non_numeric_mask, "ApprovalFY"].unique()
+
+# %%
 #Year to Int
 df['ApprovalFY'].replace('1976A', 1976, inplace=True)
 df['ApprovalFY']= df['ApprovalFY'].astype(int)
