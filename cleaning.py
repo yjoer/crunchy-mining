@@ -547,6 +547,8 @@ df['BalanceGross'].unique()
 
 # %%
 #Export Cleaned Data to CSV
-file_path = "data/output.csv"
-df.to_csv(file_path, index=False)
+file_path = "data/output.parquet"
+df.to_parquet(file_path, engine="pyarrow", index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
+
+# %%
