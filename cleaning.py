@@ -336,6 +336,11 @@ df['SBA_AppvPct'] = df['SBA_Appv'] / df['GrAppv']
 df['AppvDisbursed'] = np.where(df['DisbursementGross'] == df['GrAppv'], 1, 0)
 
 # %%
+#3.3 Time Period section
+#Excluding those disbursed after 2010 since the loan term is typically 5 years or more
+df = df[df['DisbursementFY'] <= 2010]
+
+# %%
 df.info()
 
 # %%
@@ -343,3 +348,5 @@ df.info()
 file_path = "data/output.csv"
 df.to_csv(file_path, index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
+
+# %%
