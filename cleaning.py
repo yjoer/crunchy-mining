@@ -336,6 +336,12 @@ df['SBA_AppvPct'] = df['SBA_Appv'] / df['GrAppv']
 df['AppvDisbursed'] = np.where(df['DisbursementGross'] == df['GrAppv'], 1, 0)
 
 # %%
+#Export Cleaned Data to CSV
+file_path = "data/output.csv"
+df.to_csv(file_path, index=False)
+print(f"DataFrame has been successfully exported to {file_path}.")
+
+# %%
 df.info()
 
 # %% [markdown]
