@@ -1,9 +1,10 @@
 __pycache__/
 .ipynb_checkpoints/
 .venv/
+catboost_info/
 
 *.lock
 
 #Dataset
 data/SBA.csv
-data/output.csv
+data/output.parquet
