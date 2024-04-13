@@ -219,11 +219,20 @@ df['ApprovalFY'].replace('1976A', 1976, inplace=True)
 df['ApprovalFY']= df['ApprovalFY'].astype(int)
 
 # %%
-# Change Franchise = Is_Franchise
-df['FranchiseCode'] = df['FranchiseCode'].replace(1,0 )	
-df['FranchiseCode'] = np.where((df.FranchiseCode != 0 ),1,df.FranchiseCode)
-df.rename(columns={"FranchiseCode": "Is_Franchised"}, inplace=True)
+#Is_Franchised
+df['Is_Franchised'] = df['FranchiseCode'].replace(1,0)
+df['Is_Franchised'] = np.where((df.FranchiseCode != 0 ),1,df.FranchiseCode)
 df.Is_Franchised.value_counts()
+
+# %%
+#Is_CreatedJob
+df['Is_CreatedJob'] = np.where((df.CreateJob > 0 ),1,df.CreateJob)
+df.Is_CreatedJob.value_counts()
+
+# %%
+#Is_RetainedJob
+df['Is_RetainedJob'] = np.where((df.RetainedJob > 0 ),1,df.RetainedJob)
+df.Is_RetainedJob.value_counts()
 
 # %%
 #NAICS, the first 2 numbers represent the Industry
@@ -298,8 +307,8 @@ df['Industry'] = df['Industry'].map({
 })
 
 # %%
-df = df.fillna({'Industry':'Others'})
-#df  = df.drop(df[df['NAICS'] == 0].index)
+#df = df.fillna({'Industry':'Others'})
+df = df.drop(df[df['NAICS'] == 0].index)
 
 # %%
 #Guideline: 4.1.5. Loans Backed by Real Estate
@@ -341,6 +350,11 @@ df['AppvDisbursed'] = np.where(df['DisbursementGross'] == df['GrAppv'], 1, 0)
 df = df[df['DisbursementFY'] <= 2010]
 
 # %%
+#Change MIS Status PIF = 0, CHGOFF = 1
+df['MIS_Status'] = df['MIS_Status'].replace({'P I F': 0, 'CHGOFF':1})
+df.MIS_Status.value_counts()
+
+# %%
 df.info()
 
 # %%
@@ -348,5 +362,3 @@ df.info()
 file_path = "data/output.csv"
 df.to_csv(file_path, index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
-
-# %%
