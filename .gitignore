@@ -6,3 +6,4 @@ __pycache__/
 
 #Dataset
 data/SBA.csv
+data/output.csv

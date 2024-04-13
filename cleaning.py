@@ -24,7 +24,11 @@ import datetime
 import math
 from datetime import date
 from scipy import stats
+import nltk
+from nltk.tokenize import word_tokenize
+from collections import Counter
 import warnings
+nltk.download('punkt')
 warnings.filterwarnings("ignore")
 
 # %%
@@ -70,6 +74,10 @@ df = df.fillna({'Name':'Unknown Company'})
 df = df.fillna({'City':'Unknown City'})
 
 # %%
+temp_empty_state = df.loc[df['State'].isnull()]
+temp_empty_state
+
+# %%
 df.loc[df['State'].isnull(), 'Zip'].unique()
 
 # %%
@@ -79,19 +87,44 @@ df_sorted = df.sort_values(by='Zip')
 #Group df based on zip code
 grouped = df_sorted.groupby('Zip')
 
-#Fill the null 'State'based on the zip code group
+# %%
+#Fill the null 'State' based on the zip code group
 df_sorted['State'] = grouped['State'].fillna(method='ffill')
 df = df_sorted.sort_index()
 
+
 # %%
-df.isnull().sum()
+#To cross check the imputation Result for State
+def print_imputed_State_rows(df, temp_empty_state):
+    if not temp_empty_state.empty:
+        null_indices = temp_empty_state.index
+        imputed_rows = df.loc[null_indices, ["City", "State", "Zip", "BankState"]]
+        print("Table with imputed data for rows with null values in the 'State' column:")
+        print(imputed_rows)
+    else:
+        print("No rows with null values in the 'State' column.")
+
+print_imputed_State_rows(df, temp_empty_state)
 
 # %%
 #Still got one State is NA, We will fill in manually based on Zip Code
 df.loc[df['State'].isnull()]
+df = df.fillna({'State':'AP'})
+
 
 # %%
-df = df.fillna({'State':'AP'})
+#Notice that Row 49244 Zip code is 0, the state is incorrect, we impute manually
+def change_state_value(df, row_id, new_value):
+    df_copy = df.copy()
+    df_copy.loc[row_id, 'State'] = new_value
+    return df_copy
+
+row_id = 49244
+new_value = 'NY' 
+df = change_state_value(df, row_id, new_value)
+
+# %%
+print_imputed_State_rows(df, temp_empty_state)
 
 # %%
 #Fill in NA Bank
@@ -116,8 +149,8 @@ df = df.dropna(subset=['BankState'], how='all')
 df.shape
 
 # %%
-#IsExiting
-#We dont make assumption based on the FranchiseCode for this col
+#Drop NA for IsExiting
+#We dont make assumption since this column might be one of the important factors
 df = df.dropna(subset=['NewExist'], how='all')
 df.shape
 
@@ -136,12 +169,6 @@ df.shape
 df.isnull().sum()
 
 # %%
-df.shape
-
-# %%
-df.isnull().sum()
-
-# %%
 #Drop DisbursementDate with NA
 df = df.dropna(subset=['DisbursementDate'], how='all')
 
@@ -152,9 +179,8 @@ df['MIS_Status'].unique()
 #For MIS_Status, if got change off date, we will fill in change off, others we cannot impute, we will drop it
 df['MIS_Status'] = np.where((df['MIS_Status'] == "CHGOFF") & (df['ChgOffDate'] != np.nan),"CHGOFF",df.MIS_Status)
 
-df = df[(df['MIS_Status'] == "P I F") | (df['MIS_Status'] == "CHGOFF")]
-
 # %%
+df = df[(df['MIS_Status'] == "P I F") | (df['MIS_Status'] == "CHGOFF")]
 print(df[['MIS_Status', 'ChgOffDate']].head(10))
 
 # %%
@@ -164,12 +190,12 @@ df.isnull().sum()
 # Data Transformation
 
 # %%
-#Tranform Data With String to Int/Float
+#Tranform Data With String to Float
 currency_col = ['DisbursementGross', 'BalanceGross', 'ChgOffPrinGr', 'GrAppv', 'SBA_Appv']
 df[currency_col] = df[currency_col].replace('[\$,]', '', regex=True).astype(float)
 
 # %%
-#LowDoc also only Y or N
+#LowDoc valid input only Y or N
 df['LowDoc'].unique()
 
 # %%
@@ -208,35 +234,6 @@ df['NAICS']
 df['NAICS'].unique()
 
 # %%
-df['Industry'] = df['NAICS'].astype('str').apply(lambda x: x[:2])
-df['Industry'] = df['Industry'].map({
-    '11': 'Ag/For/Fish/Hunt',
-    '21': 'Min/Quar/Oil_Gas_ext',
-    '22': 'Utilities',
-    '23': 'Construction',
-    '31': 'Manufacturing',
-    '32': 'Manufacturing',
-    '33': 'Manufacturing',
-    '42': 'Wholesale_trade',
-    '44': 'Retail_trade',
-    '45': 'Retail_trade',
-    '48': 'Trans/Ware',
-    '49': 'Trans/Ware',
-    '51': 'Information',
-    '52': 'Finance/Insurance',
-    '53': 'RE/Rental/Lease',
-    '54': 'Prof/Science/Tech',
-    '55': 'Mgmt_comp',
-    '56': 'Admin_sup/Waste_Mgmt_Rem',
-    '61': 'Educational',
-    '62': 'Healthcare/Social_assist',
-    '71': 'Arts/Entertain/Rec',
-    '72': 'Accom/Food_serv',
-    '81': 'Other_no_pub',
-    '92': 'Public_Admin'
-})
-
-# %%
 #A lot of null value, do we want to use nltk for this?
 naics_counts = df['NAICS'].value_counts()
 
@@ -246,7 +243,63 @@ else:
     print("Number of occurrences of '0' in the 'NAICS' column: 0")
 
 # %%
+#Use NLTK to fill in Industry based on Company Name
+all_text = ' '.join(df.loc[df['NAICS'] == "0", 'Name'])
+words = word_tokenize(all_text)
+word_counts = Counter(words)
+# Print the most common words and their counts
+most_common = word_counts.most_common(60)
+for word, count in most_common:
+    print(f'{word}: {count}')
+
+# %%
+#Keyword 1: Accommodation (72)
+df[df['Name'].str.contains(' INN|MOTEL', case=False)]
+
+# %%
+df.loc[(df['Name'].str.contains(' INN|MOTEL')) & (df['NAICS'] == "0"), 'NAICS'] = 72
+df.loc[df['NAICS'] == "0", 'NAICS'].value_counts()
+
+# %%
+#Keyword: Food (72)
+df[df['Name'].str.contains('RESTAURANT|PIZZA|CAFE', case=False)]
+
+# %%
+df.loc[(df['Name'].str.contains('RESTUARANT|PIZZA|CAFE')) & (df['NAICS'] == '0'), 'NAICS'] = 72
+df.loc[df['NAICS'] == '0', 'NAICS'].value_counts()
+
+# %%
+df['Industry'] = df['NAICS'].astype('str').apply(lambda x: x[:2])
+df['Industry'] = df['Industry'].map({
+    '11': 'Ag/Forest/Fish/Hunt',
+    '21': 'Min/Quar/OilGas',
+    '22': 'Utilities',
+    '23': 'Construction',
+    '31': 'Manufacturing',
+    '32': 'Manufacturing',
+    '33': 'Manufacturing',
+    '42': 'WholesaleTrade',
+    '44': 'RetailTrade',
+    '45': 'RetailTrade',
+    '48': 'Trans/Warehouse',
+    '49': 'Trans/Warehouse',
+    '51': 'Information',
+    '52': 'Finance/Insurance',
+    '53': 'REst/Rental/Lease',
+    '54': 'Prof/Science/Tech',
+    '55': 'MgmtCompEnt',
+    '56': 'Admin/Support/WasteMgmtRem',
+    '61': 'Educational',
+    '62': 'Healthcare/SocialAssist',
+    '71': 'Arts/Entertain/Rec',
+    '72': 'Accom/Food',
+    '81': 'OthersNoPublicAdmin',
+    '92': 'PublicAdmin'
+})
+
+# %%
 df = df.fillna({'Industry':'Others'})
+#df  = df.drop(df[df['NAICS'] == 0].index)
 
 # %%
 #Guideline: 4.1.5. Loans Backed by Real Estate
@@ -336,7 +389,7 @@ sns.countplot(y="Industry", hue="MIS_Status", data=df)
 plt.title('Total PIF vs Total CHGOFF based on Industry', fontsize=20)
 plt.xlabel('Total CHGOFF', fontsize=15)
 plt.ylabel('Industry', fontsize=15)
-plt.legend(["Tidak", "Gagal"],loc='lower right')
+plt.legend(["PIF", "CHGOFF"],loc='lower right')
 
 # %%
 pd.DataFrame(df.groupby('Industry')['MIS_Status'].value_counts()).unstack(level=1).style.highlight_max(color='green').highlight_min(color='blue')
