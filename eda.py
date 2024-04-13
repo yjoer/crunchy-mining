@@ -76,3 +76,6 @@ plt.legend(["PIF", "CHGOFF"],loc='lower right')
 pd.DataFrame(cleaned_df.groupby('Industry')['MIS_Status'].value_counts()).unstack(level=1).style.highlight_max(color='green').highlight_min(color='blue')
 
 # %%
+cleaned_df.info()
+
+# %%
