@@ -336,69 +336,10 @@ df['SBA_AppvPct'] = df['SBA_Appv'] / df['GrAppv']
 df['AppvDisbursed'] = np.where(df['DisbursementGross'] == df['GrAppv'], 1, 0)
 
 # %%
+df.info()
+
+# %%
 #Export Cleaned Data to CSV
 file_path = "data/output.csv"
 df.to_csv(file_path, index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
-
-# %%
-df.info()
-
-# %% [markdown]
-# Questions: 
-# 1. Data Transformation need to transform to boolean?
-# 2. Are we using NAICS while training? Was thinking should we use nltk to map the data.
-# 3. Double check Zip Code
-
-# %% [markdown]
-# EDA
-
-# %%
-df = df.astype({'UrbanRural': 'object', 
-                    'RevLineCr': 'object', 
-                    'LowDoc':'object', 
-                    'MIS_Status':'object'})
-
-# %%
-f, ax = plt.subplots(figsize=(16,9))
-sns.barplot(x="ApprovalFY", y="DisbursementGross", color='Salmon', data=df)
-plt.title('Total Loan VS Year', fontsize=20)
-plt.xlabel('Year', fontsize=15)
-plt.ylabel('Total loan ($)', fontsize=15)
-plt.xticks(rotation='vertical');
-
-# %%
-df.DisbursementGross.describe()
-
-# %%
-f, ax = plt.subplots(figsize=(16,9))
-sns.barplot(x="DisbursementGross", y="Industry", data=df)
-plt.title('Total Loan Based on Industry', fontsize=20)
-plt.xlabel('Total Loan ($)', fontsize=15)
-plt.ylabel('Industry', fontsize=15)
-
-# %%
-df.groupby('Industry')['DisbursementGross'].describe().style.highlight_max(color='green').highlight_min(color='blue')
-
-# %%
-f, ax = plt.subplots(figsize=(16,9))
-sns.countplot(x="ApprovalFY", data=df,hue='MIS_Status')
-plt.title('Total PIF vs Total CHGOFF based on Year', fontsize=20)
-plt.xlabel('Year', fontsize=15)
-plt.ylabel('Total Loan($)', fontsize=15)
-plt.legend(["PIF", "CHGOFF"],loc='upper right')
-plt.xticks(rotation='vertical');
-
-# %%
-f, ax = plt.subplots(figsize=(16,9))
-sns.countplot(y="Industry", hue="MIS_Status", data=df)
-plt.title('Total PIF vs Total CHGOFF based on Industry', fontsize=20)
-plt.xlabel('Total CHGOFF', fontsize=15)
-plt.ylabel('Industry', fontsize=15)
-plt.legend(["PIF", "CHGOFF"],loc='lower right')
-
-# %%
-pd.DataFrame(df.groupby('Industry')['MIS_Status'].value_counts()).unstack(level=1).style.highlight_max(color='green').highlight_min(color='blue')
-
-
-# %%
