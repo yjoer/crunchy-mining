@@ -24,6 +24,8 @@ import datetime
 import math
 from datetime import date
 from scipy import stats
+from scipy.stats import skew
+from sklearn.preprocessing import OrdinalEncoder
 import nltk
 from nltk.tokenize import word_tokenize
 from collections import Counter
@@ -34,8 +36,185 @@ warnings.filterwarnings("ignore")
 # %%
 df = pd.read_csv("data/SBA.csv")
 
+# %% [markdown]
+# E: Exploration
+
 # %%
 df.info()
+
+# %% [markdown]
+# Sample: 
+
+# %%
+#To Date
+date_col = ['ApprovalDate', 'ChgOffDate','DisbursementDate']
+df[date_col] = pd.to_datetime(df[date_col].stack(),format='%d-%b-%y').unstack()
+
+# %%
+#Year to Int
+df['ApprovalFY'].replace('1976A', 1976, inplace=True)
+df['ApprovalFY']= df['ApprovalFY'].astype(int)
+
+# %%
+#Tranform Data With String to Float
+currency_col = ['DisbursementGross', 'BalanceGross', 'ChgOffPrinGr', 'GrAppv', 'SBA_Appv']
+df[currency_col] = df[currency_col].replace('[\$,]', '', regex=True).astype(float)
+
+# %%
+df['DisbursementFY'] = df['DisbursementDate'].map(lambda x: x.year)
+
+# %%
+#3.3 Time Period section
+#Excluding those disbursed after 2010 since the loan term is typically 5 years or more
+df = df[df['DisbursementFY'] <= 2010]
+
+# %% [markdown]
+# Exploration:
+
+# %%
+# separate columns by data type (Numerical and Categorical Data)
+numerical_cols = df.select_dtypes(include=['int64', 'float64']).columns
+categorical_cols = df.select_dtypes(include=['object']).columns
+
+# create new data frames with only numerical and categorical columns
+numerical_data = df[numerical_cols]
+categorical_data = df[categorical_cols]
+
+# %%
+numerical_data.head()
+
+# %%
+fig, ax = plt.subplots(10, 2, figsize=(20, 40))
+ax = ax.flatten()
+
+right_skew_count = 0
+left_skew_count = 0
+
+for i, col in enumerate(numerical_cols):
+    ax[i].hist(numerical_data[col], bins=30, density=True, alpha=0.5, color='green')
+    ax[i].set_xlabel(col)
+    ax[i].set_ylabel('Probability density')
+    
+    skewness = skew(numerical_data[col])
+    #left skew, blue colour, if right skew, red colour
+    if skewness > 0:
+        right_skew_count += 1
+        ax[i].axvline(np.mean(numerical_data[col]), color='r', linestyle='--', label='Mean')
+    elif skewness < 0:
+        left_skew_count += 1
+        ax[i].axvline(np.median(numerical_data[col]), color='b', linestyle='--', label='Median')
+
+    sns.kdeplot(numerical_data[col], ax=ax[i], color='blue', linewidth=2)
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+print(f"Number of columns with right skew: {right_skew_count}")
+print(f"Number of columns with left skew: {left_skew_count}")
+
+# %%
+categorical_data.head()
+
+# %%
+# Get unique values
+
+unique_value = list()
+
+for i in categorical_cols:
+  unique_value.append(categorical_data[i].unique())
+
+unique_values_tables = {'Categorical Columns': categorical_cols, 'Unique Value': unique_value}
+unique_values_tables = pd.DataFrame(unique_values_tables)
+unique_values_tables
+
+# %%
+# Plot count distribution for each categorical column
+fig, ax = plt.subplots(2, 2, figsize=(20, 40))
+ax = ax.flatten()
+
+temp_categorical_cols = ["State","BankState","LowDoc", "MIS_Status"]
+for i, col in enumerate(temp_categorical_cols):
+    sns.countplot(x=col, data=categorical_data, ax=ax[i])
+    ax[i].set_xlabel(col)
+    ax[i].set_ylabel('Count')
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+
+# %%
+plt.rcParams.update({'font.size': 18})
+
+fig , ax = plt.subplots(5,2,figsize=(20,40))
+
+numerical_var_count = 0
+outlier_vars = []
+
+for i in range(ax.shape[0]):
+    for j in range(ax.shape[1]):
+        
+        k = numerical_cols[numerical_var_count]
+        
+        sns.boxplot(x=numerical_data[k], ax=ax[i,j])
+        ax[i,j].set(xlabel=k, ylabel=k)
+        ax[i, j].set(title='Boxplot of '+k)
+        
+        Q1 = numerical_data[k].quantile(0.25)
+        Q3 = numerical_data[k].quantile(0.75)
+        IQR = Q3 - Q1
+        lower = Q1 - 1.5 * IQR
+        upper = Q3 + 1.5 * IQR
+        
+        if any(numerical_data[k] < lower) or any(numerical_data[k] > upper):
+            outlier_vars.append(k)
+                
+        numerical_var_count = numerical_var_count + 1
+        
+plt.tight_layout()
+
+# %%
+# Perform ordinal encoding on categorical columns
+encoder = OrdinalEncoder()
+dataset_encode = df.copy()
+categorical_cols_encode = categorical_cols.copy()
+
+dataset_encode[categorical_cols_encode] = encoder.fit_transform(dataset_encode[categorical_cols_encode])
+
+# Print the updated dataset
+dataset_encode
+
+# %% [markdown]
+# Correlation
+
+# %%
+pearsoncorr = dataset_encode.corr(method='pearson')
+pearsoncorr = pearsoncorr[((pearsoncorr >= .5) | (pearsoncorr <= -.5)) & (pearsoncorr !=1.000)]
+plt.figure(figsize=(100,100))
+sns.heatmap(dataset_encode.corr(method='pearson'), 
+            xticklabels=pearsoncorr.columns,
+            yticklabels=pearsoncorr.columns,
+            cmap='RdBu_r',
+            annot=True,
+            linewidth=0.4)
+
+# %%
+corr = dataset_encode.corr().abs()
+corr[corr == 1] = 0
+corr_cols = corr.max().sort_values(ascending=False)
+print("Correlation > 0.8: ")
+display(corr_cols[corr_cols > 0.8])
+
+dfCorr = dataset_encode.corr()
+filteredDf = dfCorr[((dfCorr >= .8) | (dfCorr <= -.8)) & (dfCorr !=1.000)]
+plt.figure(figsize=(100,100))
+sns.heatmap(filteredDf, annot=True, cmap="Reds", linecolor='black', linewidths=1)
+plt.show()
+
+# %% [markdown]
+# Observation:
+
+# %% [markdown]
+# M: Modification (Data Cleaning)
 
 # %%
 df.head()
@@ -190,11 +369,6 @@ df.isnull().sum()
 # Data Transformation
 
 # %%
-#Tranform Data With String to Float
-currency_col = ['DisbursementGross', 'BalanceGross', 'ChgOffPrinGr', 'GrAppv', 'SBA_Appv']
-df[currency_col] = df[currency_col].replace('[\$,]', '', regex=True).astype(float)
-
-# %%
 #LowDoc valid input only Y or N
 df['LowDoc'].unique()
 
@@ -207,16 +381,6 @@ df = df[(df['LowDoc'] == 'Y') | (df['LowDoc'] == 'N')]
 
 # %%
 df.isnull().sum()
-
-# %%
-#To Date
-date_col = ['ApprovalDate', 'ChgOffDate','DisbursementDate']
-df[date_col] = pd.to_datetime(df[date_col].stack(),format='%d-%b-%y').unstack()
-
-# %%
-#Year to Int
-df['ApprovalFY'].replace('1976A', 1976, inplace=True)
-df['ApprovalFY']= df['ApprovalFY'].astype(int)
 
 # %%
 #Is_Franchised
@@ -308,7 +472,7 @@ df['Industry'] = df['Industry'].map({
 
 # %%
 #df = df.fillna({'Industry':'Others'})
-df = df.drop(df[df['NAICS'] == 0].index)
+df = df.drop(df[df['NAICS'] == '0'].index)
 
 # %%
 #Guideline: 4.1.5. Loans Backed by Real Estate
@@ -330,9 +494,6 @@ df['DaysToDisbursement'] = df['DisbursementDate'] - df['ApprovalDate']
 df['DaysToDisbursement'] = df['DaysToDisbursement'].astype('str').apply(lambda x: x[:x.index('d') - 1]).astype('int64')
 
 # %%
-df['DisbursementFY'] = df['DisbursementDate'].map(lambda x: x.year)
-
-# %%
 #Check if Company state is same as Bank State
 df['StateSame'] = np.where(df['State'] == df['BankState'], 1, 0)
 
@@ -345,11 +506,6 @@ df['SBA_AppvPct'] = df['SBA_Appv'] / df['GrAppv']
 df['AppvDisbursed'] = np.where(df['DisbursementGross'] == df['GrAppv'], 1, 0)
 
 # %%
-#3.3 Time Period section
-#Excluding those disbursed after 2010 since the loan term is typically 5 years or more
-df = df[df['DisbursementFY'] <= 2010]
-
-# %%
 #Change MIS Status PIF = 0, CHGOFF = 1
 df['MIS_Status'] = df['MIS_Status'].replace({'P I F': 0, 'CHGOFF':1})
 df.MIS_Status.value_counts()
@@ -357,8 +513,13 @@ df.MIS_Status.value_counts()
 # %%
 df.info()
 
+# %% [markdown]
+# To Be discussed: Drop Column
+
 # %%
 #Export Cleaned Data to CSV
 file_path = "data/output.csv"
 df.to_csv(file_path, index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
+
+# %%
