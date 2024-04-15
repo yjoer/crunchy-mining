@@ -36,9 +36,6 @@ warnings.filterwarnings("ignore")
 # %%
 df = pd.read_csv("data/SBA.csv")
 
-# %% [markdown]
-# E: Exploration
-
 # %%
 df.info()
 
@@ -67,6 +64,9 @@ df['DisbursementFY'] = df['DisbursementDate'].map(lambda x: x.year)
 #3.3 Time Period section
 #Excluding those disbursed after 2010 since the loan term is typically 5 years or more
 df = df[df['DisbursementFY'] <= 2010]
+
+# %%
+df.info()
 
 # %% [markdown]
 # Exploration:
@@ -117,7 +117,6 @@ categorical_data.head()
 
 # %%
 # Get unique values
-
 unique_value = list()
 
 for i in categorical_cols:
@@ -386,16 +385,19 @@ df.isnull().sum()
 #Is_Franchised
 df['Is_Franchised'] = df['FranchiseCode'].replace(1,0)
 df['Is_Franchised'] = np.where((df.FranchiseCode != 0 ),1,df.FranchiseCode)
+df['Is_Franchised'] = df['Is_Franchised'].astype(int)
 df.Is_Franchised.value_counts()
 
 # %%
 #Is_CreatedJob
 df['Is_CreatedJob'] = np.where((df.CreateJob > 0 ),1,df.CreateJob)
+df['Is_CreatedJob'] = df['Is_CreatedJob'].astype(int)
 df.Is_CreatedJob.value_counts()
 
 # %%
 #Is_RetainedJob
 df['Is_RetainedJob'] = np.where((df.RetainedJob > 0 ),1,df.RetainedJob)
+df['Is_RetainedJob'] = df['Is_RetainedJob'].astype(int)
 df.Is_RetainedJob.value_counts()
 
 # %%
@@ -410,8 +412,8 @@ df['NAICS'].unique()
 #A lot of null value, do we want to use nltk for this?
 naics_counts = df['NAICS'].value_counts()
 
-if '0' in naics_counts.index:
-    print("Number of occurrences of '0' in the 'NAICS' column:", naics_counts['0'])
+if '0.' in naics_counts.index:
+    print("Number of occurrences of '0' in the 'NAICS' column:", naics_counts['0.'])
 else:
     print("Number of occurrences of '0' in the 'NAICS' column: 0")
 

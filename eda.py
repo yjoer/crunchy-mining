@@ -225,7 +225,7 @@ print('-'*50)
 print(percent_outliers('DisbursementGross'))
 
 # %%
-outliers1_drop = cleaned_df[(cleaned_df['DisbursementGross'] > 14.7)].index
+outliers1_drop = cleaned_df[(cleaned_df['DisbursementGross'] > 14.8)].index
 cleaned_df.drop(outliers1_drop, inplace=True)
 
 # %%
@@ -253,5 +253,33 @@ plt.ylabel('Density', fontsize=15)
 
 plt.legend()
 plt.show()
+
+# %%
+cleaned_df.info()
+
+# %%
+f, ax = plt.subplots(figsize=(16,9))
+sns.boxplot(x=cleaned_df['GrAppv'])
+plt.title('GrAppv Ouliers', fontsize=20)
+plt.xlabel('Total', fontsize=15)
+
+# %%
+cleaned_df['GrAppv'] = np.log(cleaned_df['GrAppv'])
+cleaned_df['GrAppv'].skew()
+
+# %%
+print(limit('GrAppv'))
+print('-'*50)
+print(percent_outliers('GrAppv'))
+
+# %%
+outliers2_drop = cleaned_df[(cleaned_df['GrAppv'] < 7.5)].index
+cleaned_df.drop(outliers2_drop, inplace=True)
+
+# %%
+f, ax = plt.subplots(figsize=(16,9))
+sns.boxplot(x=data['GrAppv'])
+plt.title('GrAppv Outliers', fontsize=20)
+plt.xlabel('Total', fontsize=15)
 
 # %%
