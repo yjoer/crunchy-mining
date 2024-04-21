@@ -13,6 +13,9 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# Note: This is Reference from Kaggle, need to tweak to avoid plagiarism
+
 # %%
 import altair as alt
 import numpy as np

@@ -61,9 +61,9 @@ df[currency_col] = df[currency_col].replace('[\$,]', '', regex=True).astype(floa
 df['DisbursementFY'] = df['DisbursementDate'].map(lambda x: x.year)
 
 # %%
-#3.3 Time Period section
-#Excluding those disbursed after 2010 since the loan term is typically 5 years or more
-df = df[df['DisbursementFY'] <= 2010]
+#NAICS, the first 2 numbers represent the Industry
+df['NAICS'] = df['NAICS'].astype(str).str[:2]
+df['NAICS']
 
 # %%
 df.info()
@@ -84,7 +84,7 @@ categorical_data = df[categorical_cols]
 numerical_data.head()
 
 # %%
-fig, ax = plt.subplots(10, 2, figsize=(20, 40))
+fig, ax = plt.subplots(8, 2, figsize=(20, 40))
 ax = ax.flatten()
 
 right_skew_count = 0
@@ -128,10 +128,10 @@ unique_values_tables
 
 # %%
 # Plot count distribution for each categorical column
-fig, ax = plt.subplots(2, 2, figsize=(20, 40))
+fig, ax = plt.subplots(3, 2, figsize=(20, 40))
 ax = ax.flatten()
 
-temp_categorical_cols = ["State","BankState","LowDoc", "MIS_Status"]
+temp_categorical_cols = ["State","BankState","LowDoc", "MIS_Status","NAICS"]
 for i, col in enumerate(temp_categorical_cols):
     sns.countplot(x=col, data=categorical_data, ax=ax[i])
     ax[i].set_xlabel(col)
@@ -333,6 +333,17 @@ df = df.dropna(subset=['NewExist'], how='all')
 df.shape
 
 # %%
+#Change NewExist from float to int
+# 1 = New; 2 = Exist
+df['NewExist'] = df['NewExist'].astype(int)
+df.NewExist.value_counts()
+
+# %%
+# 1 = New; 2 = Exist
+df = df[df['NewExist'] != 0]
+df.NewExist.value_counts()
+
+# %%
 #For RevLineCr, Based on the data description, only Y and N, thus we will ingore others
 df['RevLineCr'].unique()
 
@@ -402,18 +413,14 @@ df.Is_RetainedJob.value_counts()
 
 # %%
 #NAICS, the first 2 numbers represent the Industry
-df['NAICS'] = df['NAICS'].astype(str).str[:2]
-df['NAICS']
-
-# %%
 df['NAICS'].unique()
 
 # %%
 #A lot of null value, do we want to use nltk for this?
 naics_counts = df['NAICS'].value_counts()
 
-if '0.' in naics_counts.index:
-    print("Number of occurrences of '0' in the 'NAICS' column:", naics_counts['0.'])
+if '0' in naics_counts.index:
+    print("Number of occurrences of '0' in the 'NAICS' column:", naics_counts['0'])
 else:
     print("Number of occurrences of '0' in the 'NAICS' column: 0")
 
@@ -513,15 +520,33 @@ df['MIS_Status'] = df['MIS_Status'].replace({'P I F': 0, 'CHGOFF':1})
 df.MIS_Status.value_counts()
 
 # %%
+#Change Y / N to 1 / 0
+df['LowDoc'] = df['LowDoc'].replace({'Y': 1, 'N': 0})
+df.LowDoc.value_counts()
+
+# %%
+#Change Y / N to 1 / 0
+df['RevLineCr'] = df['RevLineCr'].replace({'Y': 1, 'N': 0})
+df.RevLineCr.value_counts()
+
+# %%
+#Is_Existing
+# 1 = New; 2 = Exist
+df['Is_Existing'] = df['NewExist'].replace({1: 0, 2: 1})
+df.Is_Existing.value_counts()
+
+# %%
 df.info()
 
-# %% [markdown]
-# To Be discussed: Drop Column
+# %%
+df.drop(columns=['LoanNr_ChkDgt', 'Name', 'Zip', 'Bank', 'NAICS', "NewExist"], inplace=True)
+
+# %%
+#For Cross check BalanceGross got value (because too many 0)
+df['BalanceGross'].unique()
 
 # %%
 #Export Cleaned Data to CSV
 file_path = "data/output.csv"
 df.to_csv(file_path, index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
-
-# %%
