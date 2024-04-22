@@ -1,24 +1,30 @@
 # %%
 import altair as alt
+import mlflow
 import numpy as np
 import pandas as pd
-from catboost import CatBoostClassifier
-from lightgbm import LGBMClassifier
-from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import (
-    LabelEncoder,
-    MinMaxScaler,
-    OrdinalEncoder,
-    StandardScaler,
+from sklearn.model_selection import StratifiedKFold, train_test_split
+
+from src.pipeline import (
+    inspect_cv_split_size,
+    inspect_holdout_split_size,
+    preprocessing_v1,
+    validate_adaboost,
+    validate_catboost,
+    validate_decision_tree,
+    validate_gaussian_nb,
+    validate_knn,
+    validate_lightgbm,
+    validate_linear_svc,
+    validate_logistic_regression,
+    validate_random_forest,
+    validate_xgboost,
 )
-from sklearn.svm import LinearSVC
-from sklearn.tree import DecisionTreeClassifier
-from xgboost import XGBClassifier
+
+# %load_ext autoreload
+# %autoreload 2
+
+mlflow.set_tracking_uri("sqlite:///.mlflow/mlflow.db")
 
 # %%
 df = pd.read_parquet("data/output.parquet")
@@ -56,7 +62,7 @@ variables = {
         "Zip",
         "Bank",
         "BankState",
-        "ApprovalFY",
+        # "ApprovalFY",
         "NewExist",
         "Is_Franchised",
         "UrbanRural",
@@ -65,7 +71,7 @@ variables = {
         "Industry",
         "RealEstate",
         "Recession",
-        "DisbursementFY",
+        # "DisbursementFY",
         "StateSame",
         "SBA_AppvPct",
     ],
@@ -95,14 +101,7 @@ df_train, df_test = train_test_split(
 )
 
 # %%
-pd.concat(
-    [
-        df_train[variables["target"]].value_counts(),
-        df_test[variables["target"]].value_counts(),
-    ]
-)
-
-# %%
+# 1. Holdout method
 df_train_sm, df_val = train_test_split(
     df_train,
     test_size=0.15 / 0.85,
@@ -111,12 +110,15 @@ df_train_sm, df_val = train_test_split(
 )
 
 # %%
-pd.concat(
-    [
-        df_train_sm[variables["target"]].value_counts(),
-        df_val[variables["target"]].value_counts(),
-    ]
-)
+inspect_holdout_split_size(df_train, df_train_sm, df_val, df_test, variables["target"])
+
+# %%
+# 2. Cross-validation
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=12345)
+skf_indices = list(skf.split(np.zeros(len(df_train)), df_train[variables["target"]]))
+
+# %%
+inspect_cv_split_size(df_train, skf_indices, variables["target"])
 
 # %% [markdown]
 # ## Modify
@@ -124,119 +126,54 @@ pd.concat(
 # %%
 # What's the better way to handle categorical variables without one-hot encoding to
 # avoid the curse of dimensionality?
-oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
-X_train_sm_cat = oe.fit_transform(df_train_sm[variables["categorical"]])
-X_val_cat = oe.transform(df_val[variables["categorical"]])
-X_test_cat = oe.transform(df_test[variables["categorical"]])
-
-# %%
 # Do we need to scale the outputs of the ordinal encoder?
-mm = MinMaxScaler()
-X_train_sm_cat_scaled = mm.fit_transform(X_train_sm_cat)
-X_val_cat_scaled = mm.transform(X_val_cat)
-X_test_cat_scaled = mm.transform(X_test_cat)
 
 # %%
-ss = StandardScaler()
-X_train_sm_num = ss.fit_transform(df_train_sm[variables["numerical"]])
-X_val_num = ss.transform(df_val[variables["numerical"]])
-X_test_num = ss.transform(df_test[variables["numerical"]])
+train_val_sets = {}
 
-# %%
-X_train_sm_ft = np.hstack((X_train_sm_cat_scaled, X_train_sm_num))
-X_val_ft = np.hstack((X_val_cat_scaled, X_val_num))
-X_test_ft = np.hstack((X_test_cat_scaled, X_test_num))
+train_val_sets["holdout"] = preprocessing_v1(df_train_sm, df_val, variables)
 
-# %%
-le = LabelEncoder()
-y_train_sm = le.fit_transform(df_train_sm[variables["target"]])
-y_val = le.transform(df_val[variables["target"]])
-y_test = le.transform(df_test[variables["target"]])
+for i, (train_index, val_index) in enumerate(skf_indices):
+    train_val_sets[f"fold_{i + 1}"] = preprocessing_v1(
+        df_train.iloc[train_index],
+        df_train.iloc[val_index],
+        variables,
+    )
 
 # %% [markdown]
 # ## Model
 
 # %%
-knn = KNeighborsClassifier()
-knn.fit(X_train_sm_ft, y_train_sm)
+validate_knn(train_val_sets)
 
 # %%
-logreg = LogisticRegression(random_state=12345, n_jobs=-1)
-logreg.fit(X_train_sm_ft, y_train_sm)
+validate_logistic_regression(train_val_sets)
 
 # %%
-gnb = GaussianNB()
-gnb.fit(X_train_sm_ft, y_train_sm)
+validate_gaussian_nb(train_val_sets)
 
 # %%
-svc = LinearSVC(dual="auto", random_state=12345)
-svc.fit(X_train_sm_ft, y_train_sm)
+validate_linear_svc(train_val_sets)
 
 # %%
-dt = DecisionTreeClassifier(random_state=12345)
-dt.fit(X_train_sm_ft, y_train_sm)
+validate_decision_tree(train_val_sets)
 
 # %%
-ab = AdaBoostClassifier(algorithm="SAMME", random_state=12345)
-ab.fit(X_train_sm_ft, y_train_sm)
+validate_random_forest(train_val_sets)
 
 # %%
-rf = RandomForestClassifier(n_jobs=-1, random_state=12345)
-rf.fit(X_train_sm_ft, y_train_sm)
+validate_adaboost(train_val_sets)
 
 # %%
-xgb = XGBClassifier(n_jobs=-1, random_state=12345)
-xgb.fit(X_train_sm_ft, y_train_sm)
+validate_xgboost(train_val_sets)
 
 # %%
-lgb = LGBMClassifier(random_state=12345, n_jobs=-1)
-lgb.fit(X_train_sm_ft, y_train_sm)
+validate_lightgbm(train_val_sets)
 
 # %%
-catb = CatBoostClassifier(metric_period=250, random_state=12345)
-catb.fit(X_train_sm_ft, y_train_sm)
+validate_catboost(train_val_sets)
 
 # %% [markdown]
 # ## Assess
-
-# %%
-y_knn = knn.predict(X_val_ft)
-print(classification_report(y_val, y_knn))
-
-# %%
-y_logreg = logreg.predict(X_val_ft)
-print(classification_report(y_val, y_logreg))
-
-# %%
-y_gnb = gnb.predict(X_val_ft)
-print(classification_report(y_val, y_gnb))
-
-# %%
-y_svc = svc.predict(X_val_ft)
-print(classification_report(y_val, y_svc))
-
-# %%
-y_dt = dt.predict(X_val_ft)
-print(classification_report(y_val, y_dt))
-
-# %%
-y_ab = ab.predict(X_val_ft)
-print(classification_report(y_val, y_ab))
-
-# %%
-y_rf = rf.predict(X_val_ft)
-print(classification_report(y_val, y_rf))
-
-# %%
-y_xgb = xgb.predict(X_val_ft)
-print(classification_report(y_val, y_xgb))
-
-# %%
-y_lgb = lgb.predict(X_val_ft)
-print(classification_report(y_val, y_lgb))
-
-# %%
-y_catb = catb.predict(X_val_ft)
-print(classification_report(y_val, y_catb))
 
 # %%
