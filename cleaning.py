@@ -539,7 +539,7 @@ df.Is_Existing.value_counts()
 df.info()
 
 # %%
-df.drop(columns=['LoanNr_ChkDgt', 'Name', 'Zip', 'Bank', 'NAICS', "NewExist"], inplace=True)
+df.drop(columns=['LoanNr_ChkDgt', 'Name', 'Zip', 'Bank', 'NAICS', "NewExist", "ChgOffDate"], inplace=True)
 
 # %%
 #For Cross check BalanceGross got value (because too many 0)
