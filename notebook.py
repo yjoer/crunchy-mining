@@ -94,7 +94,7 @@ variables = {
         "RetainedJob",
         "DisbursementGross",
         "BalanceGross",
-        "ChgOffPrinGr",
+        # "ChgOffPrinGr",
         "GrAppv",
         "SBA_Appv",
         "DaysTerm",
