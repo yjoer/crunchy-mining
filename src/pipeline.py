@@ -330,6 +330,7 @@ def validate_xgboost(train_val_sets: dict):
                     xgb_model=xgb,
                     artifact_path="model",
                     signature=mlflow.models.infer_signature(X_val, y_xgb),
+                    model_format="json",
                 )
 
 
