@@ -24,7 +24,7 @@ from src.pipeline import (
 # %load_ext autoreload
 # %autoreload 2
 
-mlflow.set_tracking_uri("sqlite:///.mlflow/mlflow.db")
+mlflow.set_tracking_uri("http://localhost:5000")
 
 # %%
 df = pd.read_parquet("data/output.parquet")
