@@ -141,6 +141,7 @@ inspect_cv_split_size(df_train, skf_indices, variables["target"])
 # Do we need to scale the outputs of the ordinal encoder?
 
 # %%
+# "name": (X_train, y_train, X_val, y_val)
 train_val_sets = {}
 
 train_val_sets["holdout"] = preprocessing_v1(df_train_sm, df_val, variables)
