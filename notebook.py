@@ -1,4 +1,6 @@
 # %%
+import warnings
+
 import altair as alt
 import mlflow
 import numpy as np
@@ -25,6 +27,16 @@ from src.pipeline import (
 # %autoreload 2
 
 mlflow.set_tracking_uri("http://localhost:5000")
+
+warnings.filterwarnings(
+    action="ignore",
+    message=".*Distutils was imported before Setuptools.*",
+)
+
+warnings.filterwarnings(
+    action="ignore",
+    message=".*Setuptools is replacing distutils.*",
+)
 
 # %%
 df = pd.read_parquet("data/clean.parquet")
