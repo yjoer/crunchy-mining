@@ -1,6 +1,8 @@
 import tracemalloc
 from contextlib import contextmanager
-from sklearn.metrics import confusion_matrix, roc_auc_score
+
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_auc_score
 
 
 @contextmanager
