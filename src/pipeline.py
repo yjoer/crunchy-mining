@@ -2,7 +2,6 @@ from typing import List
 from typing import Tuple
 
 import mlflow
-import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
@@ -11,10 +10,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
@@ -71,29 +66,6 @@ def inspect_cv_split_size(
         columns=target_variable,
         values=["train", "validation"],
     )
-
-
-def preprocessing_v1(df_train: pd.DataFrame, df_test: pd.DataFrame, variables: dict):
-    oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
-    X_train_cat = oe.fit_transform(df_train[variables["categorical"]])
-    X_test_cat = oe.transform(df_test[variables["categorical"]])
-
-    mm = MinMaxScaler()
-    X_train_scaled = mm.fit_transform(X_train_cat)
-    X_test_scaled = mm.transform(X_test_cat)
-
-    ss = StandardScaler()
-    X_train_num = ss.fit_transform(df_train[variables["numerical"]])
-    X_test_num = ss.transform(df_test[variables["numerical"]])
-
-    X_train = np.hstack((X_train_scaled, X_train_num))
-    X_test = np.hstack((X_test_scaled, X_test_num))
-
-    le = LabelEncoder()
-    y_train = le.fit_transform(df_train[variables["target"]])
-    y_test = le.transform(df_test[variables["target"]])
-
-    return X_train, y_train, X_test, y_test
 
 
 def train_knn(X_train, y_train):
