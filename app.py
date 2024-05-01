@@ -3,7 +3,7 @@ from st_pages import show_pages
 
 show_pages(
     [
-        Page("pages/visualization.py", "Visualization"),
-        Page("pages/interpretation.py", "Model Interpretation"),
+        Page("crunchy_mining/pages/visualization.py", "Visualization"),
+        Page("crunchy_mining/pages/interpretation.py", "Model Interpretation"),
     ]
 )
