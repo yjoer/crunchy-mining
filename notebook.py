@@ -34,6 +34,9 @@ from src.preprocessing.preprocessors import (
 
 mlflow.set_tracking_uri("http://localhost:5001")
 
+experiment_name = "Default"
+mlflow.set_experiment(experiment_name)
+
 warnings.filterwarnings(
     action="ignore",
     message=".*Distutils was imported before Setuptools.*",
@@ -113,8 +116,9 @@ inspect_cv_split_size(df_train, skf_indices, variables["target"])
 # Do we need to scale the outputs of the ordinal encoder?
 
 # %%
-preprocessor = PreprocessorV4(variables)
-preprocessor.fit(df_train_sm, df_val, name="holdout")
+preprocessor = PreprocessorV4(experiment_name, variables)
+preprocessor.fit(df_train_sm, df_val, name="validation")
+preprocessor.fit(df_train, df_test, name="testing")
 
 for i, (train_index, val_index) in enumerate(skf_indices):
     preprocessor.fit(
@@ -124,6 +128,7 @@ for i, (train_index, val_index) in enumerate(skf_indices):
     )
 
 # "name": (X_train, y_train, X_val, y_val)
+preprocessor.save_train_val_sets()
 train_val_sets = preprocessor.get_train_val_sets()
 
 # %% [markdown]

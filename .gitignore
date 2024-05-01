@@ -5,6 +5,7 @@ catboost_info/
 
 *.lock
 
-#Dataset
-data/SBA.csv
+# Datasets
+data/*.npz
 data/output.parquet
+data/SBA.csv
