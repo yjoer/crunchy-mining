@@ -16,8 +16,14 @@ if typing.TYPE_CHECKING:
     from catboost import CatBoostRegressor
     from lightgbm import LGBMClassifier
     from lightgbm import LGBMRegressor
+    from sklearn.ensemble import AdaBoostClassifier
+    from sklearn.ensemble import AdaBoostRegressor
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.ensemble import RandomForestRegressor
     from sklearn.linear_model import LogisticRegression
     from sklearn.svm import LinearSVC
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.tree import DecisionTreeRegressor
     from xgboost import XGBClassifier
     from xgboost import XGBRegressor
 
@@ -116,6 +122,67 @@ def plot_weights_linear_svc(feature_names: List[str], importance):
 
     return (
         alt.Chart(df, title="Feature Importance for Linear SVC")
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
+
+
+def interpret_impurity_decision_tree(
+    model: DecisionTreeClassifier | DecisionTreeRegressor,
+):
+    return model.feature_importances_
+
+
+def plot_impurity_decision_tree(feature_names: List[str], importance):
+    df = pd.DataFrame({"features": feature_names, "importance": importance})
+
+    return (
+        alt.Chart(df, title="Feature Importance for Decision Tree")
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
+
+
+def interpret_impurity_random_forest(
+    model: RandomForestClassifier | RandomForestRegressor,
+):
+    return model.feature_importances_
+
+
+def plot_impurity_random_forest(feature_names: List[str], importance):
+    df = pd.DataFrame({"features": feature_names, "importance": importance})
+
+    return (
+        alt.Chart(df, title="Feature Importance for Random Forest")
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
+
+
+def interpret_impurity_adaboost(model: AdaBoostClassifier | AdaBoostRegressor):
+    return model.feature_importances_
+
+
+def plot_impurity_adaboost(feature_names: List[str], importance):
+    df = pd.DataFrame({"features": feature_names, "importance": importance})
+
+    return (
+        alt.Chart(df, title="Feature Importance for AdaBoost")
         .mark_bar()
         .encode(
             x=alt.X("importance:Q", title="Degree of Importance"),
