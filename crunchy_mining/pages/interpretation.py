@@ -5,14 +5,20 @@ from crunchy_mining.mlflow_util import get_latest_run_id_by_name
 from crunchy_mining.mlflow_util import get_nested_run_ids_by_parent_id
 from crunchy_mining.pipeline import get_variables
 from crunchy_mining.preprocessing.preprocessors import GenericPreprocessor
-from crunchy_mining.util import interpret_pvc_catboost
 from crunchy_mining.util import interpret_gain_lightgbm
 from crunchy_mining.util import interpret_gain_xgboost
+from crunchy_mining.util import interpret_impurity_adaboost
+from crunchy_mining.util import interpret_impurity_decision_tree
+from crunchy_mining.util import interpret_impurity_random_forest
+from crunchy_mining.util import interpret_pvc_catboost
 from crunchy_mining.util import interpret_weights_linear_svc
 from crunchy_mining.util import interpret_weights_logistic_regression
-from crunchy_mining.util import plot_pvc_catboost
 from crunchy_mining.util import plot_gain_lightgbm
 from crunchy_mining.util import plot_gain_xgboost
+from crunchy_mining.util import plot_impurity_adaboost
+from crunchy_mining.util import plot_impurity_decision_tree
+from crunchy_mining.util import plot_impurity_random_forest
+from crunchy_mining.util import plot_pvc_catboost
 from crunchy_mining.util import plot_weights_linear_svc
 from crunchy_mining.util import plot_weights_logistic_regression
 
@@ -22,8 +28,13 @@ mlflow.set_tracking_uri("http://localhost:5001")
 experiments = ["Default"]
 
 model_names = [
+    "KNN",
     "Logistic Regression",
+    "Gaussian NB",
     "Linear SVC",
+    "Decision Tree",
+    "Random Forest",
+    "AdaBoost",
     "XGBoost",
     "LightGBM",
     "CatBoost",
@@ -67,6 +78,8 @@ gp.load_train_val_sets()
 X_train, _, _, _ = gp.get_train_val_sets()[selected_fold]
 
 match selected_model:
+    case "KNN":
+        st.text("N/A")
     case "Logistic Regression":
         model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
         importance = interpret_weights_logistic_regression(model, X_train)
@@ -74,10 +87,33 @@ match selected_model:
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart)
+    case "Gaussian NB":
+        st.text("N/A")
     case "Linear SVC":
         model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
         importance = interpret_weights_linear_svc(model, X_train)
         chart = plot_weights_linear_svc(feature_names, importance)
+
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(chart)
+    case "Decision Tree":
+        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
+        importance = interpret_impurity_decision_tree(model)
+        chart = plot_impurity_decision_tree(feature_names, importance)
+
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(chart)
+    case "Random Forest":
+        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
+        importance = interpret_impurity_random_forest(model)
+        chart = plot_impurity_random_forest(feature_names, importance)
+
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(chart)
+    case "AdaBoost":
+        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
+        importance = interpret_impurity_adaboost(model)
+        chart = plot_impurity_adaboost(feature_names, importance)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart)
