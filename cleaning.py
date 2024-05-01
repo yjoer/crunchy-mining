@@ -296,7 +296,7 @@ grouped = df_sorted.groupby("Zip")
 
 # %%
 # Fill the null 'State' based on the zip code group
-df_sorted["State"] = grouped["State"].fillna(method="ffill")
+df_sorted["State"] = grouped["State"].ffill()
 df = df_sorted.sort_index()
 
 
@@ -348,7 +348,7 @@ df.loc[df["BankState"].isnull()]
 # Fill in Bank State based on Bank
 df_sorted = df.sort_values(by="Bank")
 grouped = df_sorted.groupby("Bank")
-df_sorted["BankState"] = grouped["BankState"].fillna(method="ffill")
+df_sorted["BankState"] = grouped["BankState"].ffill()
 df = df_sorted.sort_index()
 
 # %%
@@ -535,7 +535,7 @@ df["RealEstate"] = df["Term"].apply(lambda x: 1 if x >= 240 else 0)
 # %%
 # Guideline: 4.1.6. Economic Recession
 df["DaysTerm"] = df["Term"] * 30
-df["Active"] = df["DisbursementDate"] + pd.TimedeltaIndex(df["DaysTerm"], unit="D")
+df["Active"] = df["DisbursementDate"] + pd.to_timedelta(df["DaysTerm"], unit="D")
 
 # %%
 startdate = datetime.datetime.strptime("2007-12-1", "%Y-%m-%d").date()
