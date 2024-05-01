@@ -12,7 +12,14 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_auc_score
 
 if typing.TYPE_CHECKING:
+    from catboost import CatBoostClassifier
+    from catboost import CatBoostRegressor
+    from lightgbm import LGBMClassifier
+    from lightgbm import LGBMRegressor
     from sklearn.linear_model import LogisticRegression
+    from sklearn.svm import LinearSVC
+    from xgboost import XGBClassifier
+    from xgboost import XGBRegressor
 
 
 @contextmanager
@@ -89,11 +96,90 @@ def plot_weights_logistic_regression(feature_names: List[str], importance):
     df = pd.DataFrame({"features": feature_names, "importance": importance})
 
     return (
-        alt.Chart(df)
+        alt.Chart(df, title="Feature Importance for Logistic Regression")
         .mark_bar()
         .encode(
             x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Features").sort("-x"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
+
+
+def interpret_weights_linear_svc(model: LinearSVC, X_train):
+    return np.abs(np.std(X_train, axis=0) * model.coef_[0])
+
+
+def plot_weights_linear_svc(feature_names: List[str], importance):
+    df = pd.DataFrame({"features": feature_names, "importance": importance})
+
+    return (
+        alt.Chart(df, title="Feature Importance for Linear SVC")
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
+
+
+def interpret_gain_xgboost(model: XGBClassifier | XGBRegressor):
+    return model.feature_importances_
+
+
+def plot_gain_xgboost(feature_names: List[str], importance):
+    df = pd.DataFrame({"features": feature_names, "importance": importance})
+
+    return (
+        alt.Chart(df, title="Feature Importance for XGBoost")
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
+
+
+def interpret_gain_lightgbm(model: LGBMClassifier | LGBMRegressor):
+    # Use gain as the importance type and normalize to align with XGBoost.
+    gains = model.booster_.feature_importance(importance_type="gain")
+    return gains / np.sum(gains)
+
+
+def plot_gain_lightgbm(feature_names: List[str], importance):
+    df = pd.DataFrame({"features": feature_names, "importance": importance})
+
+    return (
+        alt.Chart(df, title="Feature Importance for LightGBM")
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
+
+
+def interpret_pvc_catboost(model: CatBoostClassifier | CatBoostRegressor):
+    # https://catboost.ai/en/docs/concepts/fstr#regular-feature-importance
+    return model.get_feature_importance()
+
+
+def plot_pvc_catboost(feature_names: List[str], importance):
+    df = pd.DataFrame({"features": feature_names, "importance": importance})
+
+    return (
+        alt.Chart(df, title="Feature Importance for CatBoost")
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
             color=alt.Color("features:N", legend=None, sort="-x"),
             tooltip="importance:Q",
         )

@@ -5,7 +5,15 @@ from crunchy_mining.mlflow_util import get_latest_run_id_by_name
 from crunchy_mining.mlflow_util import get_nested_run_ids_by_parent_id
 from crunchy_mining.pipeline import get_variables
 from crunchy_mining.preprocessing.preprocessors import GenericPreprocessor
+from crunchy_mining.util import interpret_pvc_catboost
+from crunchy_mining.util import interpret_gain_lightgbm
+from crunchy_mining.util import interpret_gain_xgboost
+from crunchy_mining.util import interpret_weights_linear_svc
 from crunchy_mining.util import interpret_weights_logistic_regression
+from crunchy_mining.util import plot_pvc_catboost
+from crunchy_mining.util import plot_gain_lightgbm
+from crunchy_mining.util import plot_gain_xgboost
+from crunchy_mining.util import plot_weights_linear_svc
 from crunchy_mining.util import plot_weights_logistic_regression
 
 st.set_page_config(layout="wide")
@@ -13,7 +21,13 @@ mlflow.set_tracking_uri("http://localhost:5001")
 
 experiments = ["Default"]
 
-model_names = ["Logistic Regression"]
+model_names = [
+    "Logistic Regression",
+    "Linear SVC",
+    "XGBoost",
+    "LightGBM",
+    "CatBoost",
+]
 
 folds = {
     "validation": "Validation",
@@ -43,8 +57,6 @@ if not run_id:
     st.text("Model training is required. Please train the model before proceeding.")
     st.stop()
 
-model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
-
 st.markdown("**Model-Specific**")
 
 variables = get_variables()
@@ -54,11 +66,41 @@ gp = GenericPreprocessor(selected_experiment, variables)
 gp.load_train_val_sets()
 X_train, _, _, _ = gp.get_train_val_sets()[selected_fold]
 
-if selected_model == "Logistic Regression":
-    cols = st.columns([1, 1])
+match selected_model:
+    case "Logistic Regression":
+        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
+        importance = interpret_weights_logistic_regression(model, X_train)
+        chart = plot_weights_logistic_regression(feature_names, importance)
 
-    importance = interpret_weights_logistic_regression(model, X_train)
-    chart = plot_weights_logistic_regression(feature_names, importance)
-    cols[0].altair_chart(chart)
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(chart)
+    case "Linear SVC":
+        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
+        importance = interpret_weights_linear_svc(model, X_train)
+        chart = plot_weights_linear_svc(feature_names, importance)
+
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(chart)
+    case "XGBoost":
+        model = mlflow.xgboost.load_model(f"runs:/{run_id}/model")
+        importance = interpret_gain_xgboost(model)
+        chart = plot_gain_xgboost(feature_names, importance)
+
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(chart)
+    case "LightGBM":
+        model = mlflow.lightgbm.load_model(f"runs:/{run_id}/model")
+        importance = interpret_gain_lightgbm(model)
+        chart = plot_gain_lightgbm(feature_names, importance)
+
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(chart)
+    case "CatBoost":
+        model = mlflow.catboost.load_model(f"runs:/{run_id}/model")
+        importance = interpret_pvc_catboost(model)
+        chart = plot_pvc_catboost(feature_names, importance)
+
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(chart)
 
 st.markdown("**Model-Agnostic**")
