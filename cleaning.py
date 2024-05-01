@@ -54,8 +54,7 @@ df.loc[non_numeric_mask, "ApprovalFY"].unique()
 
 # %%
 # Year to Int
-df["ApprovalFY"].replace("1976A", 1976, inplace=True)
-df["ApprovalFY"] = df["ApprovalFY"].astype(int)
+df["ApprovalFY"] = df["ApprovalFY"].replace("1976A", 1976).astype(int)
 
 # %%
 # Tranform Data With String to Float
