@@ -10,7 +10,6 @@ from sklearn.model_selection import StratifiedKFold, train_test_split
 from src.pipeline import (
     inspect_cv_split_size,
     inspect_holdout_split_size,
-    preprocessing_v1,
     validate_adaboost,
     validate_catboost,
     validate_decision_tree,
@@ -22,11 +21,17 @@ from src.pipeline import (
     validate_random_forest,
     validate_xgboost,
 )
+from src.preprocessing.preprocessors import (
+    PreprocessorV1,
+    PreprocessorV2,
+    PreprocessorV3,
+    PreprocessorV4,
+)
 
 # %load_ext autoreload
 # %autoreload 2
 
-mlflow.set_tracking_uri("http://localhost:5000")
+mlflow.set_tracking_uri("http://localhost:5001")
 
 warnings.filterwarnings(
     action="ignore",
@@ -141,17 +146,18 @@ inspect_cv_split_size(df_train, skf_indices, variables["target"])
 # Do we need to scale the outputs of the ordinal encoder?
 
 # %%
-# "name": (X_train, y_train, X_val, y_val)
-train_val_sets = {}
-
-train_val_sets["holdout"] = preprocessing_v1(df_train_sm, df_val, variables)
+preprocessor = PreprocessorV4(variables)
+preprocessor.fit(df_train_sm, df_val, name="holdout")
 
 for i, (train_index, val_index) in enumerate(skf_indices):
-    train_val_sets[f"fold_{i + 1}"] = preprocessing_v1(
+    preprocessor.fit(
         df_train.iloc[train_index],
         df_train.iloc[val_index],
-        variables,
+        name=f"fold_{i + 1}",
     )
+
+# "name": (X_train, y_train, X_val, y_val)
+train_val_sets = preprocessor.get_train_val_sets()
 
 # %% [markdown]
 # ## Model
