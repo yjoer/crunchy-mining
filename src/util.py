@@ -1,8 +1,18 @@
-import tracemalloc
-from contextlib import contextmanager
+from __future__ import annotations
 
+import tracemalloc
+import typing
+from contextlib import contextmanager
+from typing import List
+
+import altair as alt
+import numpy as np
+import pandas as pd
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_auc_score
+
+if typing.TYPE_CHECKING:
+    from sklearn.linear_model import LogisticRegression
 
 
 @contextmanager
@@ -69,3 +79,22 @@ def evaluate_classification(y_true, y_pred):
         "support_0": sup_neg,
         "roc_auc": roc_auc_score(y_true, y_pred),
     }
+
+
+def interpret_weights_logistic_regression(model: LogisticRegression, X_train):
+    return np.abs(np.std(X_train, axis=0) * model.coef_[0])
+
+
+def plot_weights_logistic_regression(feature_names: List[str], importance):
+    df = pd.DataFrame({"features": feature_names, "importance": importance})
+
+    return (
+        alt.Chart(df)
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Features").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
