@@ -31,6 +31,7 @@ from scipy import stats
 from scipy.stats import skew
 from sklearn.preprocessing import OrdinalEncoder
 
+pd.set_option("future.no_silent_downcasting", True)
 nltk.download("punkt")
 
 # %%
@@ -573,12 +574,12 @@ df.MIS_Status.value_counts()
 
 # %%
 # Change Y / N to 1 / 0
-df["LowDoc"] = df["LowDoc"].replace({"Y": 1, "N": 0})
+df["LowDoc"] = df["LowDoc"].replace({"Y": 1, "N": 0}).astype(int)
 df.LowDoc.value_counts()
 
 # %%
 # Change Y / N to 1 / 0
-df["RevLineCr"] = df["RevLineCr"].replace({"Y": 1, "N": 0})
+df["RevLineCr"] = df["RevLineCr"].replace({"Y": 1, "N": 0}).astype(int)
 df.RevLineCr.value_counts()
 
 # %%
