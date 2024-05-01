@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
 from src.pipeline import (
+    get_variables,
     inspect_cv_split_size,
     inspect_holdout_split_size,
     validate_adaboost,
@@ -72,41 +73,7 @@ df_sampled = pd.concat(
 # %%
 # Should the year be categorical or numerical?
 # How to deal with dates?
-variables = {
-    "categorical": [
-        "City",
-        "State",
-        "Zip",
-        "Bank",
-        "BankState",
-        # "ApprovalFY",
-        "NewExist",
-        "Is_Franchised",
-        "UrbanRural",
-        "RevLineCr",
-        "LowDoc",
-        "Industry",
-        "RealEstate",
-        "Recession",
-        # "DisbursementFY",
-        "StateSame",
-        "SBA_AppvPct",
-    ],
-    "numerical": [
-        "Term",
-        "NoEmp",
-        "CreateJob",
-        "RetainedJob",
-        "DisbursementGross",
-        "BalanceGross",
-        # "ChgOffPrinGr",
-        "GrAppv",
-        "SBA_Appv",
-        "DaysTerm",
-        "DaysToDisbursement",
-    ],
-    "target": "MIS_Status",
-}
+variables = get_variables()
 
 # %%
 # Do we leak future information if we ignore the application date?
