@@ -1,8 +1,8 @@
 import mlflow
 import streamlit as st
 
-from src.mlflow import get_latest_run_id_by_name
-from src.mlflow import get_nested_run_ids_by_parent_id
+from src.mlflow_util import get_latest_run_id_by_name
+from src.mlflow_util import get_nested_run_ids_by_parent_id
 from src.pipeline import get_variables
 from src.preprocessing.preprocessors import GenericPreprocessor
 from src.util import interpret_weights_logistic_regression
