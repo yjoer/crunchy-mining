@@ -3,10 +3,9 @@ from abc import abstractmethod
 
 
 class BasePreprocessor(ABC):
-    train_val_sets = {}
-    encoders = {}
-
     def __init__(self, variables: dict):
+        self.train_val_sets = {}
+        self.encoders = {}
         self.variables = variables
 
     @abstractmethod
