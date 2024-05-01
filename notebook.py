@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
-from src.pipeline import (
+from crunchy_mining.pipeline import (
     get_variables,
     inspect_cv_split_size,
     inspect_holdout_split_size,
@@ -22,7 +22,7 @@ from src.pipeline import (
     validate_random_forest,
     validate_xgboost,
 )
-from src.preprocessing.preprocessors import (
+from crunchy_mining.preprocessing.preprocessors import (
     PreprocessorV1,
     PreprocessorV2,
     PreprocessorV3,

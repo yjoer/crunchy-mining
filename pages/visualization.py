@@ -1,8 +1,8 @@
 import pandas as pd
 import streamlit as st
 
-from src.vis import plot_loan_default_rate_by_state
-from src.vis import plot_top_state_by_loan
+from crunchy_mining.vis import plot_loan_default_rate_by_state
+from crunchy_mining.vis import plot_top_state_by_loan
 
 st.set_page_config(layout="wide")
 

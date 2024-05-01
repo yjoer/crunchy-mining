@@ -1,12 +1,12 @@
 import mlflow
 import streamlit as st
 
-from src.mlflow_util import get_latest_run_id_by_name
-from src.mlflow_util import get_nested_run_ids_by_parent_id
-from src.pipeline import get_variables
-from src.preprocessing.preprocessors import GenericPreprocessor
-from src.util import interpret_weights_logistic_regression
-from src.util import plot_weights_logistic_regression
+from crunchy_mining.mlflow_util import get_latest_run_id_by_name
+from crunchy_mining.mlflow_util import get_nested_run_ids_by_parent_id
+from crunchy_mining.pipeline import get_variables
+from crunchy_mining.preprocessing.preprocessors import GenericPreprocessor
+from crunchy_mining.util import interpret_weights_logistic_regression
+from crunchy_mining.util import plot_weights_logistic_regression
 
 st.set_page_config(layout="wide")
 mlflow.set_tracking_uri("http://localhost:5001")

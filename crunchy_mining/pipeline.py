@@ -14,8 +14,8 @@ from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from src.util import evaluate_classification
-from src.util import trace_memory
+from .util import evaluate_classification
+from .util import trace_memory
 
 
 def get_variables():

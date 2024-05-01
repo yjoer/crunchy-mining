@@ -7,7 +7,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import StandardScaler
 
-from src.preprocessing.base_preprocessor import BasePreprocessor
+from .base_preprocessor import BasePreprocessor
 
 
 # Enable the loading of the preprocessed datasets from any preprocessors.
