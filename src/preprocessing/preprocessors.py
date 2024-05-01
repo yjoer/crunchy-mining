@@ -10,6 +10,12 @@ from sklearn.preprocessing import StandardScaler
 from src.preprocessing.base_preprocessor import BasePreprocessor
 
 
+# Enable the loading of the preprocessed datasets from any preprocessors.
+class GenericPreprocessor(BasePreprocessor):
+    def fit():
+        pass
+
+
 # Ordinal Encoding + No Scaling
 class PreprocessorV1(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
