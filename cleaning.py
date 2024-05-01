@@ -16,7 +16,6 @@
 # %%
 import datetime
 import math
-import warnings
 from collections import Counter
 from datetime import date
 
@@ -33,10 +32,9 @@ from scipy.stats import skew
 from sklearn.preprocessing import OrdinalEncoder
 
 nltk.download("punkt")
-warnings.filterwarnings("ignore")
 
 # %%
-df = pd.read_csv("data/SBA.csv")
+df = pd.read_csv("data/SBA.csv", low_memory=False)
 
 # %%
 df.info()
