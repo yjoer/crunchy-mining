@@ -57,7 +57,7 @@ if not run_id:
     st.text("Model training is required. Please train the model before proceeding.")
     st.stop()
 
-st.markdown("**Model-Specific**")
+st.markdown("**Intrinsic and Model Specific**")
 
 variables = get_variables()
 feature_names = variables["categorical"] + variables["numerical"]
@@ -103,4 +103,4 @@ match selected_model:
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart)
 
-st.markdown("**Model-Agnostic**")
+st.markdown("**Post Hoc and Model Agnostic**")
