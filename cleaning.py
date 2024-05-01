@@ -480,7 +480,7 @@ for word, count in most_common:
 df[df["Name"].str.contains(" INN|MOTEL", case=False)]
 
 # %%
-df.loc[(df["Name"].str.contains(" INN|MOTEL")) & (df["NAICS"] == "0"), "NAICS"] = 72
+df.loc[(df["Name"].str.contains(" INN|MOTEL")) & (df["NAICS"] == "0"), "NAICS"] = "72"
 df.loc[df["NAICS"] == "0", "NAICS"].value_counts()
 
 # %%
@@ -490,7 +490,7 @@ df[df["Name"].str.contains("RESTAURANT|PIZZA|CAFE", case=False)]
 # %%
 df.loc[
     (df["Name"].str.contains("RESTUARANT|PIZZA|CAFE")) & (df["NAICS"] == "0"), "NAICS"
-] = 72
+] = "72"
 df.loc[df["NAICS"] == "0", "NAICS"].value_counts()
 
 # %%
