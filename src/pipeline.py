@@ -18,6 +18,44 @@ from src.util import evaluate_classification
 from src.util import trace_memory
 
 
+def get_variables():
+    return {
+        "categorical": [
+            "City",
+            "State",
+            "Zip",
+            "Bank",
+            "BankState",
+            # "ApprovalFY",
+            "NewExist",
+            "Is_Franchised",
+            "UrbanRural",
+            "RevLineCr",
+            "LowDoc",
+            "Industry",
+            "RealEstate",
+            "Recession",
+            # "DisbursementFY",
+            "StateSame",
+            "SBA_AppvPct",
+        ],
+        "numerical": [
+            "Term",
+            "NoEmp",
+            "CreateJob",
+            "RetainedJob",
+            "DisbursementGross",
+            "BalanceGross",
+            # "ChgOffPrinGr",
+            "GrAppv",
+            "SBA_Appv",
+            "DaysTerm",
+            "DaysToDisbursement",
+        ],
+        "target": "MIS_Status",
+    }
+
+
 def inspect_holdout_split_size(
     df_train: pd.DataFrame,
     df_train_sm: pd.DataFrame,
