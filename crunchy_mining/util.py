@@ -95,7 +95,8 @@ def evaluate_classification(y_true, y_pred):
 
 
 def interpret_weights_logistic_regression(model: LogisticRegression, X_train):
-    return np.abs(np.std(X_train, axis=0) * model.coef_[0])
+    contributions = np.abs(np.std(X_train, axis=0) * model.coef_[0])
+    return contributions / np.sum(contributions)
 
 
 def plot_weights_logistic_regression(feature_names: List[str], importance):
@@ -114,7 +115,8 @@ def plot_weights_logistic_regression(feature_names: List[str], importance):
 
 
 def interpret_weights_linear_svc(model: LinearSVC, X_train):
-    return np.abs(np.std(X_train, axis=0) * model.coef_[0])
+    contributions = np.abs(np.std(X_train, axis=0) * model.coef_[0])
+    return contributions / np.sum(contributions)
 
 
 def plot_weights_linear_svc(feature_names: List[str], importance):
