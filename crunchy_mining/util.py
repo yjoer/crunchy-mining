@@ -253,3 +253,47 @@ def plot_pvc_catboost(feature_names: List[str], importance):
             tooltip="importance:Q",
         )
     )
+
+
+def plot_pimp_mean(feature_names: List[str], pimp):
+    df = pd.DataFrame(
+        {
+            "features": feature_names,
+            "importance": pimp["importances_mean"],
+        }
+    )
+
+    return df, (
+        alt.Chart(df, title="Permutation Feature Importance (Mean)")
+        .mark_bar()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names").sort("-x"),
+            color=alt.Color("features:N", legend=None, sort="-x"),
+            tooltip="importance:Q",
+        )
+    )
+
+
+def plot_pimp_boxplot(feature_names: List[str], pimp):
+    df = pd.concat(
+        objs=(
+            pd.DataFrame({"features": feature_names}),
+            pd.DataFrame(pimp["importances"]),
+        ),
+        axis=1,
+    ).melt(
+        id_vars=["features"],
+        var_name="repeat_idx",
+        value_name="importance",
+    )
+
+    return (
+        alt.Chart(df, title="Permutation Feature Importance in Repeated Runs")
+        .mark_boxplot()
+        .encode(
+            x=alt.X("importance:Q", title="Degree of Importance"),
+            y=alt.Y("features:N", title="Feature Names"),
+            color=alt.Color("features:N", legend=None),
+        )
+    )

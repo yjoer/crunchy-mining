@@ -1,4 +1,34 @@
+import os
+import pickle
+import tempfile
+
 import mlflow
+
+
+def log_pickle(obj, artifact_file: str, run_id: str):
+    directory, filename = os.path.split(artifact_file)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        path = os.path.join(tmp_dir, filename)
+
+        with open(path, "wb") as f:
+            pickle.dump(obj, f)
+
+        mlflow.log_artifact(
+            local_path=path,
+            artifact_path=directory,
+            run_id=run_id,
+        )
+
+
+def load_pickle(artifact_uri: str):
+    try:
+        dst_path = mlflow.artifacts.download_artifacts(artifact_uri)
+    except OSError:
+        return None
+
+    with open(dst_path, "rb") as f:
+        return pickle.load(f)
 
 
 def get_latest_run_id_by_name(name: str):
