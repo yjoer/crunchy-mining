@@ -7,13 +7,16 @@ from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
+from tqdm.auto import tqdm
 from xgboost import XGBClassifier
 
+from . import mlflow_util
 from .util import evaluate_classification
 from .util import trace_memory
 
@@ -404,3 +407,31 @@ def validate_catboost(train_val_sets: dict):
                     artifact_path="model",
                     signature=mlflow.models.infer_signature(X_val, y_catb),
                 )
+
+
+def pimp(train_val_sets: dict, model_name: str):
+    for name, (_, _, X_val, y_val) in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model_uri = f"runs:/{run_id}/model"
+
+        match model_name:
+            case "XGBoost":
+                model = mlflow.xgboost.load_model(model_uri)
+            case "LightGBM":
+                model = mlflow.lightgbm.load_model(model_uri)
+            case "CatBoost":
+                model = mlflow.catboost.load_model(model_uri)
+            case _:
+                model = mlflow.sklearn.load_model(model_uri)
+
+        pimp = permutation_importance(
+            estimator=model,
+            X=X_val,
+            y=y_val,
+            n_repeats=10,
+            n_jobs=-1,
+            random_state=12345,
+        )
+
+        mlflow_util.log_pickle(pimp, artifact_file="pimp/pimp.pkl", run_id=run_id)

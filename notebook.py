@@ -5,29 +5,28 @@ import altair as alt
 import mlflow
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import train_test_split
 
-from crunchy_mining.pipeline import (
-    get_variables,
-    inspect_cv_split_size,
-    inspect_holdout_split_size,
-    validate_adaboost,
-    validate_catboost,
-    validate_decision_tree,
-    validate_gaussian_nb,
-    validate_knn,
-    validate_lightgbm,
-    validate_linear_svc,
-    validate_logistic_regression,
-    validate_random_forest,
-    validate_xgboost,
-)
-from crunchy_mining.preprocessing.preprocessors import (
-    PreprocessorV1,
-    PreprocessorV2,
-    PreprocessorV3,
-    PreprocessorV4,
-)
+from crunchy_mining.pipeline import get_variables
+from crunchy_mining.pipeline import inspect_cv_split_size
+from crunchy_mining.pipeline import inspect_holdout_split_size
+from crunchy_mining.pipeline import pimp
+from crunchy_mining.pipeline import validate_adaboost
+from crunchy_mining.pipeline import validate_catboost
+from crunchy_mining.pipeline import validate_decision_tree
+from crunchy_mining.pipeline import validate_gaussian_nb
+from crunchy_mining.pipeline import validate_knn
+from crunchy_mining.pipeline import validate_lightgbm
+from crunchy_mining.pipeline import validate_linear_svc
+from crunchy_mining.pipeline import validate_logistic_regression
+from crunchy_mining.pipeline import validate_random_forest
+from crunchy_mining.pipeline import validate_xgboost
+from crunchy_mining.preprocessing.preprocessors import GenericPreprocessor
+from crunchy_mining.preprocessing.preprocessors import PreprocessorV1
+from crunchy_mining.preprocessing.preprocessors import PreprocessorV2
+from crunchy_mining.preprocessing.preprocessors import PreprocessorV3
+from crunchy_mining.preprocessing.preprocessors import PreprocessorV4
 
 # %load_ext autoreload
 # %autoreload 2
@@ -166,5 +165,36 @@ validate_catboost(train_val_sets)
 
 # %% [markdown]
 # ## Assess
+
+# %%
+# It takes forever on KNN
+# pimp(train_val_sets, model_name="KNN")
+
+# %%
+pimp(train_val_sets, model_name="Logistic Regression")
+
+# %%
+pimp(train_val_sets, model_name="Gaussian NB")
+
+# %%
+pimp(train_val_sets, model_name="Linear SVC")
+
+# %%
+pimp(train_val_sets, model_name="Decision Tree")
+
+# %%
+pimp(train_val_sets, model_name="Random Forest")
+
+# %%
+pimp(train_val_sets, model_name="AdaBoost")
+
+# %%
+pimp(train_val_sets, model_name="XGBoost")
+
+# %%
+pimp(train_val_sets, model_name="LightGBM")
+
+# %%
+pimp(train_val_sets, model_name="CatBoost")
 
 # %%
