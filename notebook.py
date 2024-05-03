@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from crunchy_mining.pipeline import get_variables
 from crunchy_mining.pipeline import inspect_cv_split_size
 from crunchy_mining.pipeline import inspect_holdout_split_size
+from crunchy_mining.pipeline import pdp
 from crunchy_mining.pipeline import pimp
 from crunchy_mining.pipeline import validate_adaboost
 from crunchy_mining.pipeline import validate_catboost
@@ -44,6 +45,11 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     action="ignore",
     message=".*Setuptools is replacing distutils.*",
+)
+
+warnings.filterwarnings(
+    action="ignore",
+    message=".*Attempting to set identical low and high xlims.*",
 )
 
 # %%
@@ -166,6 +172,9 @@ validate_catboost(train_val_sets)
 # %% [markdown]
 # ## Assess
 
+# %% [markdown]
+# ### Permutation Feature Importance
+
 # %%
 # It takes forever on KNN
 # pimp(train_val_sets, model_name="KNN")
@@ -196,5 +205,43 @@ pimp(train_val_sets, model_name="LightGBM")
 
 # %%
 pimp(train_val_sets, model_name="CatBoost")
+
+# %% [markdown]
+# ### Partial Dependence Plot
+
+# %%
+feature_names = variables["categorical"] + variables["numerical"]
+
+# %%
+# It took about 5.5 hours/model for KNN, 10 minutes/model for Random Forest to CatBoost,
+# and under or within a minute for the rest.
+# pdp(train_val_sets, model_name="KNN", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="Logistic Regression", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="Gaussian NB", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="Linear SVC", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="Decision Tree", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="Random Forest", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="AdaBoost", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="XGBoost", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="LightGBM", feature_names=feature_names)
+
+# %%
+pdp(train_val_sets, model_name="CatBoost", feature_names=feature_names)
 
 # %%

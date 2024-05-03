@@ -1,8 +1,10 @@
 from typing import List
 from typing import Tuple
 
+import matplotlib.pyplot as plt
 import mlflow
 import pandas as pd
+import shap
 from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import AdaBoostClassifier
@@ -435,3 +437,39 @@ def pimp(train_val_sets: dict, model_name: str):
         )
 
         mlflow_util.log_pickle(pimp, artifact_file="pimp/pimp.pkl", run_id=run_id)
+
+
+def pdp(train_val_sets: dict, model_name: str, feature_names: List[str]):
+    for name, (_, _, X_val, _) in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model_uri = f"runs:/{run_id}/model"
+
+        match model_name:
+            case "XGBoost":
+                model = mlflow.xgboost.load_model(model_uri)
+            case "LightGBM":
+                model = mlflow.lightgbm.load_model(model_uri)
+            case "CatBoost":
+                model = mlflow.catboost.load_model(model_uri)
+            case _:
+                model = mlflow.sklearn.load_model(model_uri)
+
+        for idx in range(len(feature_names)):
+            fig = plt.figure()
+            ax = fig.gca()
+
+            shap.plots.partial_dependence(
+                ind=idx,
+                model=model.predict,
+                data=X_val,
+                feature_names=feature_names,
+                model_expected_value=True,
+                feature_expected_value=True,
+                ice=False,
+                ax=ax,
+                show=False,
+            )
+
+            mlflow_util.log_pickle(fig, artifact_file=f"pdp/{idx}.pkl", run_id=run_id)
+            plt.close(fig)
