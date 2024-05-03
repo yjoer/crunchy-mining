@@ -161,3 +161,17 @@ cols[1].table(
 )
 
 st.altair_chart(plot_pimp_boxplot(feature_names, pimp), use_container_width=True)
+
+st.markdown("**Partial Dependence Plot**")
+
+for left, right in ((x, x + 1) for x in range(0, len(feature_names), 2)):
+    fig_1 = mlflow_util.load_pickle(f"runs:/{run_id}/pdp/{left}.pkl")
+    fig_2 = mlflow_util.load_pickle(f"runs:/{run_id}/pdp/{right}.pkl")
+
+    cols = st.columns([1, 1])
+
+    if fig_1:
+        cols[0].pyplot(fig_1)
+
+    if fig_2:
+        cols[1].pyplot(fig_2)
