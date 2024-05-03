@@ -4,14 +4,6 @@ import streamlit as st
 from crunchy_mining import mlflow_util
 from crunchy_mining.pipeline import get_variables
 from crunchy_mining.preprocessing.preprocessors import GenericPreprocessor
-from crunchy_mining.util import interpret_gain_lightgbm
-from crunchy_mining.util import interpret_gain_xgboost
-from crunchy_mining.util import interpret_impurity_adaboost
-from crunchy_mining.util import interpret_impurity_decision_tree
-from crunchy_mining.util import interpret_impurity_random_forest
-from crunchy_mining.util import interpret_pvc_catboost
-from crunchy_mining.util import interpret_weights_linear_svc
-from crunchy_mining.util import interpret_weights_logistic_regression
 from crunchy_mining.util import plot_gain_lightgbm
 from crunchy_mining.util import plot_gain_xgboost
 from crunchy_mining.util import plot_impurity_adaboost
@@ -82,60 +74,60 @@ match selected_model:
     case "KNN":
         st.text("N/A")
     case "Logistic Regression":
-        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
-        importance = interpret_weights_logistic_regression(model, X_train)
-        chart = plot_weights_logistic_regression(feature_names, importance)
+        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+        importances = mlflow_util.load_table(artifact_uri)
+        chart = plot_weights_logistic_regression(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "Gaussian NB":
         st.text("N/A")
     case "Linear SVC":
-        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
-        importance = interpret_weights_linear_svc(model, X_train)
-        chart = plot_weights_linear_svc(feature_names, importance)
+        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+        importances = mlflow_util.load_table(artifact_uri)
+        chart = plot_weights_linear_svc(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "Decision Tree":
-        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
-        importance = interpret_impurity_decision_tree(model)
-        chart = plot_impurity_decision_tree(feature_names, importance)
+        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+        importances = mlflow_util.load_table(artifact_uri)
+        chart = plot_impurity_decision_tree(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "Random Forest":
-        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
-        importance = interpret_impurity_random_forest(model)
-        chart = plot_impurity_random_forest(feature_names, importance)
+        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+        importances = mlflow_util.load_table(artifact_uri)
+        chart = plot_impurity_random_forest(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "AdaBoost":
-        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
-        importance = interpret_impurity_adaboost(model)
-        chart = plot_impurity_adaboost(feature_names, importance)
+        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+        importances = mlflow_util.load_table(artifact_uri)
+        chart = plot_impurity_adaboost(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "XGBoost":
-        model = mlflow.xgboost.load_model(f"runs:/{run_id}/model")
-        importance = interpret_gain_xgboost(model)
-        chart = plot_gain_xgboost(feature_names, importance)
+        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+        importances = mlflow_util.load_table(artifact_uri)
+        chart = plot_gain_xgboost(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "LightGBM":
-        model = mlflow.lightgbm.load_model(f"runs:/{run_id}/model")
-        importance = interpret_gain_lightgbm(model)
-        chart = plot_gain_lightgbm(feature_names, importance)
+        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+        importances = mlflow_util.load_table(artifact_uri)
+        chart = plot_gain_lightgbm(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "CatBoost":
-        model = mlflow.catboost.load_model(f"runs:/{run_id}/model")
-        importance = interpret_pvc_catboost(model)
-        chart = plot_pvc_catboost(feature_names, importance)
+        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+        importances = mlflow_util.load_table(artifact_uri)
+        chart = plot_pvc_catboost(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)

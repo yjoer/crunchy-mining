@@ -6,26 +6,12 @@ from contextlib import contextmanager
 from typing import List
 
 import altair as alt
-import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_auc_score
 
 if typing.TYPE_CHECKING:
-    from catboost import CatBoostClassifier
-    from catboost import CatBoostRegressor
-    from lightgbm import LGBMClassifier
-    from lightgbm import LGBMRegressor
-    from sklearn.ensemble import AdaBoostClassifier
-    from sklearn.ensemble import AdaBoostRegressor
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.ensemble import RandomForestRegressor
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.svm import LinearSVC
-    from sklearn.tree import DecisionTreeClassifier
-    from sklearn.tree import DecisionTreeRegressor
-    from xgboost import XGBClassifier
-    from xgboost import XGBRegressor
+    pass
 
 
 @contextmanager
@@ -94,163 +80,106 @@ def evaluate_classification(y_true, y_pred):
     }
 
 
-def interpret_weights_logistic_regression(model: LogisticRegression, X_train):
-    contributions = np.abs(np.std(X_train, axis=0) * model.coef_[0])
-    return contributions / np.sum(contributions)
-
-
-def plot_weights_logistic_regression(feature_names: List[str], importance):
-    df = pd.DataFrame({"features": feature_names, "importance": importance})
-
+def plot_weights_logistic_regression(importances: pd.DataFrame):
     return (
-        alt.Chart(df, title="Feature Importance for Logistic Regression")
+        alt.Chart(importances, title="Feature Importance for Logistic Regression")
         .mark_bar()
         .encode(
-            x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Feature Names").sort("-x"),
-            color=alt.Color("features:N", legend=None, sort="-x"),
-            tooltip="importance:Q",
+            x=alt.X("importances:Q", title="Degree of Importance"),
+            y=alt.Y("feature_names:N", title="Feature Names").sort("-x"),
+            color=alt.Color("feature_names:N", legend=None, sort="-x"),
+            tooltip="importances:Q",
         )
     )
 
 
-def interpret_weights_linear_svc(model: LinearSVC, X_train):
-    contributions = np.abs(np.std(X_train, axis=0) * model.coef_[0])
-    return contributions / np.sum(contributions)
-
-
-def plot_weights_linear_svc(feature_names: List[str], importance):
-    df = pd.DataFrame({"features": feature_names, "importance": importance})
-
+def plot_weights_linear_svc(importances: pd.DataFrame):
     return (
-        alt.Chart(df, title="Feature Importance for Linear SVC")
+        alt.Chart(importances, title="Feature Importance for Linear SVC")
         .mark_bar()
         .encode(
-            x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Feature Names").sort("-x"),
-            color=alt.Color("features:N", legend=None, sort="-x"),
-            tooltip="importance:Q",
+            x=alt.X("importances:Q", title="Degree of Importance"),
+            y=alt.Y("feature_names:N", title="Feature Names").sort("-x"),
+            color=alt.Color("feature_names:N", legend=None, sort="-x"),
+            tooltip="importances:Q",
         )
     )
 
 
-def interpret_impurity_decision_tree(
-    model: DecisionTreeClassifier | DecisionTreeRegressor,
-):
-    return model.feature_importances_
-
-
-def plot_impurity_decision_tree(feature_names: List[str], importance):
-    df = pd.DataFrame({"features": feature_names, "importance": importance})
-
+def plot_impurity_decision_tree(importances: pd.DataFrame):
     return (
-        alt.Chart(df, title="Feature Importance for Decision Tree")
+        alt.Chart(importances, title="Feature Importance for Decision Tree")
         .mark_bar()
         .encode(
-            x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Feature Names").sort("-x"),
-            color=alt.Color("features:N", legend=None, sort="-x"),
-            tooltip="importance:Q",
+            x=alt.X("importances:Q", title="Degree of Importance"),
+            y=alt.Y("feature_names:N", title="Feature Names").sort("-x"),
+            color=alt.Color("feature_names:N", legend=None, sort="-x"),
+            tooltip="importances:Q",
         )
     )
 
 
-def interpret_impurity_random_forest(
-    model: RandomForestClassifier | RandomForestRegressor,
-):
-    return model.feature_importances_
-
-
-def plot_impurity_random_forest(feature_names: List[str], importance):
-    df = pd.DataFrame({"features": feature_names, "importance": importance})
-
+def plot_impurity_random_forest(importances: pd.DataFrame):
     return (
-        alt.Chart(df, title="Feature Importance for Random Forest")
+        alt.Chart(importances, title="Feature Importance for Random Forest")
         .mark_bar()
         .encode(
-            x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Feature Names").sort("-x"),
-            color=alt.Color("features:N", legend=None, sort="-x"),
-            tooltip="importance:Q",
+            x=alt.X("importances:Q", title="Degree of Importance"),
+            y=alt.Y("feature_names:N", title="Feature Names").sort("-x"),
+            color=alt.Color("feature_names:N", legend=None, sort="-x"),
+            tooltip="importances:Q",
         )
     )
 
 
-def interpret_impurity_adaboost(model: AdaBoostClassifier | AdaBoostRegressor):
-    return model.feature_importances_
-
-
-def plot_impurity_adaboost(feature_names: List[str], importance):
-    df = pd.DataFrame({"features": feature_names, "importance": importance})
-
+def plot_impurity_adaboost(importances: pd.DataFrame):
     return (
-        alt.Chart(df, title="Feature Importance for AdaBoost")
+        alt.Chart(importances, title="Feature Importance for AdaBoost")
         .mark_bar()
         .encode(
-            x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Feature Names").sort("-x"),
-            color=alt.Color("features:N", legend=None, sort="-x"),
-            tooltip="importance:Q",
+            x=alt.X("importances:Q", title="Degree of Importance"),
+            y=alt.Y("feature_names:N", title="Feature Names").sort("-x"),
+            color=alt.Color("feature_names:N", legend=None, sort="-x"),
+            tooltip="importances:Q",
         )
     )
 
 
-def interpret_gain_xgboost(model: XGBClassifier | XGBRegressor):
-    return model.feature_importances_
-
-
-def plot_gain_xgboost(feature_names: List[str], importance):
-    df = pd.DataFrame({"features": feature_names, "importance": importance})
-
+def plot_gain_xgboost(importances: pd.DataFrame):
     return (
-        alt.Chart(df, title="Feature Importance for XGBoost")
+        alt.Chart(importances, title="Feature Importance for XGBoost")
         .mark_bar()
         .encode(
-            x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Feature Names").sort("-x"),
-            color=alt.Color("features:N", legend=None, sort="-x"),
-            tooltip="importance:Q",
+            x=alt.X("importances:Q", title="Degree of Importance"),
+            y=alt.Y("feature_names:N", title="Feature Names").sort("-x"),
+            color=alt.Color("feature_names:N", legend=None, sort="-x"),
+            tooltip="importances:Q",
         )
     )
 
 
-def interpret_gain_lightgbm(model: LGBMClassifier | LGBMRegressor):
-    # Use gain as the importance type and normalize to align with XGBoost.
-    gains = model.booster_.feature_importance(importance_type="gain")
-    return gains / np.sum(gains)
-
-
-def plot_gain_lightgbm(feature_names: List[str], importance):
-    df = pd.DataFrame({"features": feature_names, "importance": importance})
-
+def plot_gain_lightgbm(importances: pd.DataFrame):
     return (
-        alt.Chart(df, title="Feature Importance for LightGBM")
+        alt.Chart(importances, title="Feature Importance for LightGBM")
         .mark_bar()
         .encode(
-            x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Feature Names").sort("-x"),
-            color=alt.Color("features:N", legend=None, sort="-x"),
-            tooltip="importance:Q",
+            x=alt.X("importances:Q", title="Degree of Importance"),
+            y=alt.Y("feature_names:N", title="Feature Names").sort("-x"),
+            color=alt.Color("feature_names:N", legend=None, sort="-x"),
+            tooltip="importances:Q",
         )
     )
 
 
-def interpret_pvc_catboost(model: CatBoostClassifier | CatBoostRegressor):
-    # https://catboost.ai/en/docs/concepts/fstr#regular-feature-importance
-    return model.get_feature_importance()
-
-
-def plot_pvc_catboost(feature_names: List[str], importance):
-    df = pd.DataFrame({"features": feature_names, "importance": importance})
-
+def plot_pvc_catboost(importances: pd.DataFrame):
     return (
-        alt.Chart(df, title="Feature Importance for CatBoost")
+        alt.Chart(importances, title="Feature Importance for CatBoost")
         .mark_bar()
         .encode(
-            x=alt.X("importance:Q", title="Degree of Importance"),
-            y=alt.Y("features:N", title="Feature Names").sort("-x"),
-            color=alt.Color("features:N", legend=None, sort="-x"),
-            tooltip="importance:Q",
+            x=alt.X("importances:Q", title="Degree of Importance"),
+            y=alt.Y("feature_names:N", title="Feature Names").sort("-x"),
+            color=alt.Color("feature_names:N", legend=None, sort="-x"),
+            tooltip="importances:Q",
         )
     )
 

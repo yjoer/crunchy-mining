@@ -3,6 +3,30 @@ import pickle
 import tempfile
 
 import mlflow
+import pandas as pd
+
+
+def log_table(data, artifact_file: str, run_id: str):
+    directory, filename = os.path.split(artifact_file)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        path = os.path.join(tmp_dir, filename)
+        data.to_json(path, orient="split", index=False)
+
+        mlflow.log_artifact(
+            local_path=path,
+            artifact_path=directory,
+            run_id=run_id,
+        )
+
+
+def load_table(artifact_uri: str):
+    try:
+        dst_path = mlflow.artifacts.download_artifacts(artifact_uri)
+    except OSError:
+        return None
+
+    return pd.read_json(dst_path, orient="split")
 
 
 def log_pickle(obj, artifact_file: str, run_id: str):
