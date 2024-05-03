@@ -11,6 +11,11 @@ from sklearn.model_selection import train_test_split
 from crunchy_mining.pipeline import get_variables
 from crunchy_mining.pipeline import inspect_cv_split_size
 from crunchy_mining.pipeline import inspect_holdout_split_size
+from crunchy_mining.pipeline import intrinsic_catboost
+from crunchy_mining.pipeline import intrinsic_lightgbm
+from crunchy_mining.pipeline import intrinsic_linear
+from crunchy_mining.pipeline import intrinsic_trees
+from crunchy_mining.pipeline import intrinsic_xgboost
 from crunchy_mining.pipeline import pdp
 from crunchy_mining.pipeline import pimp
 from crunchy_mining.pipeline import validate_adaboost
@@ -173,6 +178,40 @@ validate_catboost(train_val_sets)
 # ## Assess
 
 # %% [markdown]
+# ### Intrinsic Interpretation
+
+# %%
+feature_names = variables["categorical"] + variables["numerical"]
+
+# %%
+intrinsic_linear(
+    train_val_sets,
+    model_name="Logistic Regression",
+    feature_names=feature_names,
+)
+
+# %%
+intrinsic_linear(train_val_sets, model_name="Linear SVC", feature_names=feature_names)
+
+# %%
+intrinsic_trees(train_val_sets, model_name="Decision Tree", feature_names=feature_names)
+
+# %%
+intrinsic_trees(train_val_sets, model_name="Random Forest", feature_names=feature_names)
+
+# %%
+intrinsic_trees(train_val_sets, model_name="AdaBoost", feature_names=feature_names)
+
+# %%
+intrinsic_xgboost(train_val_sets, feature_names=feature_names)
+
+# %%
+intrinsic_lightgbm(train_val_sets, feature_names=feature_names)
+
+# %%
+intrinsic_catboost(train_val_sets, feature_names=feature_names)
+
+# %% [markdown]
 # ### Permutation Feature Importance
 
 # %%
@@ -208,9 +247,6 @@ pimp(train_val_sets, model_name="CatBoost")
 
 # %% [markdown]
 # ### Partial Dependence Plot
-
-# %%
-feature_names = variables["categorical"] + variables["numerical"]
 
 # %%
 # It took about 5.5 hours/model for KNN, 10 minutes/model for Random Forest to CatBoost,
