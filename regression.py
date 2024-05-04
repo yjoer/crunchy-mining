@@ -16,21 +16,8 @@
 # %% editable=true slideshow={"slide_type": ""}
 import warnings
 
-import numpy as np
 import pandas as pd
-import seaborn as sns
 import mlflow
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.preprocessing import MinMaxScaler
-from matplotlib import pyplot as plt
-from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score
-
-from sklearn import metrics
-from collections import Counter
-
-from src.util import trace_memory
 
 mlflow.set_tracking_uri("http://localhost:5001")
 
