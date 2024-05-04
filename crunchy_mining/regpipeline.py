@@ -32,30 +32,24 @@ def train_lm(X_train, y_train):
     return lm
 
 
-def validate_lm(X_train,y_train,X_test,y_test):
-    x_scaler = MinMaxScaler()
-    x_train_scaler = x_scaler.fit_transform(X_train)
-    x_test_scaler =  x_scaler.transform(X_test)
-
-    y_scaler = MinMaxScaler()
-    y_train_scaler = y_scaler.fit_transform(y_train.to_numpy().reshape(-1,1))
-    y_test_scaler =  y_scaler.transform(y_test.to_numpy().reshape(-1,1))
-    
+def validate_lm(train_val_sets: dict, encoders: object):    
     with mlflow.start_run(run_name="Linear Regression"):
-        with trace_memory() as trace:
-            lm = train_lm(x_train_scaler, y_train_scaler)
-
-        y_pred = lm.predict(x_test_scaler)
-        result = y_scaler.inverse_transform(y_pred)
-        mlflow.log_metrics(evaluate_regression(lm,x_train_scaler,y_train_scaler,x_test_scaler,y_test,result))
-        mlflow.log_metric("peak_memory_usage", trace["peak"])
-        mlflow.log_params(lm.get_params())
-    
-        mlflow.sklearn.log_model(
-                sk_model=lm,
-                artifact_path="model",
-                signature=mlflow.models.infer_signature(x_test_scaler, y_pred),
-        )
+        for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+             with mlflow.start_run(run_name=name, nested=True):
+                with trace_memory() as trace:
+                    lm = train_lm(X_train, y_train)
+        
+                y_pred = lm.predict(X_val)
+                result = encoders['y_min_max'].inverse_transform(y_pred)
+                mlflow.log_metrics(evaluate_regression(y_val,result))
+                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_params(lm.get_params())
+            
+                mlflow.sklearn.log_model(
+                        sk_model=lm,
+                        artifact_path="model",
+                        signature=mlflow.models.infer_signature(X_train, y_pred),
+                )
 
 
 def train_random_forest(X_train, y_train):
