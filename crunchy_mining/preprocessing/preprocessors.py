@@ -111,3 +111,32 @@ class PreprocessorV4(BasePreprocessor):
         self.encoders["standard"] = ss
         self.encoders["min_max"] = mm
         self.encoders["label"] = le
+
+
+# Ordinal Encoding + Standard Scaling + Min-Max Scaling
+class PreprocessorReg(BasePreprocessor):
+    def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
+        oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+        X_train_cat = oe.fit_transform(df_train[self.variables["categorical"]])
+        X_test_cat = oe.transform(df_test[self.variables["categorical"]])
+
+        ss = StandardScaler()
+        X_train_num = ss.fit_transform(df_train[self.variables["numerical"]])
+        X_test_num = ss.transform(df_test[self.variables["numerical"]])
+
+        X_train = np.hstack((X_train_cat, X_train_num))
+        X_test = np.hstack((X_test_cat, X_test_num))
+
+        x_scaler = MinMaxScaler()
+        X_train_scaled = x_scaler.fit_transform(X_train)
+        X_test_scaled = x_scaler.transform(X_test)
+
+        y_scaler = MinMaxScaler()
+        y_train_scaled = y_scaler.fit_transform(df_train[self.variables["target"]].to_numpy().reshape(-1,1))
+        # y_test = y_scaler.transform(df_test[self.variables["target"]].to_numpy().reshape(-1,1))
+
+        self.train_val_sets[name] = (X_train_scaled, y_train_scaled, X_test_scaled, df_test[self.variables["target"]])
+        self.encoders["ordinal"] = oe
+        self.encoders["standard"] = ss
+        self.encoders["x_min_max"] = x_scaler
+        self.encoders["y_min_max"] = y_scaler

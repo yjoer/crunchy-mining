@@ -15,11 +15,24 @@
 
 # %% editable=true slideshow={"slide_type": ""}
 import warnings
-import pandas as pd
-from sklearn.preprocessing import OrdinalEncoder
 import mlflow
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import OrdinalEncoder
+
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+
+from crunchy_mining.pipeline import inspect_holdout_split_size
+from crunchy_mining.pipeline import inspect_cv_split_size
+from crunchy_mining.preprocessing.preprocessors import PreprocessorReg
+
 
 mlflow.set_tracking_uri("http://localhost:5001")
+
+experiment_name = "Bank Appv"
+mlflow.set_experiment(experiment_name)
 
 warnings.filterwarnings(
     action="ignore",
@@ -29,6 +42,11 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     action="ignore",
     message=".*Setuptools is replacing distutils.*",
+)
+
+warnings.filterwarnings(
+    action="ignore",
+    message=".*Attempting to set identical low and high xlims.*",
 )
 
 # %%
@@ -41,7 +59,7 @@ from crunchy_mining.regpipeline import (
 )
 
 # %%
-df = pd.read_csv("data/output.csv")
+df = pd.read_parquet("data/output.parquet")
 
 # %%
 df.info()
@@ -89,37 +107,84 @@ variables = {
 }
 
 # %%
-df.drop(columns=['ChgOffDate'], inplace=True)
+df_train, df_test = train_test_split(
+    df,
+    test_size=0.15,
+    random_state=12345,
+)
 
 # %%
-#Encode Data
-encoder = OrdinalEncoder()
-
-df[variables["categorical"]] = encoder.fit_transform(df[variables["categorical"]])
-
-# Print the updated dataset
-df.head()
-
-# %%
-X = df.drop('GrAppv', axis=1)
-y = df['GrAppv']
+# 1. Holdout method
+df_train_sm, df_val = train_test_split(
+    df_train,
+    test_size=0.15 / 0.85,
+    random_state=12345,
+)
 
 # %%
-#Split data set
-from sklearn.model_selection import train_test_split
+inspect_holdout_split_size(df_train, df_train_sm, df_val, df_test, variables["target"])
 
-# Split the data into train and test sets (85% train, 15% test)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
+# %%
+# 2. Cross-validation
+kf = KFold(n_splits=5, shuffle=True, random_state=12345)
+# skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=12345)
+kf_indices = list(kf.split(np.zeros(len(df_train)), df_train[variables["target"]]))
 
-# Split the train set further into train and validation sets (70% train, 15% validation)
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.15 / 0.85, random_state=42)
+# %%
+inspect_cv_split_size(df_train, kf_indices, variables["target"])
 
-print("Train set shape:", X_train.shape)
-print("Validation set shape:", X_val.shape)
-print("Test set shape:", X_test.shape)
+# %%
+preprocessor = PreprocessorReg(experiment_name, variables)
+preprocessor.fit(df_train_sm, df_val, name="validation")
+preprocessor.fit(df_train, df_test, name="testing")
 
-validate_rmse_score = []
-test_rmse_score = []
+for i, (train_index, val_index) in enumerate(kf_indices):
+    preprocessor.fit(
+        df_train.iloc[train_index],
+        df_train.iloc[val_index],
+        name=f"fold_{i + 1}",
+    )
+
+# "name": (X_train, y_train, X_val, y_val)
+preprocessor.save_train_val_sets()
+train_val_sets = preprocessor.get_train_val_sets()
+encoders = preprocessor.get_encoders()
+
+# %%
+print(encoders)
+
+# %% [markdown]
+# Modelling
+
+# %%
+validate_lm(train_val_sets, encoders)
+
+# %%
+# #Encode Data
+# encoder = OrdinalEncoder()
+
+# df[variables["categorical"]] = encoder.fit_transform(df[variables["categorical"]])
+
+# # Print the updated dataset
+# df.head()
+
+# %%
+# X = df.drop('GrAppv', axis=1)
+# y = df['GrAppv']
+
+# %%
+# # Split the data into train and test sets (85% train, 15% test)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
+
+# # Split the train set further into train and validation sets (70% train, 15% validation)
+# X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.15 / 0.85, random_state=42)
+
+# print("Train set shape:", X_train.shape)
+# print("Validation set shape:", X_val.shape)
+# print("Test set shape:", X_test.shape)
+
+# validate_rmse_score = []
+# test_rmse_score = []
 
 # %% [markdown]
 # Modelling
