@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 
 
 class BaseSampler(ABC):
-    def __init__(self, variables: dict):
+    def __init__(self, variables: dict = {}):
         self.variables = variables
         self.train_val_sets: Dict[str, list | tuple] = {}
 

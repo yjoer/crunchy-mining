@@ -33,6 +33,14 @@ from crunchy_mining.preprocessing.preprocessors import PreprocessorV1
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV2
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV3
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV4
+from crunchy_mining.sampling.samplers import PostSamplerV1
+from crunchy_mining.sampling.samplers import PostSamplerV2
+from crunchy_mining.sampling.samplers import PostSamplerV3
+from crunchy_mining.sampling.samplers import PostSamplerV4
+from crunchy_mining.sampling.samplers import PostSamplerV5
+from crunchy_mining.sampling.samplers import PostSamplerV6
+from crunchy_mining.sampling.samplers import PostSamplerV7
+from crunchy_mining.sampling.samplers import PostSamplerV8
 from crunchy_mining.sampling.samplers import SamplerV1
 from crunchy_mining.sampling.samplers import SamplerV2
 
@@ -103,7 +111,12 @@ for name, (df_train, df_val) in train_val_sets_raw.items():
 
 # "name": (X_train, y_train, X_val, y_val)
 preprocessor.save_train_val_sets()
-train_val_sets = preprocessor.get_train_val_sets()
+train_val_sets_pp = preprocessor.get_train_val_sets()
+
+# %%
+postsampler = PostSamplerV1()
+postsampler.sample(train_val_sets_pp)
+train_val_sets = postsampler.train_val_sets
 
 # %% [markdown]
 # ## Model
