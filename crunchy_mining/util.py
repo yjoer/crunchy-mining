@@ -1,13 +1,9 @@
-import tracemalloc
-from contextlib import contextmanager
+from __future__ import annotations
 
 import numpy as np
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import r2_score
 from sklearn import metrics
-from __future__ import annotations
 
 import tracemalloc
 import typing
