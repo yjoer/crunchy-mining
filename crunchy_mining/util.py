@@ -239,34 +239,15 @@ def calculate_mape(y_true, y_pred):
 
 
 def evaluate_regression(y_test,y_pred):
-    # cv_score = cross_val_score(estimator = model, X = X_train, y = y_train, cv = 6)
     r2 = r2_score(y_test, y_pred)
-    # n = X_test.shape[0]
-    # p = X_test.shape[1]
-    # adjusted_r2 = 1-(1-r2)*(n-1)/(n-p-1)
     R2 = r2_score(y_test, y_pred)
     RMSE = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
     MSE = metrics.mean_squared_error(y_test, y_pred)
     MAE = metrics.mean_absolute_error(y_test, y_pred)
-    #To enable Back
-    # MAPE = calculate_mape(y_test, y_pred)
-
-    # CV_R2 = cv_score.mean()
-
-    # print('RMSE:', round(RMSE,4))
-    # print('MSE:', round(MSE,4))
-    # print('MAE:', round(MAE,4))
-    # print('MAPE:', round(MAPE,4))
-    # print('R2:', round(R2,4))
-    # print('Adjusted R2:', round(adjusted_r2, 4) )
-    # print("Cross Validated R2: ", round(cv_score.mean(),4) )
 
     return {
         "R2": round(R2,4),
-        # "Adjusted R2": round(adjusted_r2, 4),
-        # "Cross Validated R2": round(cv_score.mean(),4),
         "RMSE": round(RMSE,4),
         "MSE": round(MSE,4),
         "MAE": round(MAE,4),
-        # "MAPE": round(MAPE,4)
         }
