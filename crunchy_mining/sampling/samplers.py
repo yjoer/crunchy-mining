@@ -1,6 +1,15 @@
 import numpy as np
 import pandas as pd
+from imblearn.over_sampling import ADASYN
+from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import BorderlineSMOTE
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.pipeline import Pipeline
+from imblearn.under_sampling import NearMiss
+from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import NearestNeighbors
+from tqdm.auto import tqdm
 
 from .base_sampler import BaseSampler
 
@@ -64,3 +73,93 @@ class SamplerV2(BaseSampler):
             df_val_fold = pd.concat((df_train.iloc[val_idx], df_val_extra))
 
             self.train_val_sets[f"fold_{i}"] = (df_train_fold, df_val_fold)
+
+
+class PostSamplerV1(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            random = RandomOverSampler(random_state=12345)
+            X_train_rs, y_train_rs = random.fit_resample(X_train, y_train)
+
+            self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
+
+
+class PostSamplerV2(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)
+            smote = SMOTE(random_state=12345, k_neighbors=nn)
+            X_train_rs, y_train_rs = smote.fit_resample(X_train, y_train)
+
+            self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
+
+
+class PostSamplerV3(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)
+            adasyn = ADASYN(random_state=12345, n_neighbors=nn)
+            X_train_rs, y_train_rs = adasyn.fit_resample(X_train, y_train)
+
+            self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
+
+
+class PostSamplerV4(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            k_nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)
+            m_nn = NearestNeighbors(n_neighbors=10, n_jobs=-1)
+            b_smote = BorderlineSMOTE(
+                random_state=12345,
+                k_neighbors=k_nn,
+                m_neighbors=m_nn,
+            )
+
+            X_train_rs, y_train_rs = b_smote.fit_resample(X_train, y_train)
+
+            self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
+
+
+class PostSamplerV5(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            random = RandomUnderSampler(random_state=12345)
+            X_train_rs, y_train_rs = random.fit_resample(X_train, y_train)
+
+            self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
+
+
+class PostSamplerV6(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            nm = NearMiss(n_jobs=-1)
+            X_train_rs, y_train_rs = nm.fit_resample(X_train, y_train)
+
+            self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
+
+
+# Oversampling the minority class to half of the majority class and undersampling the
+# majority class to the minority class.
+class PostSamplerV7(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            over = RandomOverSampler(sampling_strategy=0.5, random_state=12345)
+            under = RandomUnderSampler(sampling_strategy=1, random_state=12345)
+
+            pipeline = Pipeline((("oversampling", over), ("undersampling", under)))
+            X_train_rs, y_train_rs = pipeline.fit_resample(X_train, y_train)
+
+            self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
+
+
+class PostSamplerV8(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)
+            over = SMOTE(sampling_strategy=0.5, random_state=12345, k_neighbors=nn)
+            under = RandomUnderSampler(sampling_strategy=1, random_state=12345)
+
+            pipeline = Pipeline((("oversampling", over), ("undersampling", under)))
+            X_train_rs, y_train_rs = pipeline.fit_resample(X_train, y_train)
+
+            self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
