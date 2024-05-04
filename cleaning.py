@@ -607,5 +607,3 @@ df["BalanceGross"].unique()
 file_path = "data/output.parquet"
 df.to_parquet(file_path, engine="pyarrow", index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
-
-# %%
