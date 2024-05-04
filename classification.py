@@ -33,6 +33,7 @@ from crunchy_mining.preprocessing.preprocessors import PreprocessorV1
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV2
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV3
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV4
+from crunchy_mining.sampling.samplers import SamplerV1
 
 # %load_ext autoreload
 # %autoreload 2
@@ -67,55 +68,23 @@ df.info()
 # ## Sample
 
 # %%
-counts = df["MIS_Status"].value_counts()
-majority_class = counts.index[np.argmax(counts)]
-minority_class = counts.index[np.argmin(counts)]
-n_minority_class = np.min(counts)
-
-# %%
-df_sampled = pd.concat(
-    [
-        df[df["MIS_Status"] == majority_class].sample(
-            n_minority_class,
-            random_state=12345,
-        ),
-        df[df["MIS_Status"] == minority_class],
-    ]
-)
-
-# %%
 # Should the year be categorical or numerical?
 # How to deal with dates?
 variables = get_variables()
 
 # %%
 # Do we leak future information if we ignore the application date?
-df_train, df_test = train_test_split(
-    df_sampled,
-    test_size=0.15,
-    random_state=12345,
-    stratify=df_sampled[variables["target"]],
-)
 
 # %%
-# 1. Holdout method
-df_train_sm, df_val = train_test_split(
-    df_train,
-    test_size=0.15 / 0.85,
-    random_state=12345,
-    stratify=df_train[variables["target"]],
-)
+sampler = SamplerV1(variables)
+sampler.sample(df)
+train_val_sets_raw = sampler.train_val_sets
 
 # %%
-inspect_holdout_split_size(df_train, df_train_sm, df_val, df_test, variables["target"])
+inspect_holdout_split_size(train_val_sets_raw, variables["target"])
 
 # %%
-# 2. Cross-validation
-skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=12345)
-skf_indices = list(skf.split(np.zeros(len(df_train)), df_train[variables["target"]]))
-
-# %%
-inspect_cv_split_size(df_train, skf_indices, variables["target"])
+inspect_cv_split_size(train_val_sets_raw, variables["target"])
 
 # %% [markdown]
 # ## Modify
@@ -127,15 +96,9 @@ inspect_cv_split_size(df_train, skf_indices, variables["target"])
 
 # %%
 preprocessor = PreprocessorV4(experiment_name, variables)
-preprocessor.fit(df_train_sm, df_val, name="validation")
-preprocessor.fit(df_train, df_test, name="testing")
 
-for i, (train_index, val_index) in enumerate(skf_indices):
-    preprocessor.fit(
-        df_train.iloc[train_index],
-        df_train.iloc[val_index],
-        name=f"fold_{i + 1}",
-    )
+for name, (df_train, df_val) in train_val_sets_raw.items():
+    preprocessor.fit(df_train, df_val, name=name)
 
 # "name": (X_train, y_train, X_val, y_val)
 preprocessor.save_train_val_sets()

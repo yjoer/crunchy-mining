@@ -1,5 +1,4 @@
 from typing import List
-from typing import Tuple
 
 import matplotlib.pyplot as plt
 import mlflow
@@ -62,13 +61,10 @@ def get_variables():
     }
 
 
-def inspect_holdout_split_size(
-    df_train: pd.DataFrame,
-    df_train_sm: pd.DataFrame,
-    df_val: pd.DataFrame,
-    df_test: pd.DataFrame,
-    target_variable: str,
-):
+def inspect_holdout_split_size(train_val_sets: dict, target_variable: str):
+    df_train, df_test = train_val_sets["testing"]
+    df_train_sm, df_val = train_val_sets["validation"]
+
     return pd.concat(
         [
             df_train[target_variable].value_counts().rename("train"),
@@ -80,22 +76,19 @@ def inspect_holdout_split_size(
     )
 
 
-def inspect_cv_split_size(
-    df_train: pd.DataFrame,
-    indices: List[Tuple],
-    target_variable: str,
-):
+def inspect_cv_split_size(train_val_sets: dict, target_variable: str):
     folds = []
 
-    for i, (train_index, val_index) in enumerate(indices):
+    for name, (df_train, df_val) in train_val_sets.items():
+        if not name.startswith("fold_"):
+            continue
+
+        i = name.split("_")[-1]
+
         count_by_split = pd.concat(
             [
-                df_train.iloc[train_index][target_variable]
-                .value_counts()
-                .rename("train"),
-                df_train.iloc[val_index][target_variable]
-                .value_counts()
-                .rename("validation"),
+                df_train[target_variable].value_counts().rename("train"),
+                df_val[target_variable].value_counts().rename("validation"),
             ],
             axis=1,
         )
