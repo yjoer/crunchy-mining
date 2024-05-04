@@ -34,6 +34,7 @@ from crunchy_mining.preprocessing.preprocessors import PreprocessorV2
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV3
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV4
 from crunchy_mining.sampling.samplers import SamplerV1
+from crunchy_mining.sampling.samplers import SamplerV2
 
 # %load_ext autoreload
 # %autoreload 2
