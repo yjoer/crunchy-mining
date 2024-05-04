@@ -20,8 +20,9 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import Ridge
 from xgboost import XGBRegressor
 
-from src.util import evaluate_regression
-from src.util import trace_memory
+from . import mlflow_util
+from .util import evaluate_regression
+from .util import trace_memory
 
 
 def train_lm(X_train, y_train):

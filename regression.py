@@ -15,8 +15,8 @@
 
 # %% editable=true slideshow={"slide_type": ""}
 import warnings
-
 import pandas as pd
+from sklearn.preprocessing import OrdinalEncoder
 import mlflow
 
 mlflow.set_tracking_uri("http://localhost:5001")
@@ -32,7 +32,7 @@ warnings.filterwarnings(
 )
 
 # %%
-from src.regpipeline import (
+from crunchy_mining.regpipeline import (
     validate_lm,
     validate_random_forest,
     validate_decision_tree,
