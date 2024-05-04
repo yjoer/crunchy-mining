@@ -5,8 +5,6 @@ import altair as alt
 import mlflow
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import train_test_split
 
 from crunchy_mining.pipeline import get_variables
 from crunchy_mining.pipeline import inspect_cv_split_size
@@ -33,6 +31,9 @@ from crunchy_mining.preprocessing.preprocessors import PreprocessorV1
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV2
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV3
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV4
+from crunchy_mining.preprocessing.preprocessors import PreprocessorV5
+from crunchy_mining.preprocessing.preprocessors import PreprocessorV6
+from crunchy_mining.preprocessing.preprocessors import PreprocessorV7
 from crunchy_mining.sampling.samplers import PostSamplerV1
 from crunchy_mining.sampling.samplers import PostSamplerV2
 from crunchy_mining.sampling.samplers import PostSamplerV3
