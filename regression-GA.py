@@ -13,7 +13,7 @@
 #     name: python3
 # ---
 
-# %% editable=true slideshow={"slide_type": ""}
+# %%
 import warnings
 
 import numpy as np
@@ -30,8 +30,6 @@ from sklearn.metrics import r2_score
 from sklearn import metrics
 from collections import Counter
 
-from src.util import trace_memory
-
 mlflow.set_tracking_uri("http://localhost:5001")
 
 warnings.filterwarnings(
@@ -44,22 +42,16 @@ warnings.filterwarnings(
     message=".*Setuptools is replacing distutils.*",
 )
 
-# %%
-from src.regpipeline import (
-    validate_lm,
-)
-
 
 # %%
 def calculate_mape(y_true, y_pred):
-    actual    = np.array(y_true)
-    predicted = np.array(y_pred.flatten()) 
-    return np.mean(np.abs((actual - predicted) / actual)) * 100    
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 
 # %%
 def Reg_Models_Evaluation_Metrics (model,X_train,y_train,X_test,y_test,y_pred):
-    cv_score = cross_val_score(estimator = model, X = X_train, y = y_train, cv = 6)
+    cv_score = cross_val_score(estimator = model, X = X_train, y = y_train, cv = 10)
+    
     r2 = r2_score(y_test, y_pred)
     n = X_test.shape[0]
     p = X_test.shape[1]
@@ -68,48 +60,19 @@ def Reg_Models_Evaluation_Metrics (model,X_train,y_train,X_test,y_test,y_pred):
     RMSE = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
     MSE = metrics.mean_squared_error(y_test, y_pred)
     MAE = metrics.mean_absolute_error(y_test, y_pred)
-    MAPE = calculate_mape(y_test, y_pred)
+    # MAPE = calculate_mape(y_test, y_pred)
     CV_R2 = cv_score.mean()
 
-        # return R2, adjusted_r2, CV_R2, RMSE, MSE, MAE, MAPE
-        
+    return R2, adjusted_r2, CV_R2, RMSE, MSE, MAE
+    
     print('RMSE:', round(RMSE,4))
     print('MSE:', round(MSE,4))
     print('MAE:', round(MAE,4))
-    print('MAPE:', round(MAPE,4))
+    # print('MAPE:', round(MAPE,4))
     print('R2:', round(R2,4))
     print('Adjusted R2:', round(adjusted_r2, 4) )
     print("Cross Validated R2: ", round(cv_score.mean(),4) )
-    
-    return {
-        "R2": round(R2,4),
-        "Adjusted R2": round(adjusted_r2, 4),
-        "Cross Validated R2": round(cv_score.mean(),4),
-        "RMSE": round(RMSE,4),
-        "MSE": round(MSE,4),
-        "MAE": round(MAE,4),
-        "MAPE": round(MAPE,4)
-        }
 
-
-# %%
-# def validate_lm(X_train,y_train,X_test,y_test):
-#     with mlflow.start_run(run_name="Linear Regression"):
-#                 with trace_memory() as trace:
-#                     lm = train_lm(X_train, y_train)
-                    
-#                 # y_knn = knn.predict(X_val)
-#                 y_pred = lm.predict(X_test)
-#                 result = y_scaler.inverse_transform(y_pred)
-#                 mlflow.log_metrics(Reg_Models_Evaluation_Metrics(lm,X_train,y_train,X_test,y_test,result))
-#                 mlflow.log_metric("peak_memory_usage", trace["peak"])
-#                 mlflow.log_params(lm.get_params())
-
-#                 mlflow.sklearn.log_model(
-#                     sk_model=lm,
-#                     artifact_path="model",
-#                     signature=mlflow.models.infer_signature(X_test, y_pred),
-#                 )
 
 # %%
 df = pd.read_csv("data/output.csv")
@@ -156,7 +119,7 @@ variables = {
         "Is_Existing",
         "MIS_Status"
     ],
-    "target": "GrAppv",
+    "target": "SBA_Appv",
 }
 
 # %%
@@ -172,8 +135,8 @@ df[variables["categorical"]] = encoder.fit_transform(df[variables["categorical"]
 df.head()
 
 # %%
-X = df.drop('GrAppv', axis=1)
-y = df['GrAppv']
+X = df.drop('SBA_Appv', axis=1)
+y = df['SBA_Appv']
 
 # %%
 #Split data set
@@ -207,24 +170,19 @@ y_train_scaler = y_scaler.fit_transform(y_train.to_numpy().reshape(-1,1))
 y_test_scaler =  y_scaler.transform(y_test.to_numpy().reshape(-1,1))
 y_val_scaler =  y_scaler.transform(y_val.to_numpy().reshape(-1,1))
 
+# %%
+# Apply log transformation to the data
+log_data = np.log(data)
+
+# Plot the original data and the log-transformed data
+import matplotlib.pyplot as plt
+#plt.hist(data, bins=50, label='Original Data')
+plt.hist(log_data, bins=50, label='Log-Transformed Data')
+plt.legend()
+plt.show()
+
 # %% [markdown]
 # Modelling
-
-# %%
-validate_lm(X_train,y_train,X_test,y_test)
-
-# %%
-validate_lm(x_train_scaler,y_train_scaler,x_test_scaler,y_test)
-
-# %%
-from sklearn.linear_model import LinearRegression
-
-def train_lm(X_train, y_train):
-    lm = LinearRegression()
-    lm.fit(X_train, y_train)
-
-    return lm
-
 
 # %%
 from sklearn.linear_model import LinearRegression
@@ -242,16 +200,13 @@ print(y_pred)
 result = y_scaler.inverse_transform(y_pred)
 
 # %%
-calculate_mape(y_test, result)
-
-# %%
 ndf = [Reg_Models_Evaluation_Metrics(lm,x_train_scaler,y_train_scaler,x_test_scaler,y_test,result)]
 
-lm_score = pd.DataFrame(data = ndf, columns=['R2 Score','Adjusted R2 Score','Cross Validated R2 Score','RMSE', "MSE", "MAE", "MAPE"])
+lm_score = pd.DataFrame(data = ndf, columns=['R2 Score','Adjusted R2 Score','Cross Validated R2 Score','RMSE', "MSE", "MAE"])
 lm_score.insert(0, 'Model', 'Linear Regression')
 lm_score
 
-# %% editable=true slideshow={"slide_type": ""}
+# %%
 plt.figure(figsize = (10,5))
 sns.regplot(x=y_test,y=result)
 plt.title('Linear regression', fontsize = 20)
