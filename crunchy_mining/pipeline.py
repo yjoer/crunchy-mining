@@ -1,21 +1,65 @@
 from typing import List
 from typing import Tuple
 
+import matplotlib.pyplot as plt
 import mlflow
+import numpy as np
 import pandas as pd
+import shap
 from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
+from tqdm.auto import tqdm
 from xgboost import XGBClassifier
 
-from src.util import evaluate_classification
-from src.util import trace_memory
+from . import mlflow_util
+from .util import evaluate_classification
+from .util import trace_memory
+
+
+def get_variables():
+    return {
+        "categorical": [
+            "City",
+            "State",
+            "Zip",
+            "Bank",
+            "BankState",
+            # "ApprovalFY",
+            "NewExist",
+            "Is_Franchised",
+            "UrbanRural",
+            "RevLineCr",
+            "LowDoc",
+            "Industry",
+            "RealEstate",
+            "Recession",
+            # "DisbursementFY",
+            "StateSame",
+            "SBA_AppvPct",
+        ],
+        "numerical": [
+            "Term",
+            "NoEmp",
+            "CreateJob",
+            "RetainedJob",
+            "DisbursementGross",
+            "BalanceGross",
+            # "ChgOffPrinGr",
+            "GrAppv",
+            "SBA_Appv",
+            "DaysTerm",
+            "DaysToDisbursement",
+        ],
+        "target": "MIS_Status",
+    }
 
 
 def inspect_holdout_split_size(
@@ -366,3 +410,151 @@ def validate_catboost(train_val_sets: dict):
                     artifact_path="model",
                     signature=mlflow.models.infer_signature(X_val, y_catb),
                 )
+
+
+def intrinsic_linear(train_val_sets: dict, model_name: str, feature_names: List[str]):
+    for name, (X_train, _, _, _) in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
+
+        contributions = np.abs(np.std(X_train, axis=0) * model.coef_[0])
+        importances = contributions / np.sum(contributions)
+
+        df = pd.DataFrame({"feature_names": feature_names, "importances": importances})
+        mlflow_util.log_table(
+            data=df,
+            artifact_file="interpretation/intrinsic.json",
+            run_id=run_id,
+        )
+
+
+def intrinsic_trees(train_val_sets: dict, model_name: str, feature_names: List[str]):
+    for name, _ in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
+
+        importances = model.feature_importances_
+
+        df = pd.DataFrame({"feature_names": feature_names, "importances": importances})
+        mlflow_util.log_table(
+            data=df,
+            artifact_file="interpretation/intrinsic.json",
+            run_id=run_id,
+        )
+
+
+def intrinsic_xgboost(train_val_sets: dict, feature_names: List[str]):
+    for name, _ in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name("XGBoost")
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model = mlflow.xgboost.load_model(f"runs:/{run_id}/model")
+
+        importances = model.feature_importances_
+
+        df = pd.DataFrame({"feature_names": feature_names, "importances": importances})
+        mlflow_util.log_table(
+            data=df,
+            artifact_file="interpretation/intrinsic.json",
+            run_id=run_id,
+        )
+
+
+def intrinsic_lightgbm(train_val_sets: dict, feature_names: List[str]):
+    for name, _ in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name("LightGBM")
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model = mlflow.lightgbm.load_model(f"runs:/{run_id}/model")
+
+        # Use gain as the importance type and normalize to align with XGBoost.
+        gains = model.booster_.feature_importance(importance_type="gain")
+        importances = gains / np.sum(gains)
+
+        df = pd.DataFrame({"feature_names": feature_names, "importances": importances})
+        mlflow_util.log_table(
+            data=df,
+            artifact_file="interpretation/intrinsic.json",
+            run_id=run_id,
+        )
+
+
+def intrinsic_catboost(train_val_sets: dict, feature_names: List[str]):
+    for name, _ in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name("CatBoost")
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model = mlflow.catboost.load_model(f"runs:/{run_id}/model")
+
+        # https://catboost.ai/en/docs/concepts/fstr#regular-feature-importance
+        importances = model.get_feature_importance()
+
+        df = pd.DataFrame({"feature_names": feature_names, "importances": importances})
+        mlflow_util.log_table(
+            data=df,
+            artifact_file="interpretation/intrinsic.json",
+            run_id=run_id,
+        )
+
+
+def pimp(train_val_sets: dict, model_name: str):
+    for name, (_, _, X_val, y_val) in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model_uri = f"runs:/{run_id}/model"
+
+        match model_name:
+            case "XGBoost":
+                model = mlflow.xgboost.load_model(model_uri)
+            case "LightGBM":
+                model = mlflow.lightgbm.load_model(model_uri)
+            case "CatBoost":
+                model = mlflow.catboost.load_model(model_uri)
+            case _:
+                model = mlflow.sklearn.load_model(model_uri)
+
+        pimp = permutation_importance(
+            estimator=model,
+            X=X_val,
+            y=y_val,
+            n_repeats=10,
+            n_jobs=-1,
+            random_state=12345,
+        )
+
+        mlflow_util.log_pickle(pimp, artifact_file="pimp/pimp.pkl", run_id=run_id)
+
+
+def pdp(train_val_sets: dict, model_name: str, feature_names: List[str]):
+    for name, (_, _, X_val, _) in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model_uri = f"runs:/{run_id}/model"
+
+        match model_name:
+            case "XGBoost":
+                model = mlflow.xgboost.load_model(model_uri)
+            case "LightGBM":
+                model = mlflow.lightgbm.load_model(model_uri)
+            case "CatBoost":
+                model = mlflow.catboost.load_model(model_uri)
+            case _:
+                model = mlflow.sklearn.load_model(model_uri)
+
+        for idx in range(len(feature_names)):
+            fig = plt.figure()
+            ax = fig.gca()
+
+            shap.plots.partial_dependence(
+                ind=idx,
+                model=model.predict,
+                data=X_val,
+                feature_names=feature_names,
+                model_expected_value=True,
+                feature_expected_value=True,
+                ice=False,
+                ax=ax,
+                show=False,
+            )
+
+            mlflow_util.log_pickle(fig, artifact_file=f"pdp/{idx}.pkl", run_id=run_id)
+            plt.close(fig)

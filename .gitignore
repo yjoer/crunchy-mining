@@ -2,9 +2,12 @@ __pycache__/
 .ipynb_checkpoints/
 .venv/
 catboost_info/
+dist/
 
 *.lock
 
-#Dataset
+# Datasets
+data/*.npz
+data/output.parquet
 data/SBA.csv
 data/output.csv
