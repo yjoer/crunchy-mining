@@ -8,7 +8,6 @@ import pandas as pd
 from hydra import compose
 from hydra import initialize
 
-from crunchy_mining.pipeline import get_variables
 from crunchy_mining.pipeline import inspect_cv_split_size
 from crunchy_mining.pipeline import inspect_holdout_split_size
 from crunchy_mining.pipeline import intrinsic_catboost
@@ -90,7 +89,6 @@ df.info()
 # %%
 # Should the year be categorical or numerical?
 # How to deal with dates?
-variables = get_variables()
 
 # %%
 # Do we leak future information if we ignore the application date?
@@ -106,10 +104,10 @@ sampler.sample(df)
 train_val_sets_raw = sampler.train_val_sets
 
 # %%
-inspect_holdout_split_size(train_val_sets_raw, variables["target"])
+inspect_holdout_split_size(train_val_sets_raw, cfg.vars.target)
 
 # %%
-inspect_cv_split_size(train_val_sets_raw, variables["target"])
+inspect_cv_split_size(train_val_sets_raw, cfg.vars.target)
 
 # %% [markdown]
 # ## Modify
