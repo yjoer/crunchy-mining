@@ -75,6 +75,12 @@ class SamplerV2(BaseSampler):
             self.train_val_sets[f"fold_{i}"] = (df_train_fold, df_val_fold)
 
 
+class PostSamplerV0(BaseSampler):
+    def sample(self, train_val_sets: dict):
+        for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
+            self.train_val_sets[name] = (X_train, y_train, X_val, y_val)
+
+
 class PostSamplerV1(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
