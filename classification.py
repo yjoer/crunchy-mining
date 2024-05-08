@@ -227,7 +227,7 @@ if cfg.validation.models.catboost:
 # ### Intrinsic Interpretation
 
 # %%
-if cfg.interpretation.intrinsic.models.knn:
+if cfg.interpretation.intrinsic.models.logistic_regression:
     intrinsic_linear(cfg, train_val_sets, model_name="Logistic Regression")
 
 # %%
@@ -263,7 +263,8 @@ if cfg.interpretation.intrinsic.models.catboost:
 
 # %%
 # It takes forever on KNN
-# pimp(train_val_sets, model_name="KNN")
+if cfg.interpretation.permutation_importance.models.knn:
+    pimp(train_val_sets, model_name="KNN")
 
 # %%
 if cfg.interpretation.permutation_importance.models.logistic_regression:
@@ -307,7 +308,8 @@ if cfg.interpretation.permutation_importance.models.catboost:
 # %%
 # It took about 5.5 hours/model for KNN, 10 minutes/model for Random Forest to CatBoost,
 # and under or within a minute for the rest.
-# pdp(train_val_sets, model_name="KNN", feature_names=feature_names)
+if cfg.interpretation.partial_dependence.models.knn:
+    pdp(cfg, train_val_sets, model_name="KNN")
 
 # %%
 if cfg.interpretation.partial_dependence.models.logistic_regression:
