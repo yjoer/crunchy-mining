@@ -75,13 +75,13 @@ class SamplerV2(BaseSampler):
             self.train_val_sets[f"fold_{i}"] = (df_train_fold, df_val_fold)
 
 
-class PostSamplerV0(BaseSampler):
+class ResamplerV0(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             self.train_val_sets[name] = (X_train, y_train, X_val, y_val)
 
 
-class PostSamplerV1(BaseSampler):
+class ResamplerV1(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             random = RandomOverSampler(random_state=12345)
@@ -90,7 +90,7 @@ class PostSamplerV1(BaseSampler):
             self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
 
 
-class PostSamplerV2(BaseSampler):
+class ResamplerV2(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)
@@ -100,7 +100,7 @@ class PostSamplerV2(BaseSampler):
             self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
 
 
-class PostSamplerV3(BaseSampler):
+class ResamplerV3(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)
@@ -110,7 +110,7 @@ class PostSamplerV3(BaseSampler):
             self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
 
 
-class PostSamplerV4(BaseSampler):
+class ResamplerV4(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             k_nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)
@@ -126,7 +126,7 @@ class PostSamplerV4(BaseSampler):
             self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
 
 
-class PostSamplerV5(BaseSampler):
+class ResamplerV5(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             random = RandomUnderSampler(random_state=12345)
@@ -135,7 +135,7 @@ class PostSamplerV5(BaseSampler):
             self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
 
 
-class PostSamplerV6(BaseSampler):
+class ResamplerV6(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             nm = NearMiss(n_jobs=-1)
@@ -146,7 +146,7 @@ class PostSamplerV6(BaseSampler):
 
 # Oversampling the minority class to half of the majority class and undersampling the
 # majority class to the minority class.
-class PostSamplerV7(BaseSampler):
+class ResamplerV7(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             over = RandomOverSampler(sampling_strategy=0.5, random_state=12345)
@@ -158,7 +158,7 @@ class PostSamplerV7(BaseSampler):
             self.train_val_sets[name] = (X_train_rs, y_train_rs, X_val, y_val)
 
 
-class PostSamplerV8(BaseSampler):
+class ResamplerV8(BaseSampler):
     def sample(self, train_val_sets: dict):
         for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):
             nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)

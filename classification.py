@@ -36,15 +36,15 @@ from crunchy_mining.preprocessing.preprocessors import PreprocessorV4
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV5
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV6
 from crunchy_mining.preprocessing.preprocessors import PreprocessorV7
-from crunchy_mining.sampling.samplers import PostSamplerV0
-from crunchy_mining.sampling.samplers import PostSamplerV1
-from crunchy_mining.sampling.samplers import PostSamplerV2
-from crunchy_mining.sampling.samplers import PostSamplerV3
-from crunchy_mining.sampling.samplers import PostSamplerV4
-from crunchy_mining.sampling.samplers import PostSamplerV5
-from crunchy_mining.sampling.samplers import PostSamplerV6
-from crunchy_mining.sampling.samplers import PostSamplerV7
-from crunchy_mining.sampling.samplers import PostSamplerV8
+from crunchy_mining.sampling.samplers import ResamplerV0
+from crunchy_mining.sampling.samplers import ResamplerV1
+from crunchy_mining.sampling.samplers import ResamplerV2
+from crunchy_mining.sampling.samplers import ResamplerV3
+from crunchy_mining.sampling.samplers import ResamplerV4
+from crunchy_mining.sampling.samplers import ResamplerV5
+from crunchy_mining.sampling.samplers import ResamplerV6
+from crunchy_mining.sampling.samplers import ResamplerV7
+from crunchy_mining.sampling.samplers import ResamplerV8
 from crunchy_mining.sampling.samplers import SamplerV1
 from crunchy_mining.sampling.samplers import SamplerV2
 
@@ -152,27 +152,27 @@ train_val_sets_pp = preprocessor.get_train_val_sets()
 # %%
 match cfg.resampling.variant:
     case 0:
-        postsampler = PostSamplerV0()
+        resampler = ResamplerV0()
     case 1:
-        postsampler = PostSamplerV1()
+        resampler = ResamplerV1()
     case 2:
-        postsampler = PostSamplerV2()
+        resampler = ResamplerV2()
     case 3:
-        postsampler = PostSamplerV3()
+        resampler = ResamplerV3()
     case 4:
-        postsampler = PostSamplerV4()
+        resampler = ResamplerV4()
     case 5:
-        postsampler = PostSamplerV5()
+        resampler = ResamplerV5()
     case 6:
-        postsampler = PostSamplerV6()
+        resampler = ResamplerV6()
     case 7:
-        postsampler = PostSamplerV7()
+        resampler = ResamplerV7()
     case 8:
-        postsampler = PostSamplerV8()
+        resampler = ResamplerV8()
 
 # "name": (X_train, y_train, X_val, y_val)
-postsampler.sample(train_val_sets_pp)
-train_val_sets = postsampler.train_val_sets
+resampler.sample(train_val_sets_pp)
+train_val_sets = resampler.train_val_sets
 
 # %% [markdown]
 # ## Model
