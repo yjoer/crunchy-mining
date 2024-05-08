@@ -21,18 +21,18 @@ class GenericPreprocessor(BasePreprocessor):
 class PreprocessorV1(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
-        X_train_cat = oe.fit_transform(df_train[self.variables["categorical"]])
-        X_test_cat = oe.transform(df_test[self.variables["categorical"]])
+        X_train_cat = oe.fit_transform(df_train[self.cfg.vars.categorical])
+        X_test_cat = oe.transform(df_test[self.cfg.vars.categorical])
 
-        X_train_num = df_train[self.variables["numerical"]]
-        X_test_num = df_test[self.variables["numerical"]]
+        X_train_num = df_train[self.cfg.vars.numerical]
+        X_test_num = df_test[self.cfg.vars.numerical]
 
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
 
         le = LabelEncoder()
-        y_train = le.fit_transform(df_train[self.variables["target"]])
-        y_test = le.transform(df_test[self.variables["target"]])
+        y_train = le.fit_transform(df_train[self.cfg.vars.target])
+        y_test = le.transform(df_test[self.cfg.vars.target])
 
         self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["ordinal"] = oe
@@ -43,18 +43,18 @@ class PreprocessorV1(BasePreprocessor):
 class PreprocessorV2(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         hot = OneHotEncoder(handle_unknown="infrequent_if_exist")
-        X_train_cat = hot.fit_transform(df_train[self.variables["categorical"]])
-        X_test_cat = hot.transform(df_test[self.variables["categorical"]])
+        X_train_cat = hot.fit_transform(df_train[self.cfg.vars.categorical])
+        X_test_cat = hot.transform(df_test[self.cfg.vars.categorical])
 
-        X_train_num = df_train[self.variables["numerical"]]
-        X_test_num = df_test[self.variables["numerical"]]
+        X_train_num = df_train[self.cfg.vars.numerical]
+        X_test_num = df_test[self.cfg.vars.numerical]
 
         X_train = sp.hstack((X_train_cat, X_train_num), format="csr")
         X_test = sp.hstack((X_test_cat, X_test_num), format="csr")
 
         le = LabelEncoder()
-        y_train = le.fit_transform(df_train[self.variables["target"]])
-        y_test = le.transform(df_test[self.variables["target"]])
+        y_train = le.fit_transform(df_train[self.cfg.vars.target])
+        y_test = le.transform(df_test[self.cfg.vars.target])
 
         self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["one_hot"] = hot
@@ -66,15 +66,15 @@ class PreprocessorV3(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         # Encode the target first because the target encoder needs them.
         le = LabelEncoder()
-        y_train = le.fit_transform(df_train[self.variables["target"]])
-        y_test = le.transform(df_test[self.variables["target"]])
+        y_train = le.fit_transform(df_train[self.cfg.vars.target])
+        y_test = le.transform(df_test[self.cfg.vars.target])
 
         te = TargetEncoder(target_type="binary", random_state=12345)
-        X_train_cat = te.fit_transform(df_train[self.variables["categorical"]], y_train)
-        X_test_cat = te.transform(df_test[self.variables["categorical"]])
+        X_train_cat = te.fit_transform(df_train[self.cfg.vars.categorical], y_train)
+        X_test_cat = te.transform(df_test[self.cfg.vars.categorical])
 
-        X_train_num = df_train[self.variables["numerical"]]
-        X_test_num = df_test[self.variables["numerical"]]
+        X_train_num = df_train[self.cfg.vars.numerical]
+        X_test_num = df_test[self.cfg.vars.numerical]
 
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
@@ -88,19 +88,19 @@ class PreprocessorV3(BasePreprocessor):
 class PreprocessorV4(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
-        X_train_cat = oe.fit_transform(df_train[self.variables["categorical"]])
-        X_test_cat = oe.transform(df_test[self.variables["categorical"]])
+        X_train_cat = oe.fit_transform(df_train[self.cfg.vars.categorical])
+        X_test_cat = oe.transform(df_test[self.cfg.vars.categorical])
 
         ss = StandardScaler()
-        X_train_num = ss.fit_transform(df_train[self.variables["numerical"]])
-        X_test_num = ss.transform(df_test[self.variables["numerical"]])
+        X_train_num = ss.fit_transform(df_train[self.cfg.vars.numerical])
+        X_test_num = ss.transform(df_test[self.cfg.vars.numerical])
 
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
 
         le = LabelEncoder()
-        y_train = le.fit_transform(df_train[self.variables["target"]])
-        y_test = le.transform(df_test[self.variables["target"]])
+        y_train = le.fit_transform(df_train[self.cfg.vars.target])
+        y_test = le.transform(df_test[self.cfg.vars.target])
 
         self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["ordinal"] = oe
@@ -112,16 +112,16 @@ class PreprocessorV4(BasePreprocessor):
 class PreprocessorV5(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         le = LabelEncoder()
-        y_train = le.fit_transform(df_train[self.variables["target"]])
-        y_test = le.transform(df_test[self.variables["target"]])
+        y_train = le.fit_transform(df_train[self.cfg.vars.target])
+        y_test = le.transform(df_test[self.cfg.vars.target])
 
         te = TargetEncoder(target_type="binary", random_state=12345)
-        X_train_cat = te.fit_transform(df_train[self.variables["categorical"]], y_train)
-        X_test_cat = te.transform(df_test[self.variables["categorical"]])
+        X_train_cat = te.fit_transform(df_train[self.cfg.vars.categorical], y_train)
+        X_test_cat = te.transform(df_test[self.cfg.vars.categorical])
 
         ss = StandardScaler()
-        X_train_num = ss.fit_transform(df_train[self.variables["numerical"]])
-        X_test_num = ss.transform(df_test[self.variables["numerical"]])
+        X_train_num = ss.fit_transform(df_train[self.cfg.vars.numerical])
+        X_test_num = ss.transform(df_test[self.cfg.vars.numerical])
 
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
@@ -136,12 +136,12 @@ class PreprocessorV5(BasePreprocessor):
 class PreprocessorV6(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
-        X_train_cat = oe.fit_transform(df_train[self.variables["categorical"]])
-        X_test_cat = oe.transform(df_test[self.variables["categorical"]])
+        X_train_cat = oe.fit_transform(df_train[self.cfg.vars.categorical])
+        X_test_cat = oe.transform(df_test[self.cfg.vars.categorical])
 
         ss = StandardScaler()
-        X_train_num = ss.fit_transform(df_train[self.variables["numerical"]])
-        X_test_num = ss.transform(df_test[self.variables["numerical"]])
+        X_train_num = ss.fit_transform(df_train[self.cfg.vars.numerical])
+        X_test_num = ss.transform(df_test[self.cfg.vars.numerical])
 
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
@@ -151,8 +151,8 @@ class PreprocessorV6(BasePreprocessor):
         X_test_scaled = mm.transform(X_test)
 
         le = LabelEncoder()
-        y_train = le.fit_transform(df_train[self.variables["target"]])
-        y_test = le.transform(df_test[self.variables["target"]])
+        y_train = le.fit_transform(df_train[self.cfg.vars.target])
+        y_test = le.transform(df_test[self.cfg.vars.target])
 
         self.train_val_sets[name] = (X_train_scaled, y_train, X_test_scaled, y_test)
         self.encoders["ordinal"] = oe
@@ -165,16 +165,16 @@ class PreprocessorV6(BasePreprocessor):
 class PreprocessorV7(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         le = LabelEncoder()
-        y_train = le.fit_transform(df_train[self.variables["target"]])
-        y_test = le.transform(df_test[self.variables["target"]])
+        y_train = le.fit_transform(df_train[self.cfg.vars.target])
+        y_test = le.transform(df_test[self.cfg.vars.target])
 
         te = TargetEncoder(target_type="binary", random_state=12345)
-        X_train_cat = te.fit_transform(df_train[self.variables["categorical"]], y_train)
-        X_test_cat = te.transform(df_test[self.variables["categorical"]])
+        X_train_cat = te.fit_transform(df_train[self.cfg.vars.categorical], y_train)
+        X_test_cat = te.transform(df_test[self.cfg.vars.categorical])
 
         ss = StandardScaler()
-        X_train_num = ss.fit_transform(df_train[self.variables["numerical"]])
-        X_test_num = ss.transform(df_test[self.variables["numerical"]])
+        X_train_num = ss.fit_transform(df_train[self.cfg.vars.numerical])
+        X_test_num = ss.transform(df_test[self.cfg.vars.numerical])
 
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
