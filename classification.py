@@ -98,9 +98,9 @@ variables = get_variables()
 # %%
 match cfg.sampling.variant:
     case 1:
-        sampler = SamplerV1(variables)
+        sampler = SamplerV1(cfg)
     case 2:
-        sampler = SamplerV2(variables)
+        sampler = SamplerV2(cfg)
 
 sampler.sample(df)
 train_val_sets_raw = sampler.train_val_sets
@@ -125,19 +125,19 @@ inspect_cv_split_size(train_val_sets_raw, variables["target"])
 # %%
 match cfg.preprocessing.variant:
     case 1:
-        preprocessor = PreprocessorV1(cfg.mlflow.experiment_name, variables)
+        preprocessor = PreprocessorV1(cfg)
     case 2:
-        preprocessor = PreprocessorV2(cfg.mlflow.experiment_name, variables)
+        preprocessor = PreprocessorV2(cfg)
     case 3:
-        preprocessor = PreprocessorV3(cfg.mlflow.experiment_name, variables)
+        preprocessor = PreprocessorV3(cfg)
     case 4:
-        preprocessor = PreprocessorV4(cfg.mlflow.experiment_name, variables)
+        preprocessor = PreprocessorV4(cfg)
     case 5:
-        preprocessor = PreprocessorV5(cfg.mlflow.experiment_name, variables)
+        preprocessor = PreprocessorV5(cfg)
     case 6:
-        preprocessor = PreprocessorV6(cfg.mlflow.experiment_name, variables)
+        preprocessor = PreprocessorV6(cfg)
     case 7:
-        preprocessor = PreprocessorV7(cfg.mlflow.experiment_name, variables)
+        preprocessor = PreprocessorV7(cfg)
 
 for name, (df_train, df_val) in train_val_sets_raw.items():
     preprocessor.fit(df_train, df_val, name=name)

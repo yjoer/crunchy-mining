@@ -1,16 +1,21 @@
+from __future__ import annotations
+
+import typing
 from abc import ABC
 from abc import abstractmethod
 from typing import Dict
 
 import numpy as np
 
+if typing.TYPE_CHECKING:
+    from omegaconf import DictConfig
+
 
 class BasePreprocessor(ABC):
-    def __init__(self, experiment_name: str, variables: dict):
+    def __init__(self, cfg: DictConfig):
         self.train_val_sets: Dict[str, list | tuple] = {}
         self.encoders = {}
-        self.experiment_name = experiment_name
-        self.variables = variables
+        self.cfg = cfg
 
     @abstractmethod
     def fit(self):
@@ -20,7 +25,7 @@ class BasePreprocessor(ABC):
         return self.train_val_sets
 
     def save_train_val_sets(self):
-        experiment = self.experiment_name.replace("/", "_")
+        experiment = self.cfg.mlflow.experiment_name.replace("/", "_")
         arrays = {}
 
         # Explode the tuple into a flat list.
@@ -33,7 +38,7 @@ class BasePreprocessor(ABC):
         np.savez(f"data/{experiment}.npz", **arrays)
 
     def load_train_val_sets(self):
-        experiment = self.experiment_name.replace("/", "_")
+        experiment = self.cfg.mlflow.experiment_name.replace("/", "_")
         arrays = {}
 
         npz = np.load(f"data/{experiment}.npz")

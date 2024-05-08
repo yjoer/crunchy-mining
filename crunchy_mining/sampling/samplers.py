@@ -32,13 +32,13 @@ class SamplerV1(BaseSampler):
 
 class SamplerV2(BaseSampler):
     def sample(self, df: pd.DataFrame):
-        counts = df[self.variables["target"]].value_counts()
+        counts = df[self.cfg.vars.target].value_counts()
         majority_class = counts.index[np.argmax(counts)]
         minority_class = counts.index[np.argmin(counts)]
         n_minority_class = np.min(counts)
 
         # Align the rows of the majority class to the minority class.
-        df_majority = df[df[self.variables["target"]] == majority_class]
+        df_majority = df[df[self.cfg.vars.target] == majority_class]
         df_majority_sampled = df_majority.sample(n_minority_class, random_state=12345)
 
         # Save the remaining rows of the majority class.
@@ -54,7 +54,7 @@ class SamplerV2(BaseSampler):
         df_sampled = pd.concat(
             [
                 df_majority_sampled,
-                df[df[self.variables["target"]] == minority_class],
+                df[df[self.cfg.vars.target] == minority_class],
             ]
         )
 

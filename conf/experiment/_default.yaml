@@ -1,5 +1,37 @@
 mlflow:
   experiment_name:
+vars:
+  categorical:
+    - City
+    - State
+    - Zip
+    - Bank
+    - BankState
+    # - ApprovalFY
+    - NewExist
+    - Is_Franchised
+    - UrbanRural
+    - RevLineCr
+    - LowDoc
+    - Industry
+    - RealEstate
+    - Recession
+    # - DisbursementFY
+    - StateSame
+    - SBA_AppvPct
+  numerical:
+    - Term
+    - NoEmp
+    - CreateJob
+    - RetainedJob
+    - DisbursementGross
+    - BalanceGross
+    # - ChgOffPrinGr
+    - GrAppv
+    - SBA_Appv
+    - DaysTerm
+    - DaysToDisbursement
+  target: MIS_Status
 sampling:
   variant: 1
 preprocessing:
