@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import typing
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -21,6 +24,9 @@ from xgboost import XGBClassifier
 from . import mlflow_util
 from .util import evaluate_classification
 from .util import trace_memory
+
+if typing.TYPE_CHECKING:
+    from omegaconf import DictConfig
 
 
 def get_variables():
@@ -405,7 +411,9 @@ def validate_catboost(train_val_sets: dict):
                 )
 
 
-def intrinsic_linear(train_val_sets: dict, model_name: str, feature_names: List[str]):
+def intrinsic_linear(cfg: DictConfig, train_val_sets: dict, model_name: str):
+    feature_names = cfg.vars.categorical + cfg.vars.numerical
+
     for name, (X_train, _, _, _) in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
@@ -422,7 +430,9 @@ def intrinsic_linear(train_val_sets: dict, model_name: str, feature_names: List[
         )
 
 
-def intrinsic_trees(train_val_sets: dict, model_name: str, feature_names: List[str]):
+def intrinsic_trees(cfg: DictConfig, train_val_sets: dict, model_name: str):
+    feature_names = cfg.vars.categorical + cfg.vars.numerical
+
     for name, _ in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
@@ -438,7 +448,9 @@ def intrinsic_trees(train_val_sets: dict, model_name: str, feature_names: List[s
         )
 
 
-def intrinsic_xgboost(train_val_sets: dict, feature_names: List[str]):
+def intrinsic_xgboost(cfg: DictConfig, train_val_sets: dict):
+    feature_names = cfg.vars.categorical + cfg.vars.numerical
+
     for name, _ in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name("XGBoost")
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
@@ -454,7 +466,9 @@ def intrinsic_xgboost(train_val_sets: dict, feature_names: List[str]):
         )
 
 
-def intrinsic_lightgbm(train_val_sets: dict, feature_names: List[str]):
+def intrinsic_lightgbm(cfg: DictConfig, train_val_sets: dict):
+    feature_names = cfg.vars.categorical + cfg.vars.numerical
+
     for name, _ in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name("LightGBM")
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
@@ -472,7 +486,9 @@ def intrinsic_lightgbm(train_val_sets: dict, feature_names: List[str]):
         )
 
 
-def intrinsic_catboost(train_val_sets: dict, feature_names: List[str]):
+def intrinsic_catboost(cfg: DictConfig, train_val_sets: dict):
+    feature_names = cfg.vars.categorical + cfg.vars.numerical
+
     for name, _ in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name("CatBoost")
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
@@ -517,7 +533,9 @@ def pimp(train_val_sets: dict, model_name: str):
         mlflow_util.log_pickle(pimp, artifact_file="pimp/pimp.pkl", run_id=run_id)
 
 
-def pdp(train_val_sets: dict, model_name: str, feature_names: List[str]):
+def pdp(cfg: DictConfig, train_val_sets: dict, model_name: str):
+    feature_names = cfg.vars.categorical + cfg.vars.numerical
+
     for name, (_, _, X_val, _) in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
