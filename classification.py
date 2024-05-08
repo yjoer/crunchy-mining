@@ -345,6 +345,6 @@ if cfg.interpretation.partial_dependence.models.lightgbm:
 
 # %%
 if cfg.interpretation.partial_dependence.models.catboost:
-    pdp(train_val_sets, model_name="CatBoost")
+    pdp(cfg, train_val_sets, model_name="CatBoost")
 
 # %%
