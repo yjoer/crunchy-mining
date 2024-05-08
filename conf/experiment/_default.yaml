@@ -40,16 +40,16 @@ resampling:
   variant: 0
 validation:
   models:
-    knn: true
-    logistic_regression: true
-    gaussian_nb: true
-    linear_svc: true
-    decision_tree: true
-    random_forest: true
-    adaboost: true
-    xgboost: true
-    lightgbm: true
-    catboost: true
+    knn: false
+    logistic_regression: false
+    gaussian_nb: false
+    linear_svc: false
+    decision_tree: false
+    random_forest: false
+    adaboost: false
+    xgboost: false
+    lightgbm: false
+    catboost: false
 interpretation:
   intrinsic:
     models:

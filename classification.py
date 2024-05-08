@@ -227,55 +227,36 @@ if cfg.validation.models.catboost:
 # ### Intrinsic Interpretation
 
 # %%
-feature_names = variables["categorical"] + variables["numerical"]
-
-# %%
 if cfg.interpretation.intrinsic.models.knn:
-    intrinsic_linear(
-        train_val_sets,
-        model_name="Logistic Regression",
-        feature_names=feature_names,
-    )
+    intrinsic_linear(cfg, train_val_sets, model_name="Logistic Regression")
 
 # %%
 if cfg.interpretation.intrinsic.models.linear_svc:
-    intrinsic_linear(
-        train_val_sets,
-        model_name="Linear SVC",
-        feature_names=feature_names,
-    )
+    intrinsic_linear(cfg, train_val_sets, model_name="Linear SVC")
 
 # %%
 if cfg.interpretation.intrinsic.models.decision_tree:
-    intrinsic_trees(
-        train_val_sets,
-        model_name="Decision Tree",
-        feature_names=feature_names,
-    )
+    intrinsic_trees(cfg, train_val_sets, model_name="Decision Tree")
 
 # %%
 if cfg.interpretation.intrinsic.models.random_forest:
-    intrinsic_trees(
-        train_val_sets,
-        model_name="Random Forest",
-        feature_names=feature_names,
-    )
+    intrinsic_trees(cfg, train_val_sets, model_name="Random Forest")
 
 # %%
 if cfg.interpretation.intrinsic.models.adaboost:
-    intrinsic_trees(train_val_sets, model_name="AdaBoost", feature_names=feature_names)
+    intrinsic_trees(cfg, train_val_sets, model_name="AdaBoost")
 
 # %%
 if cfg.interpretation.intrinsic.models.xgboost:
-    intrinsic_xgboost(train_val_sets, feature_names=feature_names)
+    intrinsic_xgboost(cfg, train_val_sets)
 
 # %%
 if cfg.interpretation.intrinsic.models.lightgbm:
-    intrinsic_lightgbm(train_val_sets, feature_names=feature_names)
+    intrinsic_lightgbm(cfg, train_val_sets)
 
 # %%
 if cfg.interpretation.intrinsic.models.catboost:
-    intrinsic_catboost(train_val_sets, feature_names=feature_names)
+    intrinsic_catboost(cfg, train_val_sets)
 
 # %% [markdown]
 # ### Permutation Feature Importance
@@ -330,38 +311,38 @@ if cfg.interpretation.permutation_importance.models.catboost:
 
 # %%
 if cfg.interpretation.partial_dependence.models.logistic_regression:
-    pdp(train_val_sets, model_name="Logistic Regression", feature_names=feature_names)
+    pdp(cfg, train_val_sets, model_name="Logistic Regression")
 
 # %%
 if cfg.interpretation.partial_dependence.models.gaussian_nb:
-    pdp(train_val_sets, model_name="Gaussian NB", feature_names=feature_names)
+    pdp(cfg, train_val_sets, model_name="Gaussian NB")
 
 # %%
 if cfg.interpretation.partial_dependence.models.linear_svc:
-    pdp(train_val_sets, model_name="Linear SVC", feature_names=feature_names)
+    pdp(cfg, train_val_sets, model_name="Linear SVC")
 
 # %%
 if cfg.interpretation.partial_dependence.models.decision_tree:
-    pdp(train_val_sets, model_name="Decision Tree", feature_names=feature_names)
+    pdp(cfg, train_val_sets, model_name="Decision Tree")
 
 # %%
 if cfg.interpretation.partial_dependence.models.random_forest:
-    pdp(train_val_sets, model_name="Random Forest", feature_names=feature_names)
+    pdp(cfg, train_val_sets, model_name="Random Forest")
 
 # %%
 if cfg.interpretation.partial_dependence.models.adaboost:
-    pdp(train_val_sets, model_name="AdaBoost", feature_names=feature_names)
+    pdp(cfg, train_val_sets, model_name="AdaBoost")
 
 # %%
 if cfg.interpretation.partial_dependence.models.xgboost:
-    pdp(train_val_sets, model_name="XGBoost", feature_names=feature_names)
+    pdp(cfg, train_val_sets, model_name="XGBoost")
 
 # %%
 if cfg.interpretation.partial_dependence.models.lightgbm:
-    pdp(train_val_sets, model_name="LightGBM", feature_names=feature_names)
+    pdp(cfg, train_val_sets, model_name="LightGBM")
 
 # %%
 if cfg.interpretation.partial_dependence.models.catboost:
-    pdp(train_val_sets, model_name="CatBoost", feature_names=feature_names)
+    pdp(train_val_sets, model_name="CatBoost")
 
 # %%
