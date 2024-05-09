@@ -362,18 +362,6 @@ df = df.fillna({"State": "AP"})
 
 
 # %%
-# Notice that Row 49244 Zip code is 0, the state is incorrect, we impute manually
-def change_state_value(df, row_id, new_value):
-    df_copy = df.copy()
-    df_copy.loc[row_id, "State"] = new_value
-    return df_copy
-
-
-row_id = 49244
-new_value = "NY"
-df = change_state_value(df, row_id, new_value)
-
-# %%
 print_imputed_State_rows(df, temp_empty_state)
 
 # %%
