@@ -32,13 +32,15 @@ from scipy.stats import skew
 from sklearn.preprocessing import OrdinalEncoder
 
 pd.set_option("future.no_silent_downcasting", True)
+pd.set_option("mode.copy_on_write", True)
 nltk.download("punkt")
 
 # %%
 df = pd.read_csv("data/SBA.csv", low_memory=False)
 
 # %%
-df.info()
+vw = df[:]
+vw.info()
 
 # %% [markdown]
 # Sample: 
