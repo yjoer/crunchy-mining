@@ -68,15 +68,14 @@ vw["NewExist"] = vw["NewExist"].astype(int)
 
 # %%
 # For RevLineCr, Based on the data description, only Y and N, thus we will ingore others
-vw["RevLineCr"].unique()
+vw["RevLineCr"].value_counts(dropna=False)
 
 # %%
-null_mask = vw["RevLineCr"].isnull()
-vw = vw[vw["RevLineCr"].isin(["Y", "N"]) | null_mask]
+vw = vw[vw["RevLineCr"].isin(["Y", "N"])]
 
 # %%
 # LowDoc valid input only Y or N
-vw["LowDoc"].unique()
+vw["LowDoc"].value_counts()
 
 # %%
 null_mask = vw["LowDoc"].isnull()
