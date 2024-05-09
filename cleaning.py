@@ -37,10 +37,10 @@ nltk.download("punkt")
 
 # %%
 df = pd.read_csv("data/SBA.csv", low_memory=False)
+df.info()
 
 # %%
 vw = df[:]
-vw.info()
 
 # %% [markdown]
 # ## Modify
