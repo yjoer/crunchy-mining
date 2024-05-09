@@ -397,6 +397,21 @@ vw.isnull().sum()
 # NAICS, the first 2 numbers represent the Industry
 vw["NAICS"] = vw["NAICS"].astype(str).str[:2]
 
+# %%
+# Change Y / N to 1 / 0
+vw["RevLineCr"] = vw["RevLineCr"].replace({"Y": 1, "N": 0}).astype(int)
+vw.RevLineCr.value_counts()
+
+# %%
+# Change Y / N to 1 / 0
+vw["LowDoc"] = vw["LowDoc"].replace({"Y": 1, "N": 0}).astype(int)
+vw.LowDoc.value_counts()
+
+# %%
+# Change MIS Status PIF = 0, CHGOFF = 1
+vw["MIS_Status"] = vw["MIS_Status"].replace({"P I F": 0, "CHGOFF": 1})
+vw.MIS_Status.value_counts()
+
 # %% [markdown]
 # ### Feature Engineering
 
@@ -534,21 +549,6 @@ vw["SBA_AppvPct"] = vw["SBA_Appv"] / vw["GrAppv"]
 # %%
 # AppvDisbursed: Check loan amount disbursed was equal to the full amount approved
 vw["AppvDisbursed"] = np.where(vw["DisbursementGross"] == vw["GrAppv"], 1, 0)
-
-# %%
-# Change MIS Status PIF = 0, CHGOFF = 1
-vw["MIS_Status"] = vw["MIS_Status"].replace({"P I F": 0, "CHGOFF": 1})
-vw.MIS_Status.value_counts()
-
-# %%
-# Change Y / N to 1 / 0
-vw["LowDoc"] = vw["LowDoc"].replace({"Y": 1, "N": 0}).astype(int)
-vw.LowDoc.value_counts()
-
-# %%
-# Change Y / N to 1 / 0
-vw["RevLineCr"] = vw["RevLineCr"].replace({"Y": 1, "N": 0}).astype(int)
-vw.RevLineCr.value_counts()
 
 # %%
 # Is_Existing
