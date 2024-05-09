@@ -327,20 +327,13 @@ temp_empty_state = df.loc[df["State"].isnull()]
 temp_empty_state
 
 # %%
-df.loc[df["State"].isnull(), "Zip"].unique()
-
-# %%
-# Sort Zip in Ascending
-df_sorted = df.sort_values(by="Zip")
-
-# Group df based on zip code
-grouped = df_sorted.groupby("Zip")
+vw.loc[vw["State"].isnull(), "Zip"].unique()
 
 # %%
 # Fill the null 'State' based on the zip code group
-df_sorted["State"] = grouped["State"].ffill()
-df = df_sorted.sort_index()
-
+vw.sort_values(by="Zip", inplace=True)
+vw["State"] = vw.groupby("Zip")["State"].ffill()
+vw.sort_index(inplace=True)
 
 # %%
 # To cross check the imputation Result for State
@@ -388,19 +381,13 @@ vw[vw["BankState"].isnull()]
 
 # %%
 # Fill in Bank State based on Bank
-df_sorted = df.sort_values(by="Bank")
-grouped = df_sorted.groupby("Bank")
-df_sorted["BankState"] = grouped["BankState"].ffill()
-df = df_sorted.sort_index()
-
-# %%
-df.loc[df["BankState"].isnull()]
+vw.sort_values(by="Bank", inplace=True)
+vw["BankState"] = vw.groupby("Bank")["BankState"].ffill()
+vw.sort_index(inplace=True)
 
 # %%
 # Drop the BankState NA Row since we cant do any imputation
-df = df.dropna(subset=["BankState"], how="all")
-df.shape
-
+vw.dropna(subset=["BankState"], how="all", inplace=True)
 
 # %%
 # Drop DisbursementDate with NA
