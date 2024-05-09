@@ -10,3 +10,4 @@ dist/
 data/*.npz
 data/output.parquet
 data/SBA.csv
+data/output.csv

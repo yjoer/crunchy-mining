@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import numpy as np
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import r2_score
+from sklearn import metrics
+
 import tracemalloc
 import typing
 from contextlib import contextmanager
@@ -82,6 +87,27 @@ def evaluate_classification(y_true, y_pred):
         "support_0": sup_neg,
         "roc_auc": roc_auc_score(y_true, y_pred),
     }
+
+
+def calculate_mape(y_true, y_pred):
+    actual    = np.array(y_true)
+    predicted = np.array(y_pred.flatten()) 
+    return np.mean(np.abs((actual - predicted) / actual)) * 100
+
+
+def evaluate_regression(y_test,y_pred):
+    r2 = r2_score(y_test, y_pred)
+    R2 = r2_score(y_test, y_pred)
+    RMSE = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
+    MSE = metrics.mean_squared_error(y_test, y_pred)
+    MAE = metrics.mean_absolute_error(y_test, y_pred)
+    
+    return {
+        "R2": round(R2,4),
+        "RMSE": round(RMSE,4),
+        "MSE": round(MSE,4),
+        "MAE": round(MAE,4),
+        }
 
 
 def plot_weights_logistic_regression(importances: pd.DataFrame):
