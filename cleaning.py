@@ -15,22 +15,14 @@
 
 # %%
 import datetime
-import math
 from collections import Counter
-from datetime import date
 
-import altair as alt
-import matplotlib.pyplot as plt
 import nltk
 import numpy as np
 import pandas as pd
 import pandera as pa
-import seaborn as sns
 from nltk.tokenize import word_tokenize
-from numpy import argmax
-from scipy import stats
-from scipy.stats import skew
-from sklearn.preprocessing import OrdinalEncoder
+from ydata_profiling import ProfileReport
 
 pd.set_option("future.no_silent_downcasting", True)
 pd.set_option("mode.copy_on_write", True)
@@ -41,10 +33,34 @@ df = pd.read_csv("data/SBA.csv", low_memory=False)
 df.info()
 
 # %%
+if False:
+    profile = ProfileReport(df, title="Profiling Report")
+    profile.to_file("report.html")
+
+# %%
 vw = df[:]
 
 # %% [markdown]
 # ## Modify
+
+# %% [markdown]
+# ### Convert Data Types
+
+# %%
+# To Date
+date_col = ["ApprovalDate", "ChgOffDate", "DisbursementDate"]
+vw[date_col] = pd.to_datetime(vw[date_col].stack(), format="%d-%b-%y").unstack()
+
+# %%
+# Tranform Data With String to Float
+currency_col = [
+    "DisbursementGross",
+    "BalanceGross",
+    "ChgOffPrinGr",
+    "GrAppv",
+    "SBA_Appv",
+]
+vw[currency_col] = vw[currency_col].replace("[\$,]", "", regex=True).astype(float)
 
 # %% [markdown]
 # ### Handle Inconsistent Data
@@ -100,28 +116,6 @@ if not duplicate_rows.empty:
     print(duplicate_rows)
 else:
     print("No duplicate rows found.")
-
-# %% [markdown]
-# ### Convert Data Types
-
-# %%
-# To Date
-date_col = ["ApprovalDate", "ChgOffDate", "DisbursementDate"]
-vw[date_col] = pd.to_datetime(vw[date_col].stack(), format="%d-%b-%y").unstack()
-
-# %%
-# Tranform Data With String to Float
-currency_col = [
-    "DisbursementGross",
-    "BalanceGross",
-    "ChgOffPrinGr",
-    "GrAppv",
-    "SBA_Appv",
-]
-vw[currency_col] = vw[currency_col].replace("[\$,]", "", regex=True).astype(float)
-
-# %%
-vw.info()
 
 # %% [markdown]
 # ### Handle Missing Values
@@ -458,5 +452,5 @@ except pa.errors.SchemaError as exc:
 # %%
 # Export Cleaned Data to CSV
 file_path = "data/output.parquet"
-df.to_parquet(file_path, engine="pyarrow", index=False)
+vw.to_parquet(file_path, engine="pyarrow", index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
