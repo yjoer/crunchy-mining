@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import nltk
 import numpy as np
 import pandas as pd
+import pandera as pa
 import seaborn as sns
 from nltk.tokenize import word_tokenize
 from numpy import argmax
@@ -56,6 +57,9 @@ vw.loc[non_numeric_mask, "ApprovalFY"].unique()
 # %%
 # Year to Int
 vw["ApprovalFY"] = vw["ApprovalFY"].replace("1976A", 1976).astype(int)
+
+# %%
+vw.drop(vw[vw["ApprovalDate"] > vw["DisbursementDate"]].index, inplace=True)
 
 # %%
 # 1 = New; 2 = Exist
@@ -409,7 +413,7 @@ vw.LowDoc.value_counts()
 
 # %%
 # Change MIS Status PIF = 0, CHGOFF = 1
-vw["MIS_Status"] = vw["MIS_Status"].replace({"P I F": 0, "CHGOFF": 1})
+vw["MIS_Status"] = vw["MIS_Status"].replace({"P I F": 0, "CHGOFF": 1}).astype(int)
 vw.MIS_Status.value_counts()
 
 # %% [markdown]
@@ -568,6 +572,66 @@ vw.info()
 # %%
 # For Cross check BalanceGross got value (because too many 0)
 vw["BalanceGross"].value_counts()
+
+# %% [markdown]
+# ### Data Validation
+
+# %%
+schema = pa.DataFrameSchema(
+    {
+        "LoanNr_ChkDgt": pa.Column(pa.dtypes.Int64, unique=True),
+        "Name": pa.Column(pa.dtypes.String),
+        "City": pa.Column(pa.dtypes.String),
+        "State": pa.Column(pa.dtypes.String),
+        "Zip": pa.Column(pa.dtypes.Int64, checks=pa.Check.in_range(0, 99999)),
+        "Bank": pa.Column(pa.dtypes.String),
+        "BankState": pa.Column(pa.dtypes.String),
+        "NAICS": pa.Column(pa.dtypes.String, checks=pa.Check.str_length(max_value=2)),
+        "ApprovalDate": pa.Column(pa.dtypes.Timestamp),
+        "ApprovalFY": pa.Column(pa.dtypes.Int32, checks=pa.Check.in_range(1970, 2014)),
+        "Term": pa.Column(pa.dtypes.Int64, checks=pa.Check.ge(0)),
+        "NoEmp": pa.Column(pa.dtypes.Int64, checks=pa.Check.ge(0)),
+        "NewExist": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([1, 2])),
+        "CreateJob": pa.Column(pa.dtypes.Int64, checks=pa.Check.ge(0)),
+        "RetainedJob": pa.Column(pa.dtypes.Int64, checks=pa.Check.ge(0)),
+        "FranchiseCode": pa.Column(pa.dtypes.Int64),
+        "UrbanRural": pa.Column(pa.dtypes.Int64, checks=pa.Check.isin([0, 1, 2])),
+        "RevLineCr": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+        "LowDoc": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+        "ChgOffDate": pa.Column(pa.dtypes.Timestamp, nullable=True),
+        "DisbursementDate": pa.Column(pa.dtypes.Timestamp),
+        "DisbursementGross": pa.Column(pa.dtypes.Float64, checks=pa.Check.ge(0)),
+        "BalanceGross": pa.Column(pa.dtypes.Float64, checks=pa.Check.ge(0)),
+        "MIS_Status": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+        "ChgOffPrinGr": pa.Column(pa.dtypes.Float64, checks=pa.Check.ge(0)),
+        "GrAppv": pa.Column(pa.dtypes.Float64, checks=pa.Check.ge(0)),
+        "SBA_Appv": pa.Column(pa.dtypes.Float64, checks=pa.Check.ge(0)),
+        "DisbursementFY": pa.Column(
+            pa.dtypes.Int64,
+            checks=pa.Check.in_range(1970, 2028),
+        ),
+        "IsFranchised": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+        "IsCreatedJob": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+        "IsRetainedJob": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+        "Industry": pa.Column(pa.dtypes.String),
+        "RealEstate": pa.Column(pa.dtypes.Int64, checks=pa.Check.isin([0, 1])),
+        "DaysTerm": pa.Column(pa.dtypes.Int64, checks=pa.Check.ge(0)),
+        "Active": pa.Column(pa.dtypes.Timestamp),
+        "Recession": pa.Column(pa.dtypes.Int64, checks=pa.Check.isin([0, 1])),
+        "DaysToDisbursement": pa.Column(pa.dtypes.Int64, checks=pa.Check.ge(0)),
+        "StateSame": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+        "SBA_AppvPct": pa.Column(pa.dtypes.Float64, checks=pa.Check.in_range(0, 100)),
+        "AppvDisbursed": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+        "IsExisting": pa.Column(pa.dtypes.Int32, checks=pa.Check.isin([0, 1])),
+    },
+    strict=True,
+)
+
+# %%
+try:
+    schema.validate(vw, lazy=True)
+except pa.errors.SchemaError as exc:
+    print(exc)
 
 # %%
 # Export Cleaned Data to CSV
