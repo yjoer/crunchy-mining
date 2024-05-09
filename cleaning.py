@@ -43,21 +43,40 @@ vw = df[:]
 vw.info()
 
 # %% [markdown]
-# Sample: 
+# ## Modify
+
+# %% [markdown]
+# ### Handle Inconsistent Data
+
+# %%
+# Identify the values leading to mixed type
+non_numeric_mask = pd.to_numeric(vw["ApprovalFY"], errors="coerce").isna()
+vw.loc[non_numeric_mask, "ApprovalFY"].unique()
+
+# %%
+# Year to Int
+vw["ApprovalFY"] = vw["ApprovalFY"].replace("1976A", 1976).astype(int)
+
+# %% [markdown]
+# ### Remove Duplicates
+
+# %%
+# Check duplicate row
+duplicate_rows = vw[vw.duplicated()]
+
+if not duplicate_rows.empty:
+    print("Duplicate rows found:")
+    print(duplicate_rows)
+else:
+    print("No duplicate rows found.")
+
+# %% [markdown]
+# ### Convert Data Types
 
 # %%
 # To Date
 date_col = ["ApprovalDate", "ChgOffDate", "DisbursementDate"]
-df[date_col] = pd.to_datetime(df[date_col].stack(), format="%d-%b-%y").unstack()
-
-# %%
-# Identify the values leading to mixed type
-non_numeric_mask = pd.to_numeric(df["ApprovalFY"], errors="coerce").isna()
-df.loc[non_numeric_mask, "ApprovalFY"].unique()
-
-# %%
-# Year to Int
-df["ApprovalFY"] = df["ApprovalFY"].replace("1976A", 1976).astype(int)
+vw[date_col] = pd.to_datetime(vw[date_col].stack(), format="%d-%b-%y").unstack()
 
 # %%
 # Tranform Data With String to Float
@@ -252,16 +271,6 @@ df.head()
 
 # %%
 df.shape
-
-# %%
-# Check duplicate row
-duplicate_rows = df[df.duplicated()]
-
-if not duplicate_rows.empty:
-    print("Duplicate rows found:")
-    print(duplicate_rows)
-else:
-    print("No duplicate rows found.")
 
 # %%
 # Check Null
