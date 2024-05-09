@@ -313,6 +313,10 @@ df.describe(include="O")
 vw.isnull().sum()
 
 # %%
+# Drop DisbursementDate with NA
+vw.dropna(subset=["DisbursementDate"], how="all", inplace=True)
+
+# %%
 # Check for Name Column with Null
 vw.loc[vw["Name"].isnull()]
 
@@ -388,10 +392,6 @@ vw.sort_index(inplace=True)
 # %%
 # Drop the BankState NA Row since we cant do any imputation
 vw.dropna(subset=["BankState"], how="all", inplace=True)
-
-# %%
-# Drop DisbursementDate with NA
-vw.dropna(subset=["DisbursementDate"], how="all", inplace=True)
 
 # %%
 # For MIS_Status, if got charge-off date, we will fill in charge off, others we cannot
