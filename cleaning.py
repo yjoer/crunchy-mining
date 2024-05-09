@@ -82,7 +82,7 @@ null_mask = vw["LowDoc"].isnull()
 vw = vw[vw["LowDoc"].isin(["Y", "N"]) | null_mask]
 
 # %%
-vw["MIS_Status"].unique()
+vw["MIS_Status"].value_counts(dropna=False)
 
 # %% [markdown]
 # ### Remove Duplicates
@@ -117,15 +117,7 @@ currency_col = [
 vw[currency_col] = vw[currency_col].replace("[\$,]", "", regex=True).astype(float)
 
 # %%
-df["DisbursementFY"] = df["DisbursementDate"].map(lambda x: x.year)
-
-# %%
-# NAICS, the first 2 numbers represent the Industry
-df["NAICS"] = df["NAICS"].astype(str).str[:2]
-df["NAICS"]
-
-# %%
-df.info()
+vw.info()
 
 # %% [markdown]
 # Exploration:
@@ -330,7 +322,7 @@ vw.fillna({"City": "Unknown City"}, inplace=True)
 
 # %%
 temp_empty_state = vw.loc[vw["State"].isnull()]
-temp_empty_state
+temp_empty_state.iloc[:, :5]
 
 # %%
 vw.loc[vw["State"].isnull(), "Zip"].unique()
@@ -358,9 +350,6 @@ vw.fillna({"State": "AP"}, inplace=True)
 # %%
 # Fill in NA Bank
 vw.fillna({"Bank": "Unknown Bank"}, inplace=True)
-
-# %%
-vw[vw["BankState"].isnull()]
 
 # %%
 # Fill in Bank State based on Bank
@@ -401,32 +390,45 @@ vw["LowDoc"] = np.where(disbursement_gross_gte_150k, "N", vw["LowDoc"])
 # %%
 vw.isnull().sum()
 
-# %%
-# Is_Franchised
-df["Is_Franchised"] = df["FranchiseCode"].replace(1, 0)
-df["Is_Franchised"] = np.where((df.FranchiseCode != 0), 1, df.FranchiseCode)
-df["Is_Franchised"] = df["Is_Franchised"].astype(int)
-df.Is_Franchised.value_counts()
-
-# %%
-# Is_CreatedJob
-df["Is_CreatedJob"] = np.where((df.CreateJob > 0), 1, df.CreateJob)
-df["Is_CreatedJob"] = df["Is_CreatedJob"].astype(int)
-df.Is_CreatedJob.value_counts()
-
-# %%
-# Is_RetainedJob
-df["Is_RetainedJob"] = np.where((df.RetainedJob > 0), 1, df.RetainedJob)
-df["Is_RetainedJob"] = df["Is_RetainedJob"].astype(int)
-df.Is_RetainedJob.value_counts()
+# %% [markdown]
+# ### Data Transformation
 
 # %%
 # NAICS, the first 2 numbers represent the Industry
-df["NAICS"].unique()
+vw["NAICS"] = vw["NAICS"].astype(str).str[:2]
+
+# %% [markdown]
+# ### Feature Engineering
+
+# %%
+vw["DisbursementFY"] = vw["DisbursementDate"].map(lambda x: x.year)
+
+# %%
+# IsFranchised
+vw["IsFranchised"] = vw["FranchiseCode"].replace(1, 0)
+vw["IsFranchised"] = np.where((vw.FranchiseCode != 0), 1, vw.FranchiseCode)
+vw["IsFranchised"] = vw["IsFranchised"].astype(int)
+vw.IsFranchised.value_counts()
+
+# %%
+# Is_CreatedJob
+vw["IsCreatedJob"] = np.where((vw.CreateJob > 0), 1, vw.CreateJob)
+vw["IsCreatedJob"] = vw["IsCreatedJob"].astype(int)
+vw.IsCreatedJob.value_counts()
+
+# %%
+# Is_RetainedJob
+vw["IsRetainedJob"] = np.where((vw.RetainedJob > 0), 1, vw.RetainedJob)
+vw["IsRetainedJob"] = vw["IsRetainedJob"].astype(int)
+vw.IsRetainedJob.value_counts()
+
+# %%
+# NAICS, the first 2 numbers represent the Industry
+vw["NAICS"].unique()
 
 # %%
 # A lot of null value, do we want to use nltk for this?
-naics_counts = df["NAICS"].value_counts()
+naics_counts = vw["NAICS"].value_counts()
 
 if "0" in naics_counts.index:
     print("Number of occurrences of '0' in the 'NAICS' column:", naics_counts["0"])
@@ -435,7 +437,7 @@ else:
 
 # %%
 # Use NLTK to fill in Industry based on Company Name
-all_text = " ".join(df.loc[df["NAICS"] == "0", "Name"])
+all_text = " ".join(vw.loc[vw["NAICS"] == "0", "Name"])
 words = word_tokenize(all_text)
 word_counts = Counter(words)
 # Print the most common words and their counts
@@ -445,25 +447,24 @@ for word, count in most_common:
 
 # %%
 # Keyword 1: Accommodation (72)
-df[df["Name"].str.contains(" INN|MOTEL", case=False)]
+keyword_accommodation = vw["Name"].str.contains(" INN|MOTEL", case=False)
+vw[keyword_accommodation].iloc[:, :5]
 
 # %%
-df.loc[(df["Name"].str.contains(" INN|MOTEL")) & (df["NAICS"] == "0"), "NAICS"] = "72"
-df.loc[df["NAICS"] == "0", "NAICS"].value_counts()
+vw.loc[keyword_accommodation & (vw["NAICS"] == "0"), "NAICS"] = "72"
+vw.loc[vw["NAICS"] == "0", "NAICS"].value_counts()
 
 # %%
 # Keyword: Food (72)
-df[df["Name"].str.contains("RESTAURANT|PIZZA|CAFE", case=False)]
+keyword_food = vw["Name"].str.contains("RESTAURANT|PIZZA|CAFE", case=False)
+vw[keyword_food].iloc[:, :5]
 
 # %%
-df.loc[
-    (df["Name"].str.contains("RESTUARANT|PIZZA|CAFE")) & (df["NAICS"] == "0"), "NAICS"
-] = "72"
-df.loc[df["NAICS"] == "0", "NAICS"].value_counts()
+vw.loc[keyword_food & (vw["NAICS"] == "0"), "NAICS"] = "72"
+vw.loc[vw["NAICS"] == "0", "NAICS"].value_counts()
 
 # %%
-df["Industry"] = df["NAICS"].astype("str").apply(lambda x: x[:2])
-df["Industry"] = df["Industry"].map(
+vw["Industry"] = vw["NAICS"].map(
     {
         "11": "Ag/Forest/Fish/Hunt",
         "21": "Min/Quar/OilGas",
@@ -494,29 +495,29 @@ df["Industry"] = df["Industry"].map(
 
 # %%
 # df = df.fillna({'Industry':'Others'})
-df = df.drop(df[df["NAICS"] == "0"].index)
+vw.drop(vw[vw["NAICS"] == "0"].index, inplace=True)
 
 # %%
 # Guideline: 4.1.5. Loans Backed by Real Estate
-df["RealEstate"] = df["Term"].apply(lambda x: 1 if x >= 240 else 0)
+vw["RealEstate"] = vw["Term"].apply(lambda x: 1 if x >= 240 else 0)
 
 # %%
 # Guideline: 4.1.6. Economic Recession
-df["DaysTerm"] = df["Term"] * 30
-df["Active"] = df["DisbursementDate"] + pd.to_timedelta(df["DaysTerm"], unit="D")
+vw["DaysTerm"] = vw["Term"] * 30
+vw["Active"] = vw["DisbursementDate"] + pd.to_timedelta(vw["DaysTerm"], unit="D")
 
 # %%
 startdate = datetime.datetime.strptime("2007-12-1", "%Y-%m-%d").date()
 enddate = datetime.datetime.strptime("2009-06-30", "%Y-%m-%d").date()
-df["Recession"] = df["Active"].dt.date.apply(
+vw["Recession"] = vw["Active"].dt.date.apply(
     lambda x: 1 if startdate <= x <= enddate else 0
 )
 
 # %%
 # DaysToDisbursement
-df["DaysToDisbursement"] = df["DisbursementDate"] - df["ApprovalDate"]
-df["DaysToDisbursement"] = (
-    df["DaysToDisbursement"]
+vw["DaysToDisbursement"] = vw["DisbursementDate"] - vw["ApprovalDate"]
+vw["DaysToDisbursement"] = (
+    vw["DaysToDisbursement"]
     .astype("str")
     .apply(lambda x: x[: x.index("d") - 1])
     .astype("int64")
@@ -524,39 +525,39 @@ df["DaysToDisbursement"] = (
 
 # %%
 # Check if Company state is same as Bank State
-df["StateSame"] = np.where(df["State"] == df["BankState"], 1, 0)
+vw["StateSame"] = np.where(vw["State"] == vw["BankState"], 1, 0)
 
 # %%
 # SBA_AppvPct : guaranteed amount is based on a percentage of the gross loan amount
-df["SBA_AppvPct"] = df["SBA_Appv"] / df["GrAppv"]
+vw["SBA_AppvPct"] = vw["SBA_Appv"] / vw["GrAppv"]
 
 # %%
 # AppvDisbursed: Check loan amount disbursed was equal to the full amount approved
-df["AppvDisbursed"] = np.where(df["DisbursementGross"] == df["GrAppv"], 1, 0)
+vw["AppvDisbursed"] = np.where(vw["DisbursementGross"] == vw["GrAppv"], 1, 0)
 
 # %%
 # Change MIS Status PIF = 0, CHGOFF = 1
-df["MIS_Status"] = df["MIS_Status"].replace({"P I F": 0, "CHGOFF": 1})
-df.MIS_Status.value_counts()
+vw["MIS_Status"] = vw["MIS_Status"].replace({"P I F": 0, "CHGOFF": 1})
+vw.MIS_Status.value_counts()
 
 # %%
 # Change Y / N to 1 / 0
-df["LowDoc"] = df["LowDoc"].replace({"Y": 1, "N": 0}).astype(int)
-df.LowDoc.value_counts()
+vw["LowDoc"] = vw["LowDoc"].replace({"Y": 1, "N": 0}).astype(int)
+vw.LowDoc.value_counts()
 
 # %%
 # Change Y / N to 1 / 0
-df["RevLineCr"] = df["RevLineCr"].replace({"Y": 1, "N": 0}).astype(int)
-df.RevLineCr.value_counts()
+vw["RevLineCr"] = vw["RevLineCr"].replace({"Y": 1, "N": 0}).astype(int)
+vw.RevLineCr.value_counts()
 
 # %%
 # Is_Existing
 # 1 = New; 2 = Exist
-df["Is_Existing"] = df["NewExist"].replace({1: 0, 2: 1})
-df.Is_Existing.value_counts()
+vw["IsExisting"] = vw["NewExist"].replace({1: 0, 2: 1})
+vw.IsExisting.value_counts()
 
 # %%
-df.info()
+vw.info()
 
 # %%
 # df.drop(
@@ -566,7 +567,7 @@ df.info()
 
 # %%
 # For Cross check BalanceGross got value (because too many 0)
-df["BalanceGross"].unique()
+vw["BalanceGross"].value_counts()
 
 # %%
 # Export Cleaned Data to CSV
