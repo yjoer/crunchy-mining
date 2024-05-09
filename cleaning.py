@@ -73,6 +73,9 @@ vw["LowDoc"].unique()
 null_mask = vw["LowDoc"].isnull()
 vw = vw[vw["LowDoc"].isin(["Y", "N"]) | null_mask]
 
+# %%
+vw["MIS_Status"].unique()
+
 # %% [markdown]
 # ### Remove Duplicates
 
@@ -408,17 +411,8 @@ df = df[df["NewExist"] != 0]
 df.NewExist.value_counts()
 
 # %%
-df.shape
-
-# %%
-df.isnull().sum()
-
-# %%
 # Drop DisbursementDate with NA
 df = df.dropna(subset=["DisbursementDate"], how="all")
-
-# %%
-vw["MIS_Status"].unique()
 
 # %%
 # For MIS_Status, if got charge-off date, we will fill in charge off, others we cannot
@@ -435,27 +429,19 @@ vw["MIS_Status"] = np.where(possible_charge_off, "CHGOFF", vw["MIS_Status"])
 vw.dropna(subset=["MIS_Status"], how="all", inplace=True)
 
 # %%
+# Guideline: LowDoc(Y:Yes, N:No): In order to process more loans efficiently, a
+# "LowDoc Loan" program was implemented where loans under $150,000 can be processed
+# using a one-page application. "Yes" indicates loans with a one-page application, and
+# "No" indicates loans with more information attached to the application
+low_doc_missing = vw["LowDoc"].isnull()
+disbursement_gross_lt_150k = low_doc_missing & (vw["DisbursementGross"] < 150000)
+disbursement_gross_gte_150k = low_doc_missing & (vw["DisbursementGross"] >= 150000)
+
+vw["LowDoc"] = np.where(disbursement_gross_lt_150k, "Y", vw["LowDoc"])
+vw["LowDoc"] = np.where(disbursement_gross_gte_150k, "N", vw["LowDoc"])
+
+# %%
 vw.isnull().sum()
-
-# %% [markdown]
-# Data Transformation
-
-# %%
-# LowDoc valid input only Y or N
-df["LowDoc"].unique()
-
-# %%
-# Guideline: LowDoc(Y:Yes, N:No): In order to process more loansefficiently, a“LowDoc Loan”program was implemented whereloans under $150,000 can be processed using a one-page appli-cation.“Yes”indicates loans with a one-page application, and“No”indicates loans with more information attached to the application
-df["LowDoc"] = np.where(
-    (df["LowDoc"] == np.nan) & (df["DisbursementGross"] < 150000), "Y", df.LowDoc
-)
-df["LowDoc"] = np.where(
-    (df["LowDoc"] == np.nan) & (df["DisbursementGross"] >= 150000), "N", df.LowDoc
-)
-
-
-# %%
-df.isnull().sum()
 
 # %%
 # Is_Franchised
