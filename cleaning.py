@@ -87,7 +87,7 @@ currency_col = [
     "GrAppv",
     "SBA_Appv",
 ]
-df[currency_col] = df[currency_col].replace("[\$,]", "", regex=True).astype(float)
+vw[currency_col] = vw[currency_col].replace("[\$,]", "", regex=True).astype(float)
 
 # %%
 df["DisbursementFY"] = df["DisbursementDate"].map(lambda x: x.year)
@@ -273,24 +273,27 @@ df.head()
 df.shape
 
 # %%
-# Check Null
-df.isnull().sum()
-
-# %%
 df.describe()
 
 # %%
 df.describe(include="O")
 
+# %% [markdown]
+# ### Handle Missing Values
+
+# %%
+# Check Null
+vw.isnull().sum()
+
 # %%
 # Check for Name Column with Null
-df.loc[df["Name"].isnull()]
+vw.loc[vw["Name"].isnull()]
 
 # %%
-df = df.fillna({"Name": "Unknown Company"})
+vw.fillna({"Name": "Unknown Company"}, inplace=True)
 
 # %%
-df = df.fillna({"City": "Unknown City"})
+vw.fillna({"City": "Unknown City"}, inplace=True)
 
 # %%
 temp_empty_state = df.loc[df["State"].isnull()]
@@ -351,10 +354,10 @@ print_imputed_State_rows(df, temp_empty_state)
 
 # %%
 # Fill in NA Bank
-df = df.fillna({"Bank": "Unknown Bank"})
+vw.fillna({"Bank": "Unknown Bank"}, inplace=True)
 
 # %%
-df.loc[df["BankState"].isnull()]
+vw[vw["BankState"].isnull()]
 
 # %%
 # Fill in Bank State based on Bank
@@ -407,22 +410,24 @@ df.isnull().sum()
 df = df.dropna(subset=["DisbursementDate"], how="all")
 
 # %%
-df["MIS_Status"].unique()
+vw["MIS_Status"].unique()
 
 # %%
-# For MIS_Status, if got change off date, we will fill in change off, others we cannot impute, we will drop it
-df["MIS_Status"] = np.where(
-    (df["MIS_Status"] == "CHGOFF") & (df["ChgOffDate"] != np.nan),
-    "CHGOFF",
-    df.MIS_Status,
+# For MIS_Status, if got charge-off date, we will fill in charge off, others we cannot
+# impute, we will drop it
+possible_charge_off = (
+    (vw["MIS_Status"].isnull())
+    & (vw["ChgOffDate"].notnull())
+    & (vw["ChgOffPrinGr"] > 0)
 )
 
-# %%
-df = df[(df["MIS_Status"] == "P I F") | (df["MIS_Status"] == "CHGOFF")]
-print(df[["MIS_Status", "ChgOffDate"]].head(10))
+vw["MIS_Status"] = np.where(possible_charge_off, "CHGOFF", vw["MIS_Status"])
 
 # %%
-df.isnull().sum()
+vw.dropna(subset=["MIS_Status"], how="all", inplace=True)
+
+# %%
+vw.isnull().sum()
 
 # %% [markdown]
 # Data Transformation
