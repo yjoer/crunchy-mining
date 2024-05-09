@@ -57,6 +57,22 @@ vw.loc[non_numeric_mask, "ApprovalFY"].unique()
 # Year to Int
 vw["ApprovalFY"] = vw["ApprovalFY"].replace("1976A", 1976).astype(int)
 
+# %%
+# For RevLineCr, Based on the data description, only Y and N, thus we will ingore others
+vw["RevLineCr"].unique()
+
+# %%
+null_mask = vw["RevLineCr"].isnull()
+vw = vw[vw["RevLineCr"].isin(["Y", "N"]) | null_mask]
+
+# %%
+# LowDoc valid input only Y or N
+vw["LowDoc"].unique()
+
+# %%
+null_mask = vw["LowDoc"].isnull()
+vw = vw[vw["LowDoc"].isin(["Y", "N"]) | null_mask]
+
 # %% [markdown]
 # ### Remove Duplicates
 
@@ -392,14 +408,6 @@ df = df[df["NewExist"] != 0]
 df.NewExist.value_counts()
 
 # %%
-# For RevLineCr, Based on the data description, only Y and N, thus we will ingore others
-df["RevLineCr"].unique()
-
-# %%
-df = df[df["RevLineCr"].isin(["Y", "N"])]
-df["RevLineCr"].unique()
-
-# %%
 df.shape
 
 # %%
@@ -445,7 +453,6 @@ df["LowDoc"] = np.where(
     (df["LowDoc"] == np.nan) & (df["DisbursementGross"] >= 150000), "N", df.LowDoc
 )
 
-df = df[(df["LowDoc"] == "Y") | (df["LowDoc"] == "N")]
 
 # %%
 df.isnull().sum()
