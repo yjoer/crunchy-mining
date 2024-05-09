@@ -312,13 +312,15 @@ df.describe(include="O")
 # Check Null
 vw.isnull().sum()
 
+# %% [markdown]
+# #### Deletion
+
 # %%
 # Drop DisbursementDate with NA
 vw.dropna(subset=["DisbursementDate"], how="all", inplace=True)
 
-# %%
-# Check for Name Column with Null
-vw.loc[vw["Name"].isnull()]
+# %% [markdown]
+# #### Imputation
 
 # %%
 vw.fillna({"Name": "Unknown Company"}, inplace=True)
@@ -327,7 +329,7 @@ vw.fillna({"Name": "Unknown Company"}, inplace=True)
 vw.fillna({"City": "Unknown City"}, inplace=True)
 
 # %%
-temp_empty_state = df.loc[df["State"].isnull()]
+temp_empty_state = vw.loc[vw["State"].isnull()]
 temp_empty_state
 
 # %%
@@ -341,28 +343,17 @@ vw.sort_index(inplace=True)
 
 # %%
 # To cross check the imputation Result for State
-def print_imputed_State_rows(df, temp_empty_state):
-    if not temp_empty_state.empty:
-        null_indices = temp_empty_state.index
-        imputed_rows = df.loc[null_indices, ["City", "State", "Zip", "BankState"]]
-        print(
-            "Table with imputed data for rows with null values in the 'State' column:"
-        )
-        print(imputed_rows)
-    else:
-        print("No rows with null values in the 'State' column.")
-
-
-print_imputed_State_rows(df, temp_empty_state)
+if not temp_empty_state.empty:
+    null_indices = temp_empty_state.index
+    imputed_rows = vw.loc[null_indices, ["City", "State", "Zip", "BankState"]]
+    print("Table with imputed data for rows with null values in the 'State' column:")
+    print(imputed_rows)
+else:
+    print("No rows with null values in the 'State' column.")
 
 # %%
 # Still got one State is NA, We will fill in manually based on Zip Code
-df.loc[df["State"].isnull()]
-df = df.fillna({"State": "AP"})
-
-
-# %%
-print_imputed_State_rows(df, temp_empty_state)
+vw.fillna({"State": "AP"}, inplace=True)
 
 # %%
 # Fill in NA Bank
