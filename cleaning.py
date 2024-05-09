@@ -58,6 +58,15 @@ vw.loc[non_numeric_mask, "ApprovalFY"].unique()
 vw["ApprovalFY"] = vw["ApprovalFY"].replace("1976A", 1976).astype(int)
 
 # %%
+# 1 = New; 2 = Exist
+# We dont make assumption since this column might be one of the important factors
+vw["NewExist"].value_counts(dropna=False)
+
+# %%
+vw = vw[vw["NewExist"].isin([1, 2])]
+vw["NewExist"] = vw["NewExist"].astype(int)
+
+# %%
 # For RevLineCr, Based on the data description, only Y and N, thus we will ingore others
 vw["RevLineCr"].unique()
 
@@ -393,26 +402,10 @@ df.loc[df["BankState"].isnull()]
 df = df.dropna(subset=["BankState"], how="all")
 df.shape
 
-# %%
-# Drop NA for IsExiting
-# We dont make assumption since this column might be one of the important factors
-df = df.dropna(subset=["NewExist"], how="all")
-df.shape
-
-# %%
-# Change NewExist from float to int
-# 1 = New; 2 = Exist
-df["NewExist"] = df["NewExist"].astype(int)
-df.NewExist.value_counts()
-
-# %%
-# 1 = New; 2 = Exist
-df = df[df["NewExist"] != 0]
-df.NewExist.value_counts()
 
 # %%
 # Drop DisbursementDate with NA
-df = df.dropna(subset=["DisbursementDate"], how="all")
+vw.dropna(subset=["DisbursementDate"], how="all", inplace=True)
 
 # %%
 # For MIS_Status, if got charge-off date, we will fill in charge off, others we cannot
