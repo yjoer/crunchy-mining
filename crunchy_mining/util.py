@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import tracemalloc
 import typing
 from contextlib import contextmanager
@@ -12,7 +13,6 @@ from sklearn import metrics
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import r2_score
 from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import cross_val_score
 
 if typing.TYPE_CHECKING:
     pass
@@ -24,6 +24,7 @@ def trace_memory():
     # dictionary is empty initially until the execution within the context is
     # finished.
     stats = {}
+    start = time.time()
 
     if not tracemalloc.is_tracing():
         tracemalloc.start()
@@ -32,10 +33,12 @@ def trace_memory():
         yield stats
     finally:
         current, peak = tracemalloc.get_traced_memory()
+        end = time.time()
+        tracemalloc.stop()
+
+        stats["duration"] = end - start
         stats["current"] = current
         stats["peak"] = peak
-
-        tracemalloc.stop()
 
 
 def evaluate_classification(y_true, y_pred):
@@ -233,21 +236,20 @@ def plot_pimp_boxplot(feature_names: List[str], pimp):
 
 
 def calculate_mape(y_true, y_pred):
-    actual    = np.array(y_true)
+    actual = np.array(y_true)
     predicted = np.array(y_pred.flatten())
     return np.mean(np.abs((actual - predicted) / actual)) * 100
 
 
-def evaluate_regression(y_test,y_pred):
-    r2 = r2_score(y_test, y_pred)
+def evaluate_regression(y_test, y_pred):
     R2 = r2_score(y_test, y_pred)
     RMSE = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
     MSE = metrics.mean_squared_error(y_test, y_pred)
     MAE = metrics.mean_absolute_error(y_test, y_pred)
 
     return {
-        "R2": round(R2,4),
-        "RMSE": round(RMSE,4),
-        "MSE": round(MSE,4),
-        "MAE": round(MAE,4),
-        }
+        "R2": round(R2, 4),
+        "RMSE": round(RMSE, 4),
+        "MSE": round(MSE, 4),
+        "MAE": round(MAE, 4),
+    }
