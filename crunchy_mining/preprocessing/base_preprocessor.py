@@ -35,7 +35,7 @@ class BasePreprocessor(ABC):
             arrays[f"{name}.x_test"] = X_test
             arrays[f"{name}.y_test"] = y_test
 
-        np.savez(f"data/{experiment}.npz", **arrays)
+        np.savez_compressed(f"data/{experiment}.npz", **arrays)
 
     def load_train_val_sets(self):
         experiment = self.cfg.mlflow.experiment_name.replace("/", "_")
