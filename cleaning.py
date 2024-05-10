@@ -33,12 +33,15 @@ df = pd.read_csv("data/SBA.csv", low_memory=False)
 df.info()
 
 # %%
-if False:
-    profile = ProfileReport(df, title="Profiling Report")
-    profile.to_file("report.html")
+vw = df[:]
+
+# %% [markdown]
+# ## Explore
 
 # %%
-vw = df[:]
+if False:
+    profile = ProfileReport(df, title="Profiling Report")
+    profile.to_file("report_1.html")
 
 # %% [markdown]
 # ## Modify
@@ -450,7 +453,14 @@ except pa.errors.SchemaError as exc:
     print(exc)
 
 # %%
+if False:
+    profile = ProfileReport(vw, title="Profiling Report")
+    profile.to_file("report_2.html")
+
+# %%
 # Export Cleaned Data to CSV
 file_path = "data/output.parquet"
 vw.to_parquet(file_path, engine="pyarrow", index=False)
 print(f"DataFrame has been successfully exported to {file_path}.")
+
+# %%
