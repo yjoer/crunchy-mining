@@ -1,4 +1,5 @@
 # %%
+import os
 import warnings
 
 import altair as alt
@@ -68,8 +69,10 @@ warnings.filterwarnings(
 )
 
 # %%
+experiment = os.environ.get("CM_EXPERIMENT", "sampler_v1")
+
 with initialize(version_base=None, config_path="conf"):
-    cfg = compose(overrides=["+experiment=sampler_v1"])
+    cfg = compose(overrides=[f"+experiment={experiment}"])
 
 # %%
 cfg
