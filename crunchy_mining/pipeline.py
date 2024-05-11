@@ -28,44 +28,6 @@ if typing.TYPE_CHECKING:
     from omegaconf import DictConfig
 
 
-def get_variables():
-    return {
-        "categorical": [
-            "City",
-            "State",
-            "Zip",
-            "Bank",
-            "BankState",
-            # "ApprovalFY",
-            "NewExist",
-            "Is_Franchised",
-            "UrbanRural",
-            "RevLineCr",
-            "LowDoc",
-            "Industry",
-            "RealEstate",
-            "Recession",
-            # "DisbursementFY",
-            "StateSame",
-            "SBA_AppvPct",
-        ],
-        "numerical": [
-            "Term",
-            "NoEmp",
-            "CreateJob",
-            "RetainedJob",
-            "DisbursementGross",
-            "BalanceGross",
-            # "ChgOffPrinGr",
-            "GrAppv",
-            "SBA_Appv",
-            "DaysTerm",
-            "DaysToDisbursement",
-        ],
-        "target": "MIS_Status",
-    }
-
-
 def inspect_holdout_split_size(train_val_sets: dict, target_variable: str):
     df_train, df_test = train_val_sets["testing"]
     df_train_sm, df_val = train_val_sets["validation"]

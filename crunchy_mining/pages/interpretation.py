@@ -1,9 +1,9 @@
 import mlflow
 import streamlit as st
+from hydra import compose
+from hydra import initialize
 
 from crunchy_mining import mlflow_util
-from crunchy_mining.pipeline import get_variables
-from crunchy_mining.preprocessing.preprocessors import GenericPreprocessor
 from crunchy_mining.util import plot_gain_lightgbm
 from crunchy_mining.util import plot_gain_xgboost
 from crunchy_mining.util import plot_impurity_adaboost
@@ -18,7 +18,9 @@ from crunchy_mining.util import plot_weights_logistic_regression
 st.set_page_config(layout="wide")
 mlflow.set_tracking_uri("http://localhost:5001")
 
-experiments = ["Default"]
+experiments = [
+    "clf/sampler_v1",
+]
 
 model_names = [
     "KNN",
@@ -43,19 +45,25 @@ folds = {
 }
 
 cols = st.columns([1, 1, 1])
-selected_experiment = cols[0].selectbox(label="Experiments", options=experiments)
-selected_model = cols[1].selectbox(label="Models", options=model_names)
-
-selected_fold = cols[2].selectbox(
+experiment = cols[0].selectbox(label="Experiments", options=experiments)
+model = cols[1].selectbox(label="Models", options=model_names)
+fold = cols[2].selectbox(
     label="Folds",
     options=folds.keys(),
     format_func=lambda x: folds[x],
 )
 
-mlflow.set_experiment(selected_experiment)
+task, experiment_file = experiment.split("/")[:2]
 
-parent_run_id = mlflow_util.get_latest_run_id_by_name(selected_model)
-run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=selected_fold)
+with initialize(version_base=None, config_path="../../conf"):
+    cfg = compose(overrides=[f"+experiment={experiment_file}"])
+
+mlflow.set_experiment(cfg.mlflow.experiment_name)
+
+feature_names = cfg.vars.categorical + cfg.vars.numerical
+
+parent_run_id = mlflow_util.get_latest_run_id_by_name(model)
+run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=fold)
 
 if not run_id:
     st.text("Model training is required. Please train the model before proceeding.")
@@ -63,14 +71,7 @@ if not run_id:
 
 st.markdown("**Intrinsic and Model Specific**")
 
-variables = get_variables()
-feature_names = variables["categorical"] + variables["numerical"]
-
-gp = GenericPreprocessor(selected_experiment, variables)
-gp.load_train_val_sets()
-X_train, _, _, _ = gp.get_train_val_sets()[selected_fold]
-
-match selected_model:
+match model:
     case "KNN":
         st.text("N/A")
     case "Logistic Regression":
