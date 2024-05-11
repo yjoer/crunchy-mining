@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - _default
+
+mlflow:
+  experiment_name: clf/preprocessing_v6
+sampling:
+  variant: 1
+preprocessing:
+  variant: 6
+resampling:
+  variant: 0
+validation:
+  models:
+    knn: true
+    logistic_regression: true
+    gaussian_nb: true
+    linear_svc: true
+    decision_tree: true
+    random_forest: true
+    adaboost: true
+    xgboost: true
+    lightgbm: true
+    catboost: true
