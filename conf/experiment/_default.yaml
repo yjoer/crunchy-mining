@@ -42,6 +42,7 @@ vars:
     - DaysTerm
     - DaysToDisbursement
     - SBA_AppvPct
+  stratify: MIS_Status
   target: MIS_Status
 sampling:
   variant: 1
