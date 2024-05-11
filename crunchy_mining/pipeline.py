@@ -458,6 +458,10 @@ def intrinsic_linear(cfg: DictConfig, train_val_sets: dict, model_name: str):
     for name, (X_train, _, _, _) in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+
+        if not run_id:
+            continue
+
         model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
 
         contributions = np.abs(np.std(X_train, axis=0) * model.coef_[0])
@@ -477,6 +481,10 @@ def intrinsic_trees(cfg: DictConfig, train_val_sets: dict, model_name: str):
     for name, _ in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+
+        if not run_id:
+            continue
+
         model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
 
         importances = model.feature_importances_
@@ -495,6 +503,10 @@ def intrinsic_xgboost(cfg: DictConfig, train_val_sets: dict):
     for name, _ in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name("XGBoost")
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+
+        if not run_id:
+            continue
+
         model = mlflow.xgboost.load_model(f"runs:/{run_id}/model")
 
         importances = model.feature_importances_
@@ -513,6 +525,10 @@ def intrinsic_lightgbm(cfg: DictConfig, train_val_sets: dict):
     for name, _ in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name("LightGBM")
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+
+        if not run_id:
+            continue
+
         model = mlflow.lightgbm.load_model(f"runs:/{run_id}/model")
 
         # Use gain as the importance type and normalize to align with XGBoost.
@@ -533,6 +549,10 @@ def intrinsic_catboost(cfg: DictConfig, train_val_sets: dict):
     for name, _ in tqdm(train_val_sets.items()):
         parent_run_id = mlflow_util.get_latest_run_id_by_name("CatBoost")
         run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+
+        if not run_id:
+            continue
+
         model = mlflow.catboost.load_model(f"runs:/{run_id}/model")
 
         # https://catboost.ai/en/docs/concepts/fstr#regular-feature-importance
