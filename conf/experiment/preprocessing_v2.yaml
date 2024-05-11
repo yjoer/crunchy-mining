@@ -14,7 +14,7 @@ validation:
   models:
     knn: false
     logistic_regression: true
-    gaussian_nb: true
+    gaussian_nb: false
     linear_svc: true
     decision_tree: true
     random_forest: true
