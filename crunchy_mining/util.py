@@ -24,7 +24,7 @@ def trace_memory():
     # dictionary is empty initially until the execution within the context is
     # finished.
     stats = {}
-    start = time.time()
+    start = time.perf_counter_ns()
 
     if not tracemalloc.is_tracing():
         tracemalloc.start()
@@ -33,7 +33,7 @@ def trace_memory():
         yield stats
     finally:
         current, peak = tracemalloc.get_traced_memory()
-        end = time.time()
+        end = time.perf_counter_ns()
         tracemalloc.stop()
 
         stats["duration"] = end - start
