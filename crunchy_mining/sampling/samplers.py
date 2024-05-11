@@ -27,7 +27,7 @@ class SamplerV1(BaseSampler):
             df_train_fold = df_train.iloc[train_idx]
             df_val_fold = df_train.iloc[val_idx]
 
-            self.train_val_sets[f"fold_{i}"] = (df_train_fold, df_val_fold)
+            self.train_val_sets[f"fold_{i+1}"] = (df_train_fold, df_val_fold)
 
 
 class SamplerV2(BaseSampler):
@@ -72,7 +72,7 @@ class SamplerV2(BaseSampler):
             df_train_fold = df_train.iloc[train_idx]
             df_val_fold = pd.concat((df_train.iloc[val_idx], df_val_extra))
 
-            self.train_val_sets[f"fold_{i}"] = (df_train_fold, df_val_fold)
+            self.train_val_sets[f"fold_{i+1}"] = (df_train_fold, df_val_fold)
 
 
 class ResamplerV0(BaseSampler):
