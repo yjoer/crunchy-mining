@@ -22,3 +22,14 @@ validation:
     xgboost: true
     lightgbm: true
     catboost: true
+interpretation:
+  intrinsic:
+    models:
+      logistic_regression: true
+      linear_svc: true
+      decision_tree: true
+      random_forest: true
+      adaboost: true
+      xgboost: true
+      lightgbm: true
+      catboost: true
