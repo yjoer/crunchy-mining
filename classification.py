@@ -142,6 +142,7 @@ for name, (df_train, df_val) in train_val_sets_raw.items():
 
 # "name": (X_train, y_train, X_val, y_val)
 preprocessor.save_train_val_sets()
+preprocessor.save_encoders()
 train_val_sets_pp = preprocessor.get_train_val_sets()
 
 # %% [markdown]

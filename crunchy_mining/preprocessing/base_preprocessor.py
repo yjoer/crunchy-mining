@@ -5,7 +5,10 @@ from abc import ABC
 from abc import abstractmethod
 from typing import Dict
 
+import mlflow
 import numpy as np
+
+from .. import mlflow_util
 
 if typing.TYPE_CHECKING:
     from omegaconf import DictConfig
@@ -53,3 +56,7 @@ class BasePreprocessor(ABC):
 
     def get_encoders(self):
         return self.encoders
+
+    def save_encoders(self):
+        with mlflow.start_run(run_name="Encoders"):
+            mlflow_util.log_pickle(self.encoders, artifact_file="encoders.pkl")
