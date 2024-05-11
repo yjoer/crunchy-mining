@@ -29,7 +29,7 @@ class BaseSampler(ABC):
             df,
             test_size=0.15,
             random_state=12345,
-            stratify=df[self.cfg.vars.target],
+            stratify=df[self.cfg.vars.stratify],
         )
 
         return df_train, df_test
@@ -40,7 +40,7 @@ class BaseSampler(ABC):
             df_train,
             test_size=0.15 / 0.85,
             random_state=12345,
-            stratify=df_train[self.cfg.vars.target],
+            stratify=df_train[self.cfg.vars.stratify],
         )
 
         return df_train_sm, df_val
@@ -51,7 +51,7 @@ class BaseSampler(ABC):
         skf_indices = list(
             skf.split(
                 X=np.zeros(len(df_train)),
-                y=df_train[self.cfg.vars.target],
+                y=df_train[self.cfg.vars.stratify],
             )
         )
 
