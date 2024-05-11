@@ -82,13 +82,21 @@ def train_knn(X_train, y_train):
 def validate_knn(train_val_sets: dict):
     with mlflow.start_run(run_name="KNN"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     knn = train_knn(X_train, y_train)
 
-                y_knn = knn.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_knn = knn.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_knn))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(knn.get_params())
 
                 mlflow.sklearn.log_model(
@@ -113,13 +121,21 @@ def train_logistic_regression(X_train, y_train):
 def validate_logistic_regression(train_val_sets: dict):
     with mlflow.start_run(run_name="Logistic Regression"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     logreg = train_logistic_regression(X_train, y_train)
 
-                y_logreg = logreg.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_logreg = logreg.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_logreg))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(logreg.get_params())
 
                 mlflow.sklearn.log_model(
@@ -139,13 +155,21 @@ def train_gaussian_nb(X_train, y_train):
 def validate_gaussian_nb(train_val_sets: dict):
     with mlflow.start_run(run_name="Gaussian NB"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     gnb = train_gaussian_nb(X_train, y_train)
 
-                y_gnb = gnb.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_gnb = gnb.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_gnb))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(gnb.get_params())
 
                 mlflow.sklearn.log_model(
@@ -170,13 +194,21 @@ def train_linear_svc(X_train, y_train):
 def validate_linear_svc(train_val_sets: dict):
     with mlflow.start_run(run_name="Linear SVC"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     svc = train_linear_svc(X_train, y_train)
 
-                y_svc = svc.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_svc = svc.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_svc))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(svc.get_params())
 
                 mlflow.sklearn.log_model(
@@ -200,13 +232,21 @@ def train_decision_tree(X_train, y_train):
 def validate_decision_tree(train_val_sets: dict):
     with mlflow.start_run(run_name="Decision Tree"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     dt = train_decision_tree(X_train, y_train)
 
-                y_dt = dt.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_dt = dt.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_dt))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(dt.get_params())
 
                 mlflow.sklearn.log_model(
@@ -231,13 +271,21 @@ def train_random_forest(X_train, y_train):
 def validate_random_forest(train_val_sets: dict):
     with mlflow.start_run(run_name="Random Forest"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     rf = train_random_forest(X_train, y_train)
 
-                y_rf = rf.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_rf = rf.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_rf))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(rf.get_params())
 
                 mlflow.sklearn.log_model(
@@ -262,13 +310,21 @@ def train_adaboost(X_train, y_train):
 def validate_adaboost(train_val_sets: dict):
     with mlflow.start_run(run_name="AdaBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     ab = train_adaboost(X_train, y_train)
 
-                y_ab = ab.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_ab = ab.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_ab))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(ab.get_params())
 
                 mlflow.sklearn.log_model(
@@ -293,13 +349,21 @@ def train_xgboost(X_train, y_train):
 def validate_xgboost(train_val_sets: dict):
     with mlflow.start_run(run_name="XGBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     xgb = train_xgboost(X_train, y_train)
 
-                y_xgb = xgb.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_xgb = xgb.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_xgb))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(xgb.get_params())
 
                 mlflow.xgboost.log_model(
@@ -325,13 +389,21 @@ def train_lightgbm(X_train, y_train):
 def validate_lightgbm(train_val_sets: dict):
     with mlflow.start_run(run_name="LightGBM"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     lgb = train_lightgbm(X_train, y_train)
 
-                y_lgb = lgb.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_lgb = lgb.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_lgb))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(lgb.get_params())
 
                 mlflow.lightgbm.log_model(
@@ -356,13 +428,21 @@ def train_catboost(X_train, y_train):
 def validate_catboost(train_val_sets: dict):
     with mlflow.start_run(run_name="CatBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as trace:
+                with trace_memory() as fit_trace:
                     catb = train_catboost(X_train, y_train)
 
-                y_catb = catb.predict(X_val)
+                with trace_memory() as score_trace:
+                    y_catb = catb.predict(X_val)
+
                 mlflow.log_metrics(evaluate_classification(y_val, y_catb))
-                mlflow.log_metric("peak_memory_usage", trace["peak"])
+                mlflow.log_metric("fit_time", fit_trace["duration"])
+                mlflow.log_metric("fit_memory_peak", fit_trace["peak"])
+                mlflow.log_metric("score_time", score_trace["duration"])
+                mlflow.log_metric("score_memory_peak", score_trace["peak"])
                 mlflow.log_params(catb.get_params())
 
                 mlflow.catboost.log_model(
