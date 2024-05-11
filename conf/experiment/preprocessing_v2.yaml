@@ -12,7 +12,7 @@ resampling:
   variant: 0
 validation:
   models:
-    knn: true
+    knn: false
     logistic_regression: true
     gaussian_nb: true
     linear_svc: true
