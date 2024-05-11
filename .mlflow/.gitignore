@@ -1,2 +1,3 @@
 *
 !.gitignore
+!basic_auth.ini.example
