@@ -69,7 +69,7 @@ warnings.filterwarnings(
 )
 
 # %%
-experiment = os.environ.get("CM_EXPERIMENT", "sampler_v1")
+experiment = os.environ.get("CM_EXPERIMENT", "sampling_v1")
 
 with initialize(version_base=None, config_path="conf"):
     cfg = compose(overrides=[f"+experiment={experiment}"])
