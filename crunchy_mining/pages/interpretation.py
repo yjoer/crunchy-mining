@@ -19,7 +19,23 @@ st.set_page_config(layout="wide")
 mlflow.set_tracking_uri("http://localhost:5001")
 
 experiments = [
-    "clf/sampler_v1",
+    "clf/sampling_v1",
+    "clf/sampling_v2",
+    "clf/preprocessing_v1",
+    "clf/preprocessing_v2",
+    "clf/preprocessing_v3",
+    "clf/preprocessing_v4",
+    "clf/preprocessing_v5",
+    "clf/preprocessing_v6",
+    "clf/preprocessing_v7",
+    "clf/resampling_v1",
+    "clf/resampling_v2",
+    "clf/resampling_v3",
+    "clf/resampling_v4",
+    "clf/resampling_v5",
+    "clf/resampling_v6",
+    "clf/resampling_v7",
+    "clf/resampling_v8",
 ]
 
 model_names = [
@@ -71,12 +87,17 @@ if not run_id:
 
 st.markdown("**Intrinsic and Model Specific**")
 
+artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
+importances = mlflow_util.load_table(artifact_uri)
+
+if importances is None:
+    st.text("Hit a roadblock! Consider running the function to generate feature importance.")  # fmt: skip
+    st.stop()
+
 match model:
     case "KNN":
         st.text("N/A")
     case "Logistic Regression":
-        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
-        importances = mlflow_util.load_table(artifact_uri)
         chart = plot_weights_logistic_regression(importances)
 
         cols = st.columns([1, 1])
@@ -84,50 +105,36 @@ match model:
     case "Gaussian NB":
         st.text("N/A")
     case "Linear SVC":
-        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
-        importances = mlflow_util.load_table(artifact_uri)
         chart = plot_weights_linear_svc(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "Decision Tree":
-        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
-        importances = mlflow_util.load_table(artifact_uri)
         chart = plot_impurity_decision_tree(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "Random Forest":
-        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
-        importances = mlflow_util.load_table(artifact_uri)
         chart = plot_impurity_random_forest(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "AdaBoost":
-        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
-        importances = mlflow_util.load_table(artifact_uri)
         chart = plot_impurity_adaboost(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "XGBoost":
-        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
-        importances = mlflow_util.load_table(artifact_uri)
         chart = plot_gain_xgboost(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "LightGBM":
-        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
-        importances = mlflow_util.load_table(artifact_uri)
         chart = plot_gain_lightgbm(importances)
 
         cols = st.columns([1, 1])
         cols[0].altair_chart(chart, use_container_width=True)
     case "CatBoost":
-        artifact_uri = f"runs:/{run_id}/interpretation/intrinsic.json"
-        importances = mlflow_util.load_table(artifact_uri)
         chart = plot_pvc_catboost(importances)
 
         cols = st.columns([1, 1])
