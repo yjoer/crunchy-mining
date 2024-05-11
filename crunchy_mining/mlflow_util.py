@@ -1,6 +1,7 @@
 import os
 import pickle
 import tempfile
+from typing import Optional
 
 import mlflow
 import pandas as pd
@@ -29,7 +30,7 @@ def load_table(artifact_uri: str):
     return pd.read_json(dst_path, orient="split")
 
 
-def log_pickle(obj, artifact_file: str, run_id: str):
+def log_pickle(obj, artifact_file: str, run_id: Optional[str] = None):
     directory, filename = os.path.split(artifact_file)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
