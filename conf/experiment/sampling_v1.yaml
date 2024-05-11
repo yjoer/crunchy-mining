@@ -3,7 +3,7 @@ defaults:
   - _default
 
 mlflow:
-  experiment_name: clf/sampler_v1
+  experiment_name: clf/sampling_v1
 sampling:
   variant: 1
 preprocessing:
