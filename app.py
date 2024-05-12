@@ -1,5 +1,8 @@
+from dotenv import load_dotenv
 from st_pages import Page
 from st_pages import show_pages
+
+load_dotenv()
 
 show_pages(
     [
