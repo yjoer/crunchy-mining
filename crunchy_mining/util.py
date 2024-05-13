@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
@@ -91,13 +90,18 @@ def evaluate_classification(y_true, y_pred):
 
 
 def evaluate_regression(y_true, y_pred):
+    ape = np.abs((y_true - y_pred) / y_true)
+    mape = np.mean(ape)
+    mdape = np.median(ape)
+
     mse = mean_squared_error(y_true, y_pred)
     rmse = np.sqrt(mse)
 
     return {
         "mae": mean_absolute_error(y_true, y_pred),
+        "mape": mape,
         "mdae": median_absolute_error(y_true, y_pred),
-        "mape": mean_absolute_percentage_error(y_true, y_pred),
+        "mdape": mdape,
         "mse": mse,
         "rmse": rmse,
         "r_squared": r2_score(y_true, y_pred),
