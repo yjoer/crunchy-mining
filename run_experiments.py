@@ -26,9 +26,26 @@ experiments_clf = [
     # "resampling_v8",
 ]
 
-for experiment in experiments_clf:
+experiments_bank = [
+    # "bank/sampling_v1",
+    # "bank/sampling_v2",
+]
+
+for experiment in experiments_clf + experiments_bank:
     env = os.environ.copy()
     env["CM_EXPERIMENT"] = experiment
 
     logger.info(f"Running experiment: {experiment}")
-    subprocess.run([sys.executable, "classification.py"], env=env)
+    task_name, experiment_file = experiment.split("/")
+
+    match task_name:
+        case "":
+            file = "classification.py"
+        case "bank":
+            file = "regression.py"
+        case "sba":
+            file = "regression.py"
+        case _:
+            sys.exit()
+
+    subprocess.run([sys.executable, file], env=env)
