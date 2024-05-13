@@ -1,38 +1,44 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.16.1
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
-# %% editable=true slideshow={"slide_type": ""}
+# %%
+import os
 import warnings
+
 import mlflow
-import pandas as pd
 import numpy as np
-from sklearn.preprocessing import OrdinalEncoder
-
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import train_test_split
+import pandas as pd
+from dotenv import load_dotenv
+from hydra import compose
+from hydra import initialize
 from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
 
-from crunchy_mining.pipeline import inspect_holdout_split_size
 from crunchy_mining.pipeline import inspect_cv_split_size
-from crunchy_mining.preprocessing.preprocessors import PreprocessorReg
+from crunchy_mining.pipeline import inspect_holdout_split_size
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV1
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV2
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV3
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV4
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV5
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV6
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV7
+from crunchy_mining.reg_pipeline import validate_adaboost
+from crunchy_mining.reg_pipeline import validate_catboost
+from crunchy_mining.reg_pipeline import validate_decision_tree
+from crunchy_mining.reg_pipeline import validate_elastic_net
+from crunchy_mining.reg_pipeline import validate_lasso
+from crunchy_mining.reg_pipeline import validate_lightgbm
+from crunchy_mining.reg_pipeline import validate_linear_regression
+from crunchy_mining.reg_pipeline import validate_random_forest
+from crunchy_mining.reg_pipeline import validate_ridge
+from crunchy_mining.reg_pipeline import validate_xgboost
+from crunchy_mining.sampling.reg_samplers import SamplerV1
+from crunchy_mining.sampling.reg_samplers import SamplerV2
 
+load_dotenv()
+
+# %load_ext autoreload
+# %autoreload 2
 
 mlflow.set_tracking_uri("http://localhost:5001")
-
-experiment_name = "Bank Appv"
-mlflow.set_experiment(experiment_name)
 
 warnings.filterwarnings(
     action="ignore",
@@ -50,13 +56,17 @@ warnings.filterwarnings(
 )
 
 # %%
-from crunchy_mining.regpipeline import (
-    validate_lm,
-    validate_random_forest,
-    validate_decision_tree,
-    validate_ridge_regression,
-    validate_xg_boost,
-)
+experiment = os.environ.get("CM_EXPERIMENT", "bank/sampling_v1")
+task_name, experiment_file = experiment.split("/")
+
+with initialize(version_base=None, config_path="conf"):
+    cfg = compose(overrides=[f"+experiment_{task_name}={experiment_file}"])
+
+# %%
+cfg
+
+# %%
+mlflow.set_experiment(cfg.mlflow.experiment_name)
 
 # %%
 df = pd.read_parquet("data/output.parquet")
@@ -64,108 +74,99 @@ df = pd.read_parquet("data/output.parquet")
 # %%
 df.info()
 
-# %%
-variables = {
-    "categorical": [
-        "City",
-        "State",
-        "BankState",
-        "ApprovalDate",
-        "DisbursementDate",
-        "Industry",
-        "Active"
-    ],
-    "numerical": [
-        "ApprovalFY",
-        "Term",
-        "NoEmp",
-        "CreateJob",
-        "RetainedJob",
-        "FranchiseCode",
-        "UrbanRural",
-        "RevLineCr",
-        "LowDoc",
-        "DisbursementGross",
-        "BalanceGross",
-        "ChgOffPrinGr",
-        "SBA_Appv",
-        "DisbursementFY",
-        "Is_Franchised",
-        "Is_CreatedJob",
-        "Is_RetainedJob",
-        "RealEstate",
-        "DaysTerm",
-        "Recession",
-        "DaysToDisbursement",
-        "StateSame",
-        "SBA_AppvPct",
-        "AppvDisbursed",
-        "Is_Existing",
-        "MIS_Status"
-    ],
-    "target": "GrAppv",
-}
+# %% [markdown]
+# ## Sample
 
 # %%
-df_train, df_test = train_test_split(
-    df,
-    test_size=0.15,
-    random_state=12345,
-)
+match cfg.sampling.variant:
+    case 1:
+        sampler = SamplerV1(cfg)
+    case 2:
+        sampler = SamplerV2(cfg)
+
+sampler.sample(df)
+train_val_sets_raw = sampler.train_val_sets
 
 # %%
-# 1. Holdout method
-df_train_sm, df_val = train_test_split(
-    df_train,
-    test_size=0.15 / 0.85,
-    random_state=12345,
-)
+inspect_holdout_split_size(train_val_sets_raw, cfg.vars.stratify)
 
 # %%
-inspect_holdout_split_size(df_train, df_train_sm, df_val, df_test, variables["target"])
-
-# %%
-# 2. Cross-validation
-kf = KFold(n_splits=5, shuffle=True, random_state=12345)
-# skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=12345)
-kf_indices = list(kf.split(np.zeros(len(df_train)), df_train[variables["target"]]))
-
-# %%
-inspect_cv_split_size(df_train, kf_indices, variables["target"])
-
-# %%
-preprocessor = PreprocessorReg(experiment_name, variables)
-preprocessor.fit(df_train_sm, df_val, name="validation")
-preprocessor.fit(df_train, df_test, name="testing")
-
-for i, (train_index, val_index) in enumerate(kf_indices):
-    preprocessor.fit(
-        df_train.iloc[train_index],
-        df_train.iloc[val_index],
-        name=f"fold_{i + 1}",
-    )
-
-preprocessor.save_train_val_sets()
-train_val_sets = preprocessor.get_train_val_sets()
-encoders = preprocessor.get_encoders()
-
-# %%
-print(encoders)
+inspect_cv_split_size(train_val_sets_raw, cfg.vars.stratify)
 
 # %% [markdown]
-# Modelling
+# ## Modify
+
+# %% [markdown]
+# ### Preprocessing
 
 # %%
-validate_lm(train_val_sets, encoders)
+match cfg.preprocessing.variant:
+    case 1:
+        preprocessor = PreprocessorV1(cfg)
+    case 2:
+        preprocessor = PreprocessorV2(cfg)
+    case 3:
+        preprocessor = PreprocessorV3(cfg)
+    case 4:
+        preprocessor = PreprocessorV4(cfg)
+    case 5:
+        preprocessor = PreprocessorV5(cfg)
+    case 6:
+        preprocessor = PreprocessorV6(cfg)
+    case 7:
+        preprocessor = PreprocessorV7(cfg)
+
+for name, (df_train, df_val) in train_val_sets_raw.items():
+    preprocessor.fit(df_train, df_val, name=name)
+
+# "name": (X_train, y_train, X_val, y_val)
+preprocessor.save_train_val_sets()
+preprocessor.save_encoders()
+
+# %% [markdown]
+# ## Model
+
+# %% [markdown]
+# ### Cross-Validation
 
 # %%
-validate_random_forest(train_val_sets, encoders)
+if cfg.validation.models.linear_regression:
+    validate_linear_regression(preprocessor)
 
 # %%
-validate_decision_tree(train_val_sets, encoders)
+if cfg.validation.models.lasso:
+    validate_lasso(preprocessor)
 
 # %%
-validate_ridge_regression(train_val_sets, encoders)
+if cfg.validation.models.ridge:
+    validate_ridge(preprocessor)
 
 # %%
-validate_xg_boost(train_val_sets, encoders)
+if cfg.validation.models.elastic_net:
+    validate_elastic_net(preprocessor)
+
+# %%
+if cfg.validation.models.decision_tree:
+    validate_decision_tree(preprocessor)
+
+# %%
+if cfg.validation.models.random_forest:
+    validate_random_forest(preprocessor)
+
+# %%
+if cfg.validation.models.adaboost:
+    validate_adaboost(preprocessor)
+
+# %%
+if cfg.validation.models.xgboost:
+    validate_xgboost(preprocessor)
+
+# %%
+if cfg.validation.models.lightgbm:
+    validate_lightgbm(preprocessor)
+
+# %%
+if cfg.validation.models.catboost:
+    validate_catboost(preprocessor)
+
+# %%
