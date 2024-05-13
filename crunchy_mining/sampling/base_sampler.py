@@ -8,6 +8,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split
 
@@ -56,3 +57,28 @@ class BaseSampler(ABC):
         )
 
         return skf_indices
+
+    def reg_split(self, df: pd.DataFrame):
+        df_train, df_test = train_test_split(df, test_size=0.15, random_state=12345)
+
+        return df_train, df_test
+
+    def reg_validation_split(self, df_train: pd.DataFrame):
+        df_train_sm, df_val = train_test_split(
+            df_train,
+            test_size=0.15 / 0.85,
+            random_state=12345,
+        )
+
+        return df_train_sm, df_val
+
+    def reg_kfold_split(self, df_train: pd.DataFrame):
+        kf = KFold(n_splits=5, shuffle=True, random_state=12345)
+        kf_indices = list(
+            kf.split(
+                X=np.zeros(len(df_train)),
+                y=df_train[self.cfg.vars.target],
+            )
+        )
+
+        return kf_indices
