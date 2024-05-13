@@ -29,6 +29,13 @@ experiments_clf = [
 experiments_bank = [
     # "bank/sampling_v1",
     # "bank/sampling_v2",
+    # "bank/preprocessing_v1",
+    # "bank/preprocessing_v2",
+    # "bank/preprocessing_v3",
+    # "bank/preprocessing_v4",
+    # "bank/preprocessing_v5",
+    # "bank/preprocessing_v6",
+    # "bank/preprocessing_v7",
 ]
 
 for experiment in experiments_clf + experiments_bank:
