@@ -9,8 +9,11 @@ from typing import List
 import altair as alt
 import numpy as np
 import pandas as pd
-from sklearn import metrics
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import roc_auc_score
 
@@ -84,6 +87,20 @@ def evaluate_classification(y_true, y_pred):
         "support_1": sup_pos,
         "support_0": sup_neg,
         "roc_auc": roc_auc_score(y_true, y_pred),
+    }
+
+
+def evaluate_regression(y_true, y_pred):
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+
+    return {
+        "mae": mean_absolute_error(y_true, y_pred),
+        "mdae": median_absolute_error(y_true, y_pred),
+        "mape": mean_absolute_percentage_error(y_true, y_pred),
+        "mse": mse,
+        "rmse": rmse,
+        "r_squared": r2_score(y_true, y_pred),
     }
 
 
@@ -233,23 +250,3 @@ def plot_pimp_boxplot(feature_names: List[str], pimp):
             color=alt.Color("features:N", legend=None),
         )
     )
-
-
-def calculate_mape(y_true, y_pred):
-    actual = np.array(y_true)
-    predicted = np.array(y_pred.flatten())
-    return np.mean(np.abs((actual - predicted) / actual)) * 100
-
-
-def evaluate_regression(y_test, y_pred):
-    R2 = r2_score(y_test, y_pred)
-    RMSE = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
-    MSE = metrics.mean_squared_error(y_test, y_pred)
-    MAE = metrics.mean_absolute_error(y_test, y_pred)
-
-    return {
-        "R2": round(R2, 4),
-        "RMSE": round(RMSE, 4),
-        "MSE": round(MSE, 4),
-        "MAE": round(MAE, 4),
-    }
