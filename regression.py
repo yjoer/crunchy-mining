@@ -8,11 +8,14 @@ import pandas as pd
 from dotenv import load_dotenv
 from hydra import compose
 from hydra import initialize
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split
 
 from crunchy_mining.pipeline import inspect_cv_split_size
 from crunchy_mining.pipeline import inspect_holdout_split_size
+from crunchy_mining.pipeline import intrinsic_catboost
+from crunchy_mining.pipeline import intrinsic_lightgbm
+from crunchy_mining.pipeline import intrinsic_linear
+from crunchy_mining.pipeline import intrinsic_trees
+from crunchy_mining.pipeline import intrinsic_xgboost
 from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV1
 from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV2
 from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV3
@@ -122,6 +125,7 @@ for name, (df_train, df_val) in train_val_sets_raw.items():
 # "name": (X_train, y_train, X_val, y_val)
 preprocessor.save_train_val_sets()
 preprocessor.save_encoders()
+train_val_sets = preprocessor.get_train_val_sets()
 
 # %% [markdown]
 # ## Model
@@ -168,5 +172,51 @@ if cfg.validation.models.lightgbm:
 # %%
 if cfg.validation.models.catboost:
     validate_catboost(preprocessor)
+
+# %% [markdown]
+# ## Assess
+
+# %% [markdown]
+# ### Intrinsic Interpretation
+
+# %%
+if cfg.interpretation.intrinsic.models.linear_regression:
+    intrinsic_linear(cfg, train_val_sets, model_name="Linear Regression")
+
+# %%
+if cfg.interpretation.intrinsic.models.lasso:
+    intrinsic_linear(cfg, train_val_sets, model_name="Lasso Regression")
+
+# %%
+if cfg.interpretation.intrinsic.models.ridge:
+    intrinsic_linear(cfg, train_val_sets, model_name="Ridge Regression")
+
+# %%
+if cfg.interpretation.intrinsic.models.elastic_net:
+    intrinsic_linear(cfg, train_val_sets, model_name="Elastic Net")
+
+# %%
+if cfg.interpretation.intrinsic.models.decision_tree:
+    intrinsic_trees(cfg, train_val_sets, model_name="Decision Tree")
+
+# %%
+if cfg.interpretation.intrinsic.models.random_forest:
+    intrinsic_trees(cfg, train_val_sets, model_name="Random Forest")
+
+# %%
+if cfg.interpretation.intrinsic.models.adaboost:
+    intrinsic_trees(cfg, train_val_sets, model_name="AdaBoost")
+
+# %%
+if cfg.interpretation.intrinsic.models.xgboost:
+    intrinsic_xgboost(cfg, train_val_sets)
+
+# %%
+if cfg.interpretation.intrinsic.models.lightgbm:
+    intrinsic_lightgbm(cfg, train_val_sets)
+
+# %%
+if cfg.interpretation.intrinsic.models.catboost:
+    intrinsic_catboost(cfg, train_val_sets)
 
 # %%
