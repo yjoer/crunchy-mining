@@ -29,6 +29,9 @@ def validate_linear_regression(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="Linear Regression"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     lr = train_linear_regression(X_train, y_train)
@@ -68,6 +71,9 @@ def validate_lasso(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="Lasso Regression"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     lasso = train_lasso(X_train, y_train)
@@ -107,6 +113,9 @@ def validate_ridge(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="Ridge Regression"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     ridge = train_ridge(X_train, y_train)
@@ -146,6 +155,9 @@ def validate_elastic_net(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="Elastic Net"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     en = train_elastic_net(X_train, y_train)
@@ -189,6 +201,9 @@ def validate_decision_tree(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="Decision Tree"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     dt = train_decision_tree(X_train, y_train)
@@ -233,6 +248,9 @@ def validate_random_forest(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="Random Forest"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     rf = train_random_forest(X_train, y_train)
@@ -276,6 +294,9 @@ def validate_adaboost(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="AdaBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     ab = train_adaboost(X_train, y_train)
@@ -320,6 +341,9 @@ def validate_xgboost(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="XGBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     xgb = train_xgboost(X_train, y_train)
@@ -365,6 +389,9 @@ def validate_lightgbm(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="LightGBM"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     lgb = train_lightgbm(X_train, y_train)
@@ -409,6 +436,9 @@ def validate_catboost(preprocessor: BasePreprocessor):
 
     with mlflow.start_run(run_name="CatBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
+            if name == "testing":
+                continue
+
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
                     catb = train_catboost(X_train, y_train)
