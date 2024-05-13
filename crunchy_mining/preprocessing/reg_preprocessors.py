@@ -33,7 +33,7 @@ class PreprocessorV1(BasePreprocessor):
 #  One-Hot Encoding + No Scaling + No Scaling (T)
 class PreprocessorV2(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
-        hot = OneHotEncoder(handle_unknown="infrequent_if_exist")
+        hot = OneHotEncoder(handle_unknown="infrequent_if_exist", min_frequency=250)
         X_train_cat = hot.fit_transform(df_train[self.cfg.vars.categorical])
         X_test_cat = hot.transform(df_test[self.cfg.vars.categorical])
 
