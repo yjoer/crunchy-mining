@@ -237,7 +237,7 @@ def train_random_forest(X_train, y_train):
     }
 
     rf = RandomForestRegressor(**params)
-    rf.fit(X_train, np.ravel(y_train.ravel))
+    rf.fit(X_train, y_train)
 
     return rf
 

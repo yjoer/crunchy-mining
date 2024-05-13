@@ -23,8 +23,8 @@ class PreprocessorV1(BasePreprocessor):
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
 
-        y_train = df_train[self.cfg.vars.target].to_numpy().reshape(-1, 1)
-        y_test = df_test[self.cfg.vars.target].to_numpy().reshape(-1, 1)
+        y_train = df_train[self.cfg.vars.target].to_numpy()
+        y_test = df_test[self.cfg.vars.target].to_numpy()
 
         self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["ordinal"] = oe
@@ -43,8 +43,8 @@ class PreprocessorV2(BasePreprocessor):
         X_train = sp.hstack((X_train_cat, X_train_num), format="csr")
         X_test = sp.hstack((X_test_cat, X_test_num), format="csr")
 
-        y_train = df_train[self.cfg.vars.target].to_numpy().reshape(-1, 1)
-        y_test = df_test[self.cfg.vars.target].to_numpy().reshape(-1, 1)
+        y_train = df_train[self.cfg.vars.target].to_numpy()
+        y_test = df_test[self.cfg.vars.target].to_numpy()
 
         self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["one_hot"] = hot
@@ -55,8 +55,6 @@ class PreprocessorV3(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         y_train = df_train[self.cfg.vars.target].to_numpy()
         y_test = df_test[self.cfg.vars.target].to_numpy()
-        y_train_2d = y_train.reshape(-1, 1)
-        y_test_2d = y_test.reshape(-1, 1)
 
         te = TargetEncoder(target_type="continuous", random_state=12345)
         X_train_cat = te.fit_transform(df_train[self.cfg.vars.categorical], y_train)
@@ -68,7 +66,7 @@ class PreprocessorV3(BasePreprocessor):
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
 
-        self.train_val_sets[name] = (X_train, y_train_2d, X_test, y_test_2d)
+        self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["target"] = te
 
 
@@ -85,8 +83,8 @@ class PreprocessorV4(BasePreprocessor):
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
 
-        y_train = df_train[self.cfg.vars.target].to_numpy().reshape(-1, 1)
-        y_test = df_test[self.cfg.vars.target].to_numpy().reshape(-1, 1)
+        y_train = df_train[self.cfg.vars.target].to_numpy()
+        y_test = df_test[self.cfg.vars.target].to_numpy()
 
         mm = MinMaxScaler()
         y_train = mm.fit_transform(y_train)
@@ -101,8 +99,6 @@ class PreprocessorV5(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         y_train = df_train[self.cfg.vars.target].to_numpy()
         y_test = df_test[self.cfg.vars.target].to_numpy()
-        y_train_2d = y_train.reshape(-1, 1)
-        y_test_2d = y_test.reshape(-1, 1)
 
         mm = MinMaxScaler()
         y_train = mm.fit_transform(y_train)
@@ -117,7 +113,7 @@ class PreprocessorV5(BasePreprocessor):
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
 
-        self.train_val_sets[name] = (X_train, y_train_2d, X_test, y_test_2d)
+        self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["target"] = te
         self.encoders["y_min_max"] = mm
 
@@ -135,8 +131,8 @@ class PreprocessorV6(BasePreprocessor):
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
 
-        y_train = np.log1p(df_train[self.cfg.vars.target].to_numpy().reshape(-1, 1))
-        y_test = df_test[self.cfg.vars.target].to_numpy().reshape(-1, 1)
+        y_train = np.log1p(df_train[self.cfg.vars.target].to_numpy())
+        y_test = df_test[self.cfg.vars.target].to_numpy()
 
         self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["ordinal"] = oe
@@ -148,8 +144,6 @@ class PreprocessorV7(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
         y_train = np.log1p(df_train[self.cfg.vars.target].to_numpy())
         y_test = df_test[self.cfg.vars.target].to_numpy()
-        y_train_2d = y_train.reshape(-1, 1)
-        y_test_2d = y_test.reshape(-1, 1)
 
         te = TargetEncoder(target_type="continuous", random_state=12345)
         X_train_cat = te.fit_transform(df_train[self.cfg.vars.categorical], y_train)
@@ -161,7 +155,7 @@ class PreprocessorV7(BasePreprocessor):
         X_train = np.hstack((X_train_cat, X_train_num))
         X_test = np.hstack((X_test_cat, X_test_num))
 
-        self.train_val_sets[name] = (X_train, y_train_2d, X_test, y_test_2d)
+        self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["target"] = te
         self.encoders["y_log"] = True
 
