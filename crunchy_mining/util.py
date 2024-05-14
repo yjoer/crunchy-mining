@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import platform
 import time
 import tracemalloc
 import typing
@@ -9,6 +10,7 @@ from typing import List
 import altair as alt
 import numpy as np
 import pandas as pd
+import psutil
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -18,6 +20,15 @@ from sklearn.metrics import roc_auc_score
 
 if typing.TYPE_CHECKING:
     pass
+
+
+def set_low_priority(pid: int):
+    process = psutil.Process(pid)
+
+    if platform.system() == "Windows":
+        process.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
+    else:
+        process.nice(10)
 
 
 @contextmanager
