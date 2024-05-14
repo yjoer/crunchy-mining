@@ -119,6 +119,113 @@ def evaluate_regression(y_true, y_pred):
     }
 
 
+def tabulate_classification_report(metrics: dict):
+    n_support = int(metrics["support_0"] + metrics["support_1"])
+
+    def fmt(x):
+        return f"{np.round(x, 4):.4f}"
+
+    df = pd.DataFrame(
+        data={
+            "precision": [
+                fmt(metrics["precision_0"]),
+                fmt(metrics["precision_1"]),
+                "",
+                "",
+                fmt(metrics["precision_macro"]),
+                fmt(metrics["precision_weighted"]),
+            ],
+            "recall": [
+                fmt(metrics["recall_0"]),
+                fmt(metrics["recall_1"]),
+                "",
+                "",
+                fmt(metrics["recall_macro"]),
+                fmt(metrics["recall_weighted"]),
+            ],
+            "f1-score": [
+                fmt(metrics["f1_0"]),
+                fmt(metrics["f1_1"]),
+                "",
+                fmt(metrics["accuracy"]),
+                fmt(metrics["f1_macro"]),
+                fmt(metrics["f1_weighted"]),
+            ],
+            "support": [
+                int(metrics["support_0"]),
+                int(metrics["support_1"]),
+                "",
+                n_support,
+                n_support,
+                n_support,
+            ],
+        },
+        index=["0", "1", "", "accuracy", "macro avg", "weighted avg"],
+    )
+
+    return df
+
+
+def plot_confusion_matrix(metrics: dict):
+    df = pd.DataFrame(
+        {
+            "predicted_label": [0, 0, 1, 1],
+            "true_label": [0, 1, 0, 1],
+            "v": [
+                metrics["true_negative"],
+                metrics["false_negative"],
+                metrics["false_positive"],
+                metrics["true_positive"],
+            ],
+        }
+    )
+
+    p75 = df["v"].quantile(q=0.75)
+
+    base = alt.Chart(df, title="Confusion Matrix").encode(
+        x=alt.X(
+            shorthand="predicted_label:O",
+            title="Predicted Label",
+            axis=alt.Axis(
+                ticks=True,
+                labelAlign="center",
+                labelAngle=0,
+                labelFontSize=15,
+                labelPadding=4,
+            ),
+        ),
+        y=alt.Y(
+            shorthand="true_label:O",
+            title="True Label",
+            axis=alt.Axis(
+                ticks=True,
+                labelBaseline="middle",
+                labelFontSize=15,
+                labelPadding=4,
+            ),
+        ),
+    )
+
+    heatmap = (
+        base.mark_rect()
+        .encode(
+            color=alt.Color(
+                shorthand="v:Q",
+                title="Value",
+                legend=alt.Legend(title=None),
+            ),
+        )
+        .properties(height=320)
+    )
+
+    text = base.mark_text(baseline="middle", fontSize=14).encode(
+        text=alt.Text("v:Q"),
+        color=alt.condition(alt.datum.v > p75, alt.value("white"), alt.value("black")),
+    )
+
+    return heatmap + text
+
+
 def plot_intrinsic_importances(importances: pd.DataFrame, name: str):
     return (
         alt.Chart(importances, title=f"Feature Importance for {name}")
