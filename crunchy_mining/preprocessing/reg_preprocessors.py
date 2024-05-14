@@ -93,7 +93,7 @@ class PreprocessorV4(BasePreprocessor):
         y_test = df_test[self.cfg.vars.target].to_numpy()
 
         mm = MinMaxScaler()
-        y_train = mm.fit_transform(y_train)
+        y_train = mm.fit_transform(y_train.reshape(-1, 1)).ravel()
 
         self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["ordinal"] = oe
@@ -107,7 +107,7 @@ class PreprocessorV5(BasePreprocessor):
         y_test = df_test[self.cfg.vars.target].to_numpy()
 
         mm = MinMaxScaler()
-        y_train = mm.fit_transform(y_train)
+        y_train = mm.fit_transform(y_train.reshape(-1, 1)).ravel()
 
         te = TargetEncoder(target_type="continuous", random_state=12345)
         X_train_cat = te.fit_transform(df_train[self.cfg.vars.categorical], y_train)

@@ -40,7 +40,11 @@ def validate_linear_regression(preprocessor: BasePreprocessor):
                     y_lr = lr.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_lr = encoders["y_min_max"].inverse_transform(y_lr)
+                        y_lr = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_lr.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_lr = np.expm1(y_lr)
 
@@ -82,7 +86,11 @@ def validate_lasso(preprocessor: BasePreprocessor):
                     y_lasso = lasso.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_lasso = encoders["y_min_max"].inverse_transform(y_lasso)
+                        y_lasso = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_lasso.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_lasso = np.expm1(y_lasso)
 
@@ -124,7 +132,11 @@ def validate_ridge(preprocessor: BasePreprocessor):
                     y_ridge = ridge.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_ridge = encoders["y_min_max"].inverse_transform(y_ridge)
+                        y_ridge = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_ridge.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_ridge = np.expm1(y_ridge)
 
@@ -166,7 +178,11 @@ def validate_elastic_net(preprocessor: BasePreprocessor):
                     y_en = en.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_en = encoders["y_min_max"].inverse_transform(y_en)
+                        y_en = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_en.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_en = np.expm1(y_en)
 
@@ -212,7 +228,11 @@ def validate_decision_tree(preprocessor: BasePreprocessor):
                     y_dt = dt.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_dt = encoders["y_min_max"].inverse_transform(y_dt)
+                        y_dt = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_dt.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_dt = np.expm1(y_dt)
 
@@ -259,7 +279,11 @@ def validate_random_forest(preprocessor: BasePreprocessor):
                     y_rf = rf.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_rf = encoders["y_min_max"].inverse_transform(y_rf)
+                        y_rf = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_rf.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_rf = np.expm1(y_rf)
 
@@ -305,7 +329,11 @@ def validate_adaboost(preprocessor: BasePreprocessor):
                     y_ab = ab.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_ab = encoders["y_min_max"].inverse_transform(y_ab)
+                        y_ab = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_ab.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_ab = np.expm1(y_ab)
 
@@ -352,7 +380,11 @@ def validate_xgboost(preprocessor: BasePreprocessor):
                     y_xgb = xgb.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_xgb = encoders["y_min_max"].inverse_transform(y_xgb)
+                        y_xgb = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_xgb.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_xgb = np.expm1(y_xgb)
 
@@ -400,7 +432,11 @@ def validate_lightgbm(preprocessor: BasePreprocessor):
                     y_lgb = lgb.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_lgb = encoders["y_min_max"].inverse_transform(y_lgb)
+                        y_lgb = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_lgb.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_lgb = np.expm1(y_lgb)
 
@@ -447,7 +483,11 @@ def validate_catboost(preprocessor: BasePreprocessor):
                     y_catb = catb.predict(X_val)
 
                     if "y_min_max" in encoders:
-                        y_catb = encoders["y_min_max"].inverse_transform(y_catb)
+                        y_catb = (
+                            encoders["y_min_max"]
+                            .inverse_transform(y_catb.reshape(-1, 1))
+                            .ravel()
+                        )
                     elif "y_log" in encoders:
                         y_catb = np.expm1(y_catb)
 
