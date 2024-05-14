@@ -3,6 +3,8 @@ import os
 import subprocess
 import sys
 
+from crunchy_mining.util import set_low_priority
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -55,4 +57,6 @@ for experiment in experiments_clf + experiments_bank:
         case _:
             sys.exit()
 
-    subprocess.run([sys.executable, file], env=env)
+    process = subprocess.Popen([sys.executable, file], env=env)
+    set_low_priority(process.pid)
+    process.wait()
