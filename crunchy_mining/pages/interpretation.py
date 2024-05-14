@@ -4,6 +4,7 @@ from hydra import compose
 from hydra import initialize
 
 from crunchy_mining import mlflow_util
+from crunchy_mining.pages.fragments import create_fold_selector
 from crunchy_mining.util import plot_intrinsic_importances
 from crunchy_mining.util import plot_pimp_boxplot
 from crunchy_mining.util import plot_pimp_mean
@@ -11,83 +12,13 @@ from crunchy_mining.util import plot_pimp_mean
 st.set_page_config(layout="wide")
 mlflow.set_tracking_uri("http://localhost:5001")
 
-experiments = [
-    "clf/sampling_v1",
-    "clf/sampling_v2",
-    "clf/preprocessing_v1",
-    "clf/preprocessing_v2",
-    "clf/preprocessing_v3",
-    "clf/preprocessing_v4",
-    "clf/preprocessing_v5",
-    "clf/preprocessing_v6",
-    "clf/preprocessing_v7",
-    "clf/resampling_v1",
-    "clf/resampling_v2",
-    "clf/resampling_v3",
-    "clf/resampling_v4",
-    "clf/resampling_v5",
-    "clf/resampling_v6",
-    "clf/resampling_v7",
-    "clf/resampling_v8",
-    "bank/sampling_v1",
-    "bank/sampling_v2",
-]
+experiment, model, fold = create_fold_selector()
 
-folds = {
-    "validation": "Validation",
-    "fold_1": "Fold 1",
-    "fold_2": "Fold 2",
-    "fold_3": "Fold 3",
-    "fold_4": "Fold 4",
-    "fold_5": "Fold 5",
-}
-
-cols = st.columns([1, 1, 1])
-experiment = cols[0].selectbox(label="Experiments", options=experiments)
-
-if experiment.startswith("clf"):
-    model_names = [
-        "KNN",
-        "Logistic Regression",
-        "Gaussian NB",
-        "Linear SVC",
-        "Decision Tree",
-        "Random Forest",
-        "AdaBoost",
-        "XGBoost",
-        "LightGBM",
-        "CatBoost",
-    ]
-elif experiment.startswith("bank") or experiment.startswith("sba"):
-    model_names = [
-        "Linear Regression",
-        "Lasso Regression",
-        "Ridge Regression",
-        "Elastic Net",
-        "Decision Tree",
-        "Random Forest",
-        "AdaBoost",
-        "XGBoost",
-        "LightGBM",
-        "CatBoost",
-    ]
-
-model = cols[1].selectbox(label="Models", options=model_names)
-fold = cols[2].selectbox(
-    label="Folds",
-    options=folds.keys(),
-    format_func=lambda x: folds[x],
-)
-
-task, experiment_file = experiment.split("/")[:2]
-
-if task == "clf":
-    task_name = ""
-else:
-    task_name = f"_{task}"
+task_name, experiment_file = experiment.split("/")[:2]
+task_suffix = "" if task_name == "clf" else f"_{task_name}"
 
 with initialize(version_base=None, config_path="../../conf"):
-    cfg = compose(overrides=[f"+experiment{task_name}={experiment_file}"])
+    cfg = compose(overrides=[f"+experiment{task_suffix}={experiment_file}"])
 
 mlflow.set_experiment(cfg.mlflow.experiment_name)
 
