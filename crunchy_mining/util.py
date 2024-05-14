@@ -132,12 +132,14 @@ def tabulate_classification_report(metrics: dict):
                 fmt(metrics["precision_1"]),
                 "",
                 "",
+                "",
                 fmt(metrics["precision_macro"]),
                 fmt(metrics["precision_weighted"]),
             ],
             "recall": [
                 fmt(metrics["recall_0"]),
                 fmt(metrics["recall_1"]),
+                "",
                 "",
                 "",
                 fmt(metrics["recall_macro"]),
@@ -148,6 +150,7 @@ def tabulate_classification_report(metrics: dict):
                 fmt(metrics["f1_1"]),
                 "",
                 fmt(metrics["accuracy"]),
+                fmt(metrics["roc_auc"]),
                 fmt(metrics["f1_macro"]),
                 fmt(metrics["f1_weighted"]),
             ],
@@ -158,9 +161,10 @@ def tabulate_classification_report(metrics: dict):
                 n_support,
                 n_support,
                 n_support,
+                n_support,
             ],
         },
-        index=["0", "1", "", "accuracy", "macro avg", "weighted avg"],
+        index=["0", "1", "", "accuracy", "auc", "macro avg", "weighted avg"],
     )
 
     return df
