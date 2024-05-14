@@ -95,5 +95,20 @@ def fold_selector(experiments, model_names, folds):
     return experiment, model, fold
 
 
+def model_selector(experiments, model_names):
+    cols = st.columns([1, 1, 1])
+    experiment = cols[0].selectbox(label="Experiments", options=experiments)
+    task_name = experiment.split("/")[0]
+
+    model_names = model_names[task_name]
+    model = cols[1].selectbox(label="Models", options=model_names)
+
+    return experiment, model
+
+
 def create_fold_selector():
     return fold_selector(experiments, model_names, folds)
+
+
+def create_model_selector():
+    return model_selector(experiments, model_names)
