@@ -83,3 +83,17 @@ def get_nested_run_ids_by_parent_id(parent_run_id: str, name: str = None):
         return runs.iloc[0]["run_id"]
 
     return runs["run_id"].tolist()
+
+
+def get_nested_runs_by_parent_id(parent_run_id: str, filter_string: str = None):
+    fs = f"tags.mlflow.parentRunId = '{parent_run_id}'"
+
+    if filter_string:
+        fs += f" AND {filter_string}"
+
+    runs = mlflow.search_runs(filter_string=fs)
+
+    if len(runs) == 0:
+        return None
+
+    return runs
