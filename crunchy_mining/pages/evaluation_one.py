@@ -6,7 +6,10 @@ from hydra import initialize
 from crunchy_mining import mlflow_util
 from crunchy_mining.pages.fragments import create_model_selector
 from crunchy_mining.util import plot_confusion_matrix
+from crunchy_mining.util import plot_evaluation_stability
+from crunchy_mining.util import plot_resource_stability
 from crunchy_mining.util import tabulate_classification_report
+from crunchy_mining.util import tabulate_resource_usage
 
 st.set_page_config(layout="wide")
 mlflow.set_tracking_uri("http://localhost:5001")
@@ -52,6 +55,50 @@ cv_metrics = (
     .to_dict()
 )
 
+cv_metrics_eval = (
+    cv_runs[
+        [
+            "tags.mlflow.runName",
+            "metrics.accuracy",
+            "metrics.precision_macro",
+            "metrics.recall_macro",
+            "metrics.f1_macro",
+            "metrics.roc_auc",
+        ]
+    ]
+    .rename({"tags.mlflow.runName": "folds"}, axis=1)
+    .rename(lambda x: x.replace("metrics.", ""), axis=1)
+    .melt(id_vars="folds", var_name="metrics", value_name="value")
+)
+
+cv_metrics_time = (
+    cv_runs[
+        [
+            "tags.mlflow.runName",
+            "metrics.fit_time",
+            "metrics.score_time",
+        ]
+    ]
+    .rename({"tags.mlflow.runName": "folds"}, axis=1)
+    .rename(lambda x: x.replace("metrics.", ""), axis=1)
+    .melt(id_vars="folds", var_name="metrics", value_name="value")
+    .assign(value=lambda x: x["value"] / 1_000_000)
+)
+
+cv_metrics_memory = (
+    cv_runs[
+        [
+            "tags.mlflow.runName",
+            "metrics.fit_memory_peak",
+            "metrics.score_memory_peak",
+        ]
+    ]
+    .rename({"tags.mlflow.runName": "folds"}, axis=1)
+    .rename(lambda x: x.replace("metrics.", ""), axis=1)
+    .melt(id_vars="folds", var_name="metrics", value_name="value")
+    .assign(value=lambda x: x["value"] / 1_000_000)
+)
+
 if task_name == "clf":
     st.markdown("**Validation**")
     cols = st.columns([1.25, 1])
@@ -59,12 +106,23 @@ if task_name == "clf":
     cols[0].markdown("**Classification Report**")
     cols[0].table(tabulate_classification_report(val_metrics))
 
+    cols[0].markdown("**Resource Usage**")
+    cols[0].table(tabulate_resource_usage(val_metrics))
+
     cols[1].altair_chart(plot_confusion_matrix(val_metrics), use_container_width=True)
 
+    st.divider()
     st.markdown("**Cross-Validation**")
     cols = st.columns([1.25, 1])
 
     cols[0].markdown("**Classification Report**")
     cols[0].table(tabulate_classification_report(cv_metrics))
 
+    cols[0].markdown("**Resource Usage**")
+    cols[0].table(tabulate_resource_usage(cv_metrics))
+
     cols[1].altair_chart(plot_confusion_matrix(cv_metrics), use_container_width=True)
+
+    st.divider()
+    st.altair_chart(plot_evaluation_stability(cv_metrics_eval))
+    st.altair_chart(plot_resource_stability(cv_metrics_time, cv_metrics_memory))
