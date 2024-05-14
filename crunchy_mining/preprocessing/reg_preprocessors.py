@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import scipy.sparse as sp
+from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
@@ -33,21 +33,27 @@ class PreprocessorV1(BasePreprocessor):
 #  One-Hot Encoding + No Scaling + No Scaling (T)
 class PreprocessorV2(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
-        hot = OneHotEncoder(handle_unknown="infrequent_if_exist", min_frequency=250)
+        hot = OneHotEncoder(handle_unknown="infrequent_if_exist")
         X_train_cat = hot.fit_transform(df_train[self.cfg.vars.categorical])
         X_test_cat = hot.transform(df_test[self.cfg.vars.categorical])
+
+        n_components = len(self.cfg.vars.categorical)
+        svd = TruncatedSVD(n_components=n_components, random_state=12345)
+        X_train_svd = svd.fit_transform(X_train_cat)
+        X_test_svd = svd.transform(X_test_cat)
 
         X_train_num = df_train[self.cfg.vars.numerical]
         X_test_num = df_test[self.cfg.vars.numerical]
 
-        X_train = sp.hstack((X_train_cat, X_train_num), format="csr")
-        X_test = sp.hstack((X_test_cat, X_test_num), format="csr")
+        X_train = np.hstack((X_train_svd, X_train_num))
+        X_test = np.hstack((X_test_svd, X_test_num))
 
         y_train = df_train[self.cfg.vars.target].to_numpy()
         y_test = df_test[self.cfg.vars.target].to_numpy()
 
         self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
         self.encoders["one_hot"] = hot
+        self.encoders["truncated_svd"] = svd
 
 
 # Target Encoding + No Scaling + No Scaling (T)
