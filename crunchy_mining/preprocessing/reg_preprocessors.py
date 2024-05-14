@@ -165,3 +165,104 @@ class PreprocessorV7(BasePreprocessor):
         self.encoders["target"] = te
         self.encoders["y_log"] = True
 
+
+# Ordinal Encoding + Standard Scaling + Log Scaling (T)
+class PreprocessorV8(BasePreprocessor):
+    def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
+        oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+        X_train_cat = oe.fit_transform(df_train[self.cfg.vars.categorical])
+        X_test_cat = oe.transform(df_test[self.cfg.vars.categorical])
+
+        ss = StandardScaler()
+        X_train_num = ss.fit_transform(df_train[self.cfg.vars.numerical])
+        X_test_num = ss.transform(df_test[self.cfg.vars.numerical])
+
+        X_train = np.hstack((X_train_cat, X_train_num))
+        X_test = np.hstack((X_test_cat, X_test_num))
+
+        y_train = np.log1p(df_train[self.cfg.vars.target].to_numpy())
+        y_test = df_test[self.cfg.vars.target].to_numpy()
+
+        self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
+        self.encoders["ordinal"] = oe
+        self.encoders["standard"] = ss
+        self.encoders["y_log"] = True
+
+
+# Target Encoding + Standard Scaling + Log Scaling (T)
+class PreprocessorV9(BasePreprocessor):
+    def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
+        y_train = np.log1p(df_train[self.cfg.vars.target].to_numpy())
+        y_test = df_test[self.cfg.vars.target].to_numpy()
+
+        te = TargetEncoder(target_type="continuous", random_state=12345)
+        X_train_cat = te.fit_transform(df_train[self.cfg.vars.categorical], y_train)
+        X_test_cat = te.transform(df_test[self.cfg.vars.categorical])
+
+        ss = StandardScaler()
+        X_train_num = ss.fit_transform(df_train[self.cfg.vars.numerical])
+        X_test_num = ss.transform(df_test[self.cfg.vars.numerical])
+
+        X_train = np.hstack((X_train_cat, X_train_num))
+        X_test = np.hstack((X_test_cat, X_test_num))
+
+        self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
+        self.encoders["target"] = te
+        self.encoders["standard"] = ss
+        self.encoders["y_log"] = True
+
+
+# Ordinal Encoding + Standard Scaling + Min-Max Scaling + Log Scaling (T)
+class PreprocessorV10(BasePreprocessor):
+    def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
+        oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+        X_train_cat = oe.fit_transform(df_train[self.cfg.vars.categorical])
+        X_test_cat = oe.transform(df_test[self.cfg.vars.categorical])
+
+        ss = StandardScaler()
+        X_train_num = ss.fit_transform(df_train[self.cfg.vars.numerical])
+        X_test_num = ss.transform(df_test[self.cfg.vars.numerical])
+
+        X_train = np.hstack((X_train_cat, X_train_num))
+        X_test = np.hstack((X_test_cat, X_test_num))
+
+        mm = MinMaxScaler()
+        X_train_scaled = mm.fit_transform(X_train)
+        X_test_scaled = mm.transform(X_test)
+
+        y_train = np.log1p(df_train[self.cfg.vars.target].to_numpy())
+        y_test = df_test[self.cfg.vars.target].to_numpy()
+
+        self.train_val_sets[name] = (X_train_scaled, y_train, X_test_scaled, y_test)
+        self.encoders["ordinal"] = oe
+        self.encoders["standard"] = ss
+        self.encoders["min_max"] = mm
+        self.encoders["y_log"] = True
+
+
+# Target Encoding + Standard Scaling + Min-Max Scaling + Log Scaling (T)
+class PreprocessorV11(BasePreprocessor):
+    def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
+        y_train = np.log1p(df_train[self.cfg.vars.target].to_numpy())
+        y_test = df_test[self.cfg.vars.target].to_numpy()
+
+        te = TargetEncoder(target_type="continuous", random_state=12345)
+        X_train_cat = te.fit_transform(df_train[self.cfg.vars.categorical], y_train)
+        X_test_cat = te.transform(df_test[self.cfg.vars.categorical])
+
+        ss = StandardScaler()
+        X_train_num = ss.fit_transform(df_train[self.cfg.vars.numerical])
+        X_test_num = ss.transform(df_test[self.cfg.vars.numerical])
+
+        X_train = np.hstack((X_train_cat, X_train_num))
+        X_test = np.hstack((X_test_cat, X_test_num))
+
+        mm = MinMaxScaler()
+        X_train_scaled = mm.fit_transform(X_train)
+        X_test_scaled = mm.transform(X_test)
+
+        self.train_val_sets[name] = (X_train_scaled, y_train, X_test_scaled, y_test)
+        self.encoders["target"] = te
+        self.encoders["standard"] = ss
+        self.encoders["min_max"] = mm
+        self.encoders["y_log"] = True
