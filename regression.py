@@ -23,6 +23,10 @@ from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV4
 from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV5
 from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV6
 from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV7
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV8
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV9
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV10
+from crunchy_mining.preprocessing.reg_preprocessors import PreprocessorV11
 from crunchy_mining.reg_pipeline import validate_adaboost
 from crunchy_mining.reg_pipeline import validate_catboost
 from crunchy_mining.reg_pipeline import validate_decision_tree
@@ -118,6 +122,14 @@ match cfg.preprocessing.variant:
         preprocessor = PreprocessorV6(cfg)
     case 7:
         preprocessor = PreprocessorV7(cfg)
+    case 8:
+        preprocessor = PreprocessorV8(cfg)
+    case 9:
+        preprocessor = PreprocessorV9(cfg)
+    case 10:
+        preprocessor = PreprocessorV10(cfg)
+    case 11:
+        preprocessor = PreprocessorV11(cfg)
 
 for name, (df_train, df_val) in train_val_sets_raw.items():
     preprocessor.fit(df_train, df_val, name=name)
