@@ -170,6 +170,26 @@ def tabulate_classification_report(metrics: dict):
     return df
 
 
+def tabulate_resource_usage(metrics: dict):
+    def fmt_time(x):
+        return f"{np.round(x / 1_000_000, 4) :.4f} ms"
+
+    def fmt_memory(x):
+        return f"{np.round(x / 1_000_000, 4):.4f} MB"
+
+    df = pd.Series(
+        {
+            "Fit Time": fmt_time(metrics["fit_time"]),
+            "Fit Memory (Peak)": fmt_memory(metrics["fit_memory_peak"]),
+            "Score Time": fmt_time(metrics["score_time"]),
+            "Score Memory (Peak)": fmt_memory(metrics["score_memory_peak"]),
+        },
+        name="Measurements",
+    )
+
+    return df
+
+
 def plot_confusion_matrix(metrics: dict):
     df = pd.DataFrame(
         {
@@ -228,6 +248,45 @@ def plot_confusion_matrix(metrics: dict):
     )
 
     return heatmap + text
+
+
+def plot_evaluation_stability(df: pd.DataFrame):
+    return (
+        alt.Chart(df, title="Stability of Evaluation Scores Across Folds")
+        .mark_bar()
+        .encode(
+            x=alt.X("folds:N", title="Folds"),
+            y=alt.Y("value:Q", title="Scores"),
+            color=alt.Color("folds:N", title="Folds"),
+            column=alt.Column("metrics:N", title="Metrics"),
+        )
+    )
+
+
+def plot_resource_stability(df_time: pd.DataFrame, df_memory: pd.DataFrame):
+    chart_t = (
+        alt.Chart(df_time, title="Stability of Time Taken Across Folds")
+        .mark_bar()
+        .encode(
+            x=alt.X("folds:N", title="Folds"),
+            y=alt.Y("value:Q", title="Time Taken (ms)").scale(type="log"),
+            color=alt.Color("folds:N", title="Folds"),
+            column=alt.Column("metrics:N", title="Metrics"),
+        )
+    )
+
+    chart_m = (
+        alt.Chart(df_memory, title="Stability of Memory Usage Across Folds")
+        .mark_bar()
+        .encode(
+            x=alt.X("folds:N", title="Folds"),
+            y=alt.Y("value:Q", title="Memory Usage (MB)"),
+            color=alt.Color("folds:N", title="Folds"),
+            column=alt.Column("metrics:N", title="Metrics"),
+        )
+    )
+
+    return chart_t | chart_m
 
 
 def plot_intrinsic_importances(importances: pd.DataFrame, name: str):
