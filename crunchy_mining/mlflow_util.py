@@ -97,3 +97,51 @@ def get_nested_runs_by_parent_id(parent_run_id: str, filter_string: str = None):
         return None
 
     return runs
+
+
+def get_cv_metrics_by_task(task_name: str):
+    experiments = mlflow.search_experiments(filter_string=f"name LIKE '{task_name}%'")
+    experiments_map = {}
+
+    for experiment in experiments:
+        experiments_map[experiment.experiment_id] = experiment.name
+
+    # This takes about 7 seconds.
+    df = mlflow.search_runs(experiment_ids=experiments_map.keys())
+
+    df_parent_runs = (
+        df.query("`tags.mlflow.parentRunId`.isnull()")
+        .query("`tags.mlflow.runName` != 'Encoders'")
+        .sort_values(by=["experiment_id", "start_time"], ascending=[True, False])
+        .drop_duplicates(subset=["experiment_id", "tags.mlflow.runName"], keep="first")
+        .loc[:, ["experiment_id", "run_id", "tags.mlflow.runName"]]
+    )
+
+    df_agg = (
+        # Select nested runs of selected parent runs.
+        df.merge(
+            df_parent_runs[["run_id", "tags.mlflow.runName"]],
+            how="inner",
+            left_on="tags.mlflow.parentRunId",
+            right_on="run_id",
+        )
+        .rename(
+            columns={
+                "tags.mlflow.runName_x": "nested_run_name",
+                "tags.mlflow.runName_y": "parent_run_name",
+            }
+        )
+        .query("~nested_run_name.isin(['validation', 'testing'])")
+        .groupby("tags.mlflow.parentRunId")
+        .agg(
+            {
+                "experiment_id": "first",
+                "parent_run_name": "first",
+                "nested_run_name": list,
+                **{col: "mean" for col in df.columns if col.startswith("metrics")},
+            },
+        )
+        .assign(experiment_name=lambda x: x["experiment_id"].map(experiments_map))
+    )
+
+    return df_agg

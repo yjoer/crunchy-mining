@@ -7,6 +7,7 @@ load_dotenv()
 show_pages(
     [
         Page("crunchy_mining/pages/visualization.py", "Visualization"),
+        Page("crunchy_mining/pages/evaluation_summary.py", "Model Evaluation"),
         Page("crunchy_mining/pages/evaluation_one.py", "Model Evaluation 1"),
         Page("crunchy_mining/pages/evaluation_two.py", "Model Evaluation 2"),
         Page("crunchy_mining/pages/interpretation.py", "Model Interpretation"),
