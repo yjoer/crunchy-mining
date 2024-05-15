@@ -1,0 +1,100 @@
+mlflow:
+  experiment_name:
+vars:
+  categorical:
+    # - Name
+    - City
+    - State
+    - Zip
+    - Bank
+    - BankState
+    # - NAICS
+    # - ApprovalDate
+    # - ApprovalFY
+    - NewExist
+    # - FranchiseCode
+    - UrbanRural
+    - RevLineCr
+    - LowDoc
+    # - ChgOffDate
+    # - DisbursementDate
+    - MIS_Status
+    # - DisbursementFY
+    - IsFranchised
+    - IsCreatedJob
+    - IsRetainedJob
+    - Industry
+    - RealEstate
+    # - Active
+    - Recession
+    - StateSame
+    # - AppvDisbursed
+    - IsExisting
+  numerical:
+    - Term
+    - NoEmp
+    - CreateJob
+    - RetainedJob
+    # - DisbursementGross
+    # - BalanceGross
+    # - ChgOffPrinGr
+    - GrAppv
+    # - SBA_Appv
+    - DaysTerm
+    - DaysToDisbursement
+    # - SBA_AppvPct
+  stratify: MIS_Status
+  target: SBA_Appv
+sampling:
+  variant: 1
+preprocessing:
+  variant: 1
+validation:
+  models:
+    linear_regression: false
+    lasso: false
+    ridge: false
+    elastic_net: false
+    decision_tree: false
+    random_forest: false
+    adaboost: false
+    xgboost: false
+    lightgbm: false
+    catboost: false
+interpretation:
+  intrinsic:
+    models:
+      linear_regression: false
+      lasso: false
+      ridge: false
+      elastic_net: false
+      decision_tree: false
+      random_forest: false
+      adaboost: false
+      xgboost: false
+      lightgbm: false
+      catboost: false
+  permutation_importance:
+    models:
+      linear_regression: false
+      lasso: false
+      ridge: false
+      elastic_net: false
+      decision_tree: false
+      random_forest: false
+      adaboost: false
+      xgboost: false
+      lightgbm: false
+      catboost: false
+  partial_dependence:
+    models:
+      linear_regression: false
+      lasso: false
+      ridge: false
+      elastic_net: false
+      decision_tree: false
+      random_forest: false
+      adaboost: false
+      xgboost: false
+      lightgbm: false
+      catboost: false
