@@ -27,6 +27,23 @@ experiments = [
     "bank/preprocessing_v5",
     "bank/preprocessing_v6",
     "bank/preprocessing_v7",
+    "bank/preprocessing_v8",
+    "bank/preprocessing_v9",
+    "bank/preprocessing_v10",
+    "bank/preprocessing_v11",
+    "sba/sampling_v1",
+    "sba/sampling_v2",
+    "sba/preprocessing_v1",
+    "sba/preprocessing_v2",
+    "sba/preprocessing_v3",
+    "sba/preprocessing_v4",
+    "sba/preprocessing_v5",
+    "sba/preprocessing_v6",
+    "sba/preprocessing_v7",
+    "sba/preprocessing_v8",
+    "sba/preprocessing_v9",
+    "sba/preprocessing_v10",
+    "sba/preprocessing_v11",
 ]
 
 model_names = {
