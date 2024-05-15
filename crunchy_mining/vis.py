@@ -86,7 +86,28 @@ def plot_approved_amount_by_status(df: pd.DataFrame):
         alt.Chart(df[["GrAppv", "MIS_Status"]], title="Approved Loan Amount by Status")
         .mark_bar(binSpacing=0)
         .encode(
-            x=alt.X("GrAppv:Q", title="Approved Loan Amount", bin=alt.Bin(maxbins=100)),
+            x=alt.X(
+                shorthand="GrAppv:Q",
+                title="Approved Loan Amount ($)",
+                bin=alt.Bin(maxbins=100),
+            ),
+            y=alt.Y("count()").scale(type="log"),
+            color="MIS_Status:N",
+        )
+    )
+
+    return chart
+
+
+def plot_guarantees_by_status(df: pd.DataFrame):
+    chart = (
+        alt.Chart(
+            df[["SBA_Appv", "MIS_Status"]],
+            title="SBA Guarantees by Status",
+        )
+        .mark_bar(binSpacing=0)
+        .encode(
+            x=alt.X("SBA_Appv:Q", title="SBA Guarantees ($)", bin=alt.Bin(maxbins=100)),
             y=alt.Y("count()").scale(type="log"),
             color="MIS_Status:N",
         )
