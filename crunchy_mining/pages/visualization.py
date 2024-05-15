@@ -3,6 +3,7 @@ import streamlit as st
 
 from crunchy_mining.vis import plot_approved_amount_by_status
 from crunchy_mining.vis import plot_loan_default_rate_by_state
+from crunchy_mining.vis import plot_guarantees_by_status
 from crunchy_mining.vis import plot_top_state_by_loan
 
 st.set_page_config(layout="wide")
@@ -27,3 +28,4 @@ cols = st.columns([1, 1])
 cols[0].altair_chart(plot_loan_default_rate_by_state(df))
 
 st.altair_chart(plot_approved_amount_by_status(df_clean), use_container_width=True)
+st.altair_chart(plot_guarantees_by_status(df_clean), use_container_width=True)
