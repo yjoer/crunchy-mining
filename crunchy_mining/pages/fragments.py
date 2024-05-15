@@ -97,11 +97,11 @@ folds = {
 
 def fold_selector(experiments, model_names, folds):
     cols = st.columns([1, 1, 1])
-    experiment = cols[0].selectbox(label="Experiments", options=experiments)
+    experiment = cols[0].selectbox(label="Experiments", options=experiments, key=0)
     task_name = experiment.split("/")[0]
 
     model_names = model_names[task_name]
-    model = cols[1].selectbox(label="Models", options=model_names)
+    model = cols[1].selectbox(label="Models", options=model_names, key=1)
 
     fold = cols[2].selectbox(
         label="Folds",
@@ -114,11 +114,11 @@ def fold_selector(experiments, model_names, folds):
 
 def model_selector(experiments, model_names):
     cols = st.columns([1, 1, 1])
-    experiment = cols[0].selectbox(label="Experiments", options=experiments)
+    experiment = cols[0].selectbox(label="Experiments", options=experiments, key=2)
     task_name = experiment.split("/")[0]
 
     model_names = model_names[task_name]
-    model = cols[1].selectbox(label="Models", options=model_names)
+    model = cols[1].selectbox(label="Models", options=model_names, key=3)
 
     return experiment, model
 
