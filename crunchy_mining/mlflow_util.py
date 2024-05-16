@@ -141,6 +141,7 @@ def get_cv_metrics_by_task(task_name: str):
                 **{col: "mean" for col in df.columns if col.startswith("metrics")},
             },
         )
+        .rename(lambda x: x.replace("metrics.", ""), axis=1)
         .assign(experiment_name=lambda x: x["experiment_id"].map(experiments_map))
     )
 
