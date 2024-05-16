@@ -440,7 +440,7 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("mae:Q", title="Mean Absolute Error"),
+            y=alt.Y("mae:Q", title="Mean Absolute Error").scale(type="log"),
             color=alt.Color("parent_run_name:N", title="Models"),
         )
     )
