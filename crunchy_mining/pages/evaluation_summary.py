@@ -99,3 +99,51 @@ with tabs[1]:
 
     st.altair_chart(outputs["score_memory_max_chart"], use_container_width=True)
     st.dataframe(outputs["score_memory_max"], use_container_width=True)
+
+with tabs[2]:
+    with st.spinner("Fetching experiment data..."):
+        df = mlflow_util.get_cv_metrics_by_task(task_name="sba")
+
+    outputs = summarize_regression(df)
+
+    st.altair_chart(outputs["mae_chart"], use_container_width=True)
+    st.dataframe(outputs["mae"], use_container_width=True)
+
+    st.altair_chart(outputs["mae_max_chart"], use_container_width=True)
+    st.dataframe(outputs["mae_max"], use_container_width=True)
+
+    st.altair_chart(outputs["mape_chart"], use_container_width=True)
+    st.dataframe(outputs["mape"], use_container_width=True)
+
+    st.altair_chart(outputs["mape_max_chart"], use_container_width=True)
+    st.dataframe(outputs["mape_max"], use_container_width=True)
+
+    st.altair_chart(outputs["rsq_chart"], use_container_width=True)
+    st.dataframe(outputs["rsq"], use_container_width=True)
+
+    st.altair_chart(outputs["rsq_min_chart"], use_container_width=True)
+    st.dataframe(outputs["rsq_min"], use_container_width=True)
+
+    st.altair_chart(outputs["fit_time_chart"], use_container_width=True)
+    st.dataframe(outputs["fit_time"], use_container_width=True)
+
+    st.altair_chart(outputs["fit_time_max_chart"], use_container_width=True)
+    st.dataframe(outputs["fit_time_max"], use_container_width=True)
+
+    st.altair_chart(outputs["score_time_chart"], use_container_width=True)
+    st.dataframe(outputs["score_time"], use_container_width=True)
+
+    st.altair_chart(outputs["score_time_max_chart"], use_container_width=True)
+    st.dataframe(outputs["score_time_max"], use_container_width=True)
+
+    st.altair_chart(outputs["fit_memory_chart"], use_container_width=True)
+    st.dataframe(outputs["fit_memory"], use_container_width=True)
+
+    st.altair_chart(outputs["fit_memory_max_chart"], use_container_width=True)
+    st.dataframe(outputs["fit_memory_max"], use_container_width=True)
+
+    st.altair_chart(outputs["score_memory_chart"], use_container_width=True)
+    st.dataframe(outputs["score_memory"], use_container_width=True)
+
+    st.altair_chart(outputs["score_memory_max_chart"], use_container_width=True)
+    st.dataframe(outputs["score_memory_max"], use_container_width=True)
