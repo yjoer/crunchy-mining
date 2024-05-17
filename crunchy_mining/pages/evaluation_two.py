@@ -1,10 +1,9 @@
 import mlflow
 import streamlit as st
-from hydra import compose
-from hydra import initialize
 from mlflow import MlflowClient
 
 from crunchy_mining import mlflow_util
+from crunchy_mining.pages.fragments import create_experiment_selector
 from crunchy_mining.pages.fragments import create_fold_selector
 from crunchy_mining.pages.fragments import create_model_selector
 from crunchy_mining.util import plot_confusion_matrix
@@ -16,18 +15,75 @@ from crunchy_mining.util import tabulate_resource_usage
 st.set_page_config(layout="wide")
 mlflow.set_tracking_uri("http://localhost:5001")
 
-tabs = st.tabs(["Model-Specific", "Fold-Specific"])
+tabs = st.tabs(["Experiments", "Model-Specific", "Fold-Specific"])
 
 with tabs[0]:
-    experiment, model = create_model_selector()
-
+    experiment = create_experiment_selector()
     task_name, experiment_file = experiment.split("/")[:2]
-    task_suffix = "" if task_name == "clf" else f"_{task_name}"
+    mlflow.set_experiment(experiment)
 
-    with initialize(version_base=None, config_path="../../conf"):
-        cfg = compose(overrides=[f"+experiment{task_suffix}={experiment_file}"])
+    df = mlflow.search_runs(experiment_names=[experiment])
 
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
+    df_parent_runs = (
+        df.query("`tags.mlflow.parentRunId`.isnull()")
+        .query("`tags.mlflow.runName` != 'Encoders'")
+        .sort_values(by=["experiment_id", "start_time"], ascending=[True, False])
+        .drop_duplicates(subset=["experiment_id", "tags.mlflow.runName"], keep="first")
+        .loc[:, ["run_id", "tags.mlflow.runName"]]
+    )
+
+    df_val = (
+        mlflow.search_runs(
+            experiment_names=[experiment],
+            filter_string="run_name = 'validation'",
+        )
+        .set_index("tags.mlflow.parentRunId")
+        .loc[:, [col for col in df.columns if col.startswith("metrics")]]
+        .rename(lambda x: x.replace("metrics.", ""), axis=1)
+    )
+
+    df_val_out = df_parent_runs.merge(
+        right=df_val,
+        how="left",
+        left_on="run_id",
+        right_index=True,
+    ).set_index("tags.mlflow.runName")
+
+    st.markdown("**Validation**")
+    st.dataframe(df_val_out)
+
+    df_cv = mlflow.search_runs(
+        experiment_names=[experiment],
+        filter_string="run_name LIKE 'fold%'",
+    )
+
+    df_cv_agg = (
+        df_cv.rename(columns={"tags.mlflow.runName": "nested_run_name"})
+        .groupby("tags.mlflow.parentRunId")
+        .agg(
+            {
+                "nested_run_name": list,
+                **{col: "mean" for col in df.columns if col.startswith("metrics")},
+            },
+        )
+        .rename(lambda x: x.replace("metrics.", ""), axis=1)
+    )
+
+    df_cv_out = df_parent_runs.merge(
+        right=df_cv_agg,
+        how="left",
+        left_on="run_id",
+        right_index=True,
+    ).set_index("tags.mlflow.runName")
+
+    st.markdown("**Cross-Validation**")
+    st.dataframe(df_cv_out)
+
+
+with tabs[1]:
+    experiment, model = create_model_selector()
+    task_name, experiment_file = experiment.split("/")[:2]
+    mlflow.set_experiment(experiment)
 
     with st.spinner("Fetching experiment data..."):
         parent_run_id = mlflow_util.get_latest_run_id_by_name(model)
@@ -145,16 +201,10 @@ with tabs[0]:
         cols[0].altair_chart(res_stb_charts[0], use_container_width=True)
         cols[1].altair_chart(res_stb_charts[1], use_container_width=True)
 
-with tabs[1]:
+with tabs[2]:
     experiment, model, fold = create_fold_selector()
-
     task_name, experiment_file = experiment.split("/")[:2]
-    task_suffix = "" if task_name == "clf" else f"_{task_name}"
-
-    with initialize(version_base=None, config_path="../../conf"):
-        cfg = compose(overrides=[f"+experiment{task_suffix}={experiment_file}"])
-
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
+    mlflow.set_experiment(experiment)
 
     with st.spinner("Fetching experiment data..."):
         parent_run_id = mlflow_util.get_latest_run_id_by_name(model)

@@ -115,13 +115,18 @@ def task_model_selector(task_names, model_names):
     return task, model
 
 
+def experiment_selector(experiments):
+    cols = st.columns([1, 1, 1])
+    return cols[0].selectbox(label="Experiments", options=experiments, key=0)
+
+
 def fold_selector(experiments, model_names, folds):
     cols = st.columns([1, 1, 1])
-    experiment = cols[0].selectbox(label="Experiments", options=experiments, key=0)
+    experiment = cols[0].selectbox(label="Experiments", options=experiments, key=1)
     task_name = experiment.split("/")[0]
 
     model_names = model_names[task_name]
-    model = cols[1].selectbox(label="Models", options=model_names, key=1)
+    model = cols[1].selectbox(label="Models", options=model_names, key=2)
 
     fold = cols[2].selectbox(
         label="Folds",
@@ -134,17 +139,21 @@ def fold_selector(experiments, model_names, folds):
 
 def model_selector(experiments, model_names):
     cols = st.columns([1, 1, 1])
-    experiment = cols[0].selectbox(label="Experiments", options=experiments, key=2)
+    experiment = cols[0].selectbox(label="Experiments", options=experiments, key=3)
     task_name = experiment.split("/")[0]
 
     model_names = model_names[task_name]
-    model = cols[1].selectbox(label="Models", options=model_names, key=3)
+    model = cols[1].selectbox(label="Models", options=model_names, key=4)
 
     return experiment, model
 
 
 def create_task_model_selector():
     return task_model_selector(task_names, model_names)
+
+
+def create_experiment_selector():
+    return experiment_selector(experiments)
 
 
 def create_fold_selector():
