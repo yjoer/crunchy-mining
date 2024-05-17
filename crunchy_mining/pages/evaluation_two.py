@@ -85,6 +85,7 @@ with tabs[0]:
         ]
         .rename({"tags.mlflow.runName": "folds"}, axis=1)
         .rename(lambda x: x.replace("metrics.", ""), axis=1)
+        .rename(lambda x: x.replace("_peak", ""), axis=1)
         .melt(id_vars="folds", var_name="metrics", value_name="value")
         .assign(value=lambda x: x["value"] / 1_000_000)
     )
@@ -136,8 +137,13 @@ with tabs[0]:
         )
 
         st.divider()
-        st.altair_chart(plot_evaluation_stability(cv_folds_eval))
-        st.altair_chart(plot_resource_stability(cv_folds_time, cv_folds_memory))
+        eval_stb_chart = plot_evaluation_stability(cv_folds_eval)
+        st.altair_chart(eval_stb_chart, use_container_width=True)
+
+        res_stb_charts = plot_resource_stability(cv_folds_time, cv_folds_memory)
+        cols = st.columns([1, 1])
+        cols[0].altair_chart(res_stb_charts[0], use_container_width=True)
+        cols[1].altair_chart(res_stb_charts[1], use_container_width=True)
 
 with tabs[1]:
     experiment, model, fold = create_fold_selector()
