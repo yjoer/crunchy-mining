@@ -1,6 +1,8 @@
+import concurrent.futures
 import os
 import pickle
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 import mlflow
@@ -99,6 +101,58 @@ def get_nested_runs_by_parent_id(parent_run_id: str, filter_string: str = None):
     return runs
 
 
+def get_cv_metrics_by_model(task_name: str, model_name: str):
+    experiments = mlflow.search_experiments(filter_string=f"name LIKE '{task_name}%'")
+    experiments_map = {}
+
+    for experiment in experiments:
+        experiments_map[experiment.experiment_id] = experiment.name
+
+    df_parent_runs = mlflow.search_runs(
+        experiment_ids=experiments_map.keys(),
+        filter_string=f"run_name = '{model_name}'",
+    )
+
+    futures = []
+    dfs = []
+
+    # SQL IN queries are not supported for tags.mlflow.parentRunId.
+    # https://mlflow.org/docs/latest/search-runs.html#searching-over-a-set
+    with ThreadPoolExecutor(max_workers=len(df_parent_runs)) as executor:
+        for parent_run_id in df_parent_runs["run_id"]:
+            fs = f"tags.mlflow.parentRunId = '{parent_run_id}'"
+            fs += " AND run_name LIKE 'fold%'"
+
+            future = executor.submit(
+                mlflow.search_runs,
+                experiment_ids=experiments_map.keys(),
+                filter_string=fs,
+            )
+
+            futures.append(future)
+
+        for future in concurrent.futures.as_completed(futures):
+            df = future.result()
+            dfs.append(df)
+
+    df_agg = (
+        pd.concat(dfs, axis=0)
+        .rename(columns={"tags.mlflow.runName": "nested_run_name"})
+        .groupby("tags.mlflow.parentRunId")
+        .agg(
+            {
+                "experiment_id": "first",
+                "nested_run_name": list,
+                **{col: "mean" for col in df.columns if col.startswith("metrics")},
+            },
+        )
+        .rename(lambda x: x.replace("metrics.", ""), axis=1)
+        .assign(experiment_name=lambda x: x["experiment_id"].map(experiments_map))
+    )
+
+    return df_agg
+
+
 def get_cv_metrics_by_task(task_name: str):
     experiments = mlflow.search_experiments(filter_string=f"name LIKE '{task_name}%'")
     experiments_map = {}
@@ -109,6 +163,7 @@ def get_cv_metrics_by_task(task_name: str):
     # This takes about 7 seconds.
     df = mlflow.search_runs(experiment_ids=experiments_map.keys())
 
+    # https://github.com/mlflow/mlflow/issues/2922
     df_parent_runs = (
         df.query("`tags.mlflow.parentRunId`.isnull()")
         .query("`tags.mlflow.runName` != 'Encoders'")

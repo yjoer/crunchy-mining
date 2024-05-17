@@ -1,5 +1,11 @@
 import streamlit as st
 
+task_names = {
+    "clf": "Classification",
+    "bank": "Loan Amounts",
+    "sba": "Loan Guarantees",
+}
+
 experiments = [
     "clf/sampling_v1",
     "clf/sampling_v2",
@@ -95,6 +101,20 @@ folds = {
 }
 
 
+def task_model_selector(task_names, model_names):
+    cols = st.columns([1, 1, 1])
+
+    task = cols[0].selectbox(
+        label="Tasks",
+        options=task_names.keys(),
+        format_func=lambda x: task_names[x],
+    )
+
+    model = cols[1].selectbox(label="Models", options=model_names[task])
+
+    return task, model
+
+
 def fold_selector(experiments, model_names, folds):
     cols = st.columns([1, 1, 1])
     experiment = cols[0].selectbox(label="Experiments", options=experiments, key=0)
@@ -121,6 +141,10 @@ def model_selector(experiments, model_names):
     model = cols[1].selectbox(label="Models", options=model_names, key=3)
 
     return experiment, model
+
+
+def create_task_model_selector():
+    return task_model_selector(task_names, model_names)
 
 
 def create_fold_selector():
