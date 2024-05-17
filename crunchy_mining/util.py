@@ -732,12 +732,16 @@ def plot_confusion_matrix(metrics: dict):
 def plot_evaluation_stability(df: pd.DataFrame):
     return (
         alt.Chart(df, title="Stability of Evaluation Scores Across Folds")
-        .mark_bar()
+        .mark_bar(width={"band": 1})
         .encode(
-            x=alt.X("folds:N", title="Folds"),
-            y=alt.Y("value:Q", title="Scores"),
+            x=alt.X(
+                shorthand="metrics:N",
+                title="Metrics",
+                axis=alt.Axis(labelAngle=0, labelPadding=8),
+            ),
+            y=alt.Y("value:Q", title="Scores", axis=alt.Axis(labelPadding=8)),
+            xOffset=alt.XOffset("folds:N", title="Folds"),
             color=alt.Color("folds:N", title="Folds"),
-            column=alt.Column("metrics:N", title="Metrics"),
         )
     )
 
@@ -745,27 +749,44 @@ def plot_evaluation_stability(df: pd.DataFrame):
 def plot_resource_stability(df_time: pd.DataFrame, df_memory: pd.DataFrame):
     chart_t = (
         alt.Chart(df_time, title="Stability of Time Taken Across Folds")
-        .mark_bar()
+        .mark_bar(width={"band": 1})
         .encode(
-            x=alt.X("folds:N", title="Folds"),
-            y=alt.Y("value:Q", title="Time Taken (ms)").scale(type="log"),
+            x=alt.X(
+                shorthand="metrics:N",
+                title="Metrics",
+                axis=alt.Axis(labelAngle=0, labelPadding=8),
+            ),
+            y=alt.Y(
+                shorthand="value:Q",
+                title="Time Taken (ms)",
+                axis=alt.Axis(labelPadding=8),
+                scale=alt.Scale(type="log"),
+            ),
+            xOffset=alt.XOffset("folds:N", title="Folds"),
             color=alt.Color("folds:N", title="Folds"),
-            column=alt.Column("metrics:N", title="Metrics"),
         )
     )
 
     chart_m = (
         alt.Chart(df_memory, title="Stability of Memory Usage Across Folds")
-        .mark_bar()
+        .mark_bar(width={"band": 1})
         .encode(
-            x=alt.X("folds:N", title="Folds"),
-            y=alt.Y("value:Q", title="Memory Usage (MB)"),
+            x=alt.X(
+                shorthand="metrics:N",
+                title="Metrics",
+                axis=alt.Axis(labelAngle=0, labelPadding=8),
+            ),
+            y=alt.Y(
+                shorthand="value:Q",
+                title="Memory Usage (MB)",
+                axis=alt.Axis(labelPadding=8),
+            ),
+            xOffset=alt.XOffset("folds:N", title="Folds"),
             color=alt.Color("folds:N", title="Folds"),
-            column=alt.Column("metrics:N", title="Metrics"),
         )
     )
 
-    return chart_t | chart_m
+    return chart_t, chart_m
 
 
 def plot_intrinsic_importances(importances: pd.DataFrame, name: str):
