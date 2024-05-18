@@ -712,6 +712,31 @@ def intrinsic_linear(cfg: DictConfig, train_val_sets: dict, model_name: str):
         )
 
 
+def intrinsic_calibrated_svc(cfg: DictConfig, train_val_sets: dict):
+    feature_names = cfg.vars.categorical + cfg.vars.numerical
+
+    for name, (X_train, _, _, _) in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name("Linear SVC")
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+
+        if not run_id:
+            continue
+
+        model = mlflow.sklearn.load_model(f"runs:/{run_id}/model")
+        coefs = [clf.estimator.coef_ for clf in model.calibrated_classifiers_]
+        coef_ = np.mean(coefs, axis=0)
+
+        contributions = np.abs(np.std(X_train, axis=0) * coef_[0])
+        importances = contributions / np.sum(contributions)
+
+        df = pd.DataFrame({"feature_names": feature_names, "importances": importances})
+        mlflow_util.log_table(
+            data=df,
+            artifact_file="interpretation/intrinsic.json",
+            run_id=run_id,
+        )
+
+
 def intrinsic_trees(cfg: DictConfig, train_val_sets: dict, model_name: str):
     feature_names = cfg.vars.categorical + cfg.vars.numerical
 
