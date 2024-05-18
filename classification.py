@@ -107,10 +107,10 @@ sampler.sample(df)
 train_val_sets_raw = sampler.train_val_sets
 
 # %%
-inspect_holdout_split_size(train_val_sets_raw, cfg.vars.target)
+inspect_holdout_split_size(train_val_sets_raw, cfg.vars.stratify)
 
 # %%
-inspect_cv_split_size(train_val_sets_raw, cfg.vars.target)
+inspect_cv_split_size(train_val_sets_raw, cfg.vars.stratify)
 
 # %% [markdown]
 # ## Modify
@@ -184,43 +184,43 @@ train_val_sets = resampler.train_val_sets
 
 # %%
 if cfg.validation.models.knn:
-    validate_knn(train_val_sets)
+    validate_knn(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.logistic_regression:
-    validate_logistic_regression(train_val_sets)
+    validate_logistic_regression(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.gaussian_nb:
-    validate_gaussian_nb(train_val_sets)
+    validate_gaussian_nb(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.linear_svc:
-    validate_linear_svc(train_val_sets)
+    validate_linear_svc(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.decision_tree:
-    validate_decision_tree(train_val_sets)
+    validate_decision_tree(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.random_forest:
-    validate_random_forest(train_val_sets)
+    validate_random_forest(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.adaboost:
-    validate_adaboost(train_val_sets)
+    validate_adaboost(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.xgboost:
-    validate_xgboost(train_val_sets)
+    validate_xgboost(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.lightgbm:
-    validate_lightgbm(train_val_sets)
+    validate_lightgbm(cfg, train_val_sets)
 
 # %%
 if cfg.validation.models.catboost:
-    validate_catboost(train_val_sets)
+    validate_catboost(cfg, train_val_sets)
 
 # %% [markdown]
 # ## Assess

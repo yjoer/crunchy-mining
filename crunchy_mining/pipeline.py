@@ -9,6 +9,7 @@ import pandas as pd
 import shap
 from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
@@ -81,7 +82,9 @@ def train_knn(X_train, y_train):
     return knn
 
 
-def validate_knn(train_val_sets: dict):
+def validate_knn(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="KNN"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -92,7 +95,24 @@ def validate_knn(train_val_sets: dict):
                     knn = train_knn(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_knn = knn.predict(X_val)
+                    if fixed_fpr:
+                        y_knn_p, roc_raw, roc = evaluate_roc(
+                            estimator=knn,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_knn = custom_predict(
+                            y_prob=y_knn_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_knn = knn.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_knn))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -121,6 +141,8 @@ def train_logistic_regression(X_train, y_train):
 
 
 def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="Logistic Regression"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -131,8 +153,6 @@ def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
                     logreg = train_logistic_regression(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    fixed_fpr = cfg.validation.metrics.fixed_fpr
-
                     if fixed_fpr:
                         y_logreg_p, roc_raw, roc = evaluate_roc(
                             estimator=logreg,
@@ -145,11 +165,12 @@ def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
                             y_prob=y_logreg_p,
                             threshold=roc["threshold"],
                         )
-
-                        mlflow.log_dict(roc_raw, artifact_file="roc.json")
-                        mlflow.log_metrics(roc)
                     else:
                         y_logreg = logreg.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_logreg))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -172,7 +193,9 @@ def train_gaussian_nb(X_train, y_train):
     return gnb
 
 
-def validate_gaussian_nb(train_val_sets: dict):
+def validate_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="Gaussian NB"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -183,7 +206,24 @@ def validate_gaussian_nb(train_val_sets: dict):
                     gnb = train_gaussian_nb(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_gnb = gnb.predict(X_val)
+                    if fixed_fpr:
+                        y_gnb_p, roc_raw, roc = evaluate_roc(
+                            estimator=gnb,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_gnb = custom_predict(
+                            y_prob=y_gnb_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_gnb = gnb.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_gnb))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -211,7 +251,20 @@ def train_linear_svc(X_train, y_train):
     return svc
 
 
-def validate_linear_svc(train_val_sets: dict):
+def train_calibrated_linear_svc(X_train, y_train):
+    params = {
+        "n_jobs": -1,
+    }
+
+    svc = CalibratedClassifierCV(**params)
+    svc.fit(X_train, y_train)
+
+    return svc
+
+
+def validate_linear_svc(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="Linear SVC"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -219,10 +272,30 @@ def validate_linear_svc(train_val_sets: dict):
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory() as fit_trace:
-                    svc = train_linear_svc(X_train, y_train)
+                    if fixed_fpr:
+                        svc = train_calibrated_linear_svc(X_train, y_train)
+                    else:
+                        svc = train_linear_svc(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_svc = svc.predict(X_val)
+                    if fixed_fpr:
+                        y_svc_p, roc_raw, roc = evaluate_roc(
+                            estimator=svc,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_svc = custom_predict(
+                            y_prob=y_svc_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_svc = svc.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_svc))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -249,7 +322,9 @@ def train_decision_tree(X_train, y_train):
     return dt
 
 
-def validate_decision_tree(train_val_sets: dict):
+def validate_decision_tree(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="Decision Tree"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -260,7 +335,24 @@ def validate_decision_tree(train_val_sets: dict):
                     dt = train_decision_tree(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_dt = dt.predict(X_val)
+                    if fixed_fpr:
+                        y_dt_p, roc_raw, roc = evaluate_roc(
+                            estimator=dt,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_dt = custom_predict(
+                            y_prob=y_dt_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_dt = dt.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_dt))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -288,7 +380,9 @@ def train_random_forest(X_train, y_train):
     return rf
 
 
-def validate_random_forest(train_val_sets: dict):
+def validate_random_forest(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="Random Forest"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -299,7 +393,24 @@ def validate_random_forest(train_val_sets: dict):
                     rf = train_random_forest(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_rf = rf.predict(X_val)
+                    if fixed_fpr:
+                        y_rf_p, roc_raw, roc = evaluate_roc(
+                            estimator=rf,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_rf = custom_predict(
+                            y_prob=y_rf_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_rf = rf.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_rf))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -327,7 +438,9 @@ def train_adaboost(X_train, y_train):
     return ab
 
 
-def validate_adaboost(train_val_sets: dict):
+def validate_adaboost(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="AdaBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -338,7 +451,24 @@ def validate_adaboost(train_val_sets: dict):
                     ab = train_adaboost(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_ab = ab.predict(X_val)
+                    if fixed_fpr:
+                        y_ab_p, roc_raw, roc = evaluate_roc(
+                            estimator=ab,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_ab = custom_predict(
+                            y_prob=y_ab_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_ab = ab.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_ab))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -366,7 +496,9 @@ def train_xgboost(X_train, y_train):
     return xgb
 
 
-def validate_xgboost(train_val_sets: dict):
+def validate_xgboost(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="XGBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -377,7 +509,24 @@ def validate_xgboost(train_val_sets: dict):
                     xgb = train_xgboost(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_xgb = xgb.predict(X_val)
+                    if fixed_fpr:
+                        y_xgb_p, roc_raw, roc = evaluate_roc(
+                            estimator=xgb,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_xgb = custom_predict(
+                            y_prob=y_xgb_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_xgb = xgb.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_xgb))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -406,7 +555,9 @@ def train_lightgbm(X_train, y_train):
     return lgb
 
 
-def validate_lightgbm(train_val_sets: dict):
+def validate_lightgbm(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="LightGBM"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -417,7 +568,24 @@ def validate_lightgbm(train_val_sets: dict):
                     lgb = train_lightgbm(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_lgb = lgb.predict(X_val)
+                    if fixed_fpr:
+                        y_lgb_p, roc_raw, roc = evaluate_roc(
+                            estimator=lgb,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_lgb = custom_predict(
+                            y_prob=y_lgb_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_lgb = lgb.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_lgb))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
@@ -445,7 +613,9 @@ def train_catboost(X_train, y_train):
     return catb
 
 
-def validate_catboost(train_val_sets: dict):
+def validate_catboost(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
     with mlflow.start_run(run_name="CatBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -456,7 +626,24 @@ def validate_catboost(train_val_sets: dict):
                     catb = train_catboost(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_catb = catb.predict(X_val)
+                    if fixed_fpr:
+                        y_catb_p, roc_raw, roc = evaluate_roc(
+                            estimator=catb,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_catb = custom_predict(
+                            y_prob=y_catb_p,
+                            threshold=roc["threshold"],
+                        )
+                    else:
+                        y_catb = catb.predict(X_val)
+
+                if fixed_fpr:
+                    mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                    mlflow.log_metrics(roc)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_catb))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
