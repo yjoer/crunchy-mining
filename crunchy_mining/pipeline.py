@@ -127,6 +127,8 @@ def validate_knn(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_knn),
                 )
 
+            del knn, fit_trace, y_knn, y_knn_p, roc_raw, roc, score_trace
+
 
 def train_logistic_regression(X_train, y_train):
     params = {
@@ -185,6 +187,8 @@ def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_logreg),
                 )
 
+            del logreg, fit_trace, y_logreg, y_logreg_p, roc_raw, roc, score_trace
+
 
 def train_gaussian_nb(X_train, y_train):
     gnb = GaussianNB()
@@ -237,6 +241,8 @@ def validate_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
                     artifact_path="model",
                     signature=mlflow.models.infer_signature(X_val, y_gnb),
                 )
+
+            del gnb, fit_trace, y_gnb, y_gnb_p, roc_raw, roc, score_trace
 
 
 def train_linear_svc(X_train, y_train):
@@ -310,6 +316,8 @@ def validate_linear_svc(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_svc),
                 )
 
+            del svc, fit_trace, y_svc, y_svc_p, roc_raw, roc, score_trace
+
 
 def train_decision_tree(X_train, y_train):
     params = {
@@ -366,6 +374,8 @@ def validate_decision_tree(cfg: DictConfig, train_val_sets: dict):
                     artifact_path="model",
                     signature=mlflow.models.infer_signature(X_val, y_dt),
                 )
+
+            del dt, fit_trace, y_dt, y_dt_p, roc_raw, roc, score_trace
 
 
 def train_random_forest(X_train, y_train):
@@ -425,6 +435,8 @@ def validate_random_forest(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_rf),
                 )
 
+            del rf, fit_trace, y_rf, y_rf_p, roc_raw, roc, score_trace
+
 
 def train_adaboost(X_train, y_train):
     params = {
@@ -482,6 +494,8 @@ def validate_adaboost(cfg: DictConfig, train_val_sets: dict):
                     artifact_path="model",
                     signature=mlflow.models.infer_signature(X_val, y_ab),
                 )
+
+            del ab, fit_trace, y_ab, y_ab_p, roc_raw, roc, score_trace
 
 
 def train_xgboost(X_train, y_train):
@@ -542,6 +556,8 @@ def validate_xgboost(cfg: DictConfig, train_val_sets: dict):
                     model_format="json",
                 )
 
+            del xgb, fit_trace, y_xgb, y_xgb_p, roc_raw, roc, score_trace
+
 
 def train_lightgbm(X_train, y_train):
     params = {
@@ -600,6 +616,8 @@ def validate_lightgbm(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_lgb),
                 )
 
+            del lgb, fit_trace, y_lgb, y_lgb_p, roc_raw, roc, score_trace
+
 
 def train_catboost(X_train, y_train):
     params = {
@@ -657,6 +675,8 @@ def validate_catboost(cfg: DictConfig, train_val_sets: dict):
                     artifact_path="model",
                     signature=mlflow.models.infer_signature(X_val, y_catb),
                 )
+
+            del catb, fit_trace, y_catb, y_catb_p, roc_raw, roc, score_trace
 
 
 def intrinsic_linear(cfg: DictConfig, train_val_sets: dict, model_name: str):

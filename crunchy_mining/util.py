@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import gc
+import os
 import platform
 import time
 import tracemalloc
 import typing
 from contextlib import contextmanager
+from multiprocessing import Manager
+from multiprocessing import Process
 from typing import List
 
 import altair as alt
@@ -32,23 +36,80 @@ def set_low_priority(pid: int):
         process.nice(10)
 
 
+def _get_current_memory(process: psutil.Process, pid_monitor: int = None):
+    memory = process.memory_info().rss
+
+    for child_process in process.children(recursive=True):
+        if child_process.pid == pid_monitor:
+            continue
+
+        memory += child_process.memory_info().rss
+
+    return memory
+
+
+def _monitor_memory_usage(pid: int, d: dict, resolution: float):
+    process = psutil.Process(pid)
+
+    while True:
+        memory = _get_current_memory(process, os.getpid())
+
+        if "peak" not in d:
+            d["peak"] = memory
+
+        if memory > d["peak"]:
+            d["peak"] = memory
+
+        time.sleep(resolution)
+
+
 @contextmanager
-def trace_memory():
+def trace_memory(legacy=True, resolution=0.1):
     # Yield a reference to a dictionary when creating a new context. The
     # dictionary is empty initially until the execution within the context is
     # finished.
     stats = {}
     start = time.perf_counter_ns()
 
-    if not tracemalloc.is_tracing():
-        tracemalloc.start()
+    if legacy:
+        if not tracemalloc.is_tracing():
+            tracemalloc.start()
+    else:
+        # GC out-of-scope variables before collecting the memory usage.
+        gc.collect()
+
+        process = psutil.Process(os.getpid())
+        start_memory = _get_current_memory(process)
+
+        manager = Manager()
+        d = manager.dict()
+        d["peak"] = 0
+
+        p = Process(target=_monitor_memory_usage, args=(os.getpid(), d, resolution))
+        p.start()
 
     try:
         yield stats
     finally:
-        current, peak = tracemalloc.get_traced_memory()
+        if legacy:
+            current, peak = tracemalloc.get_traced_memory()
+        else:
+            # Use the current memory at this point as the fallback for tasks
+            # ending too quickly before the monitoring process is started.
+            # Hopefully, the memory is not garbage collected or deallocated yet.
+            if d["peak"] == 0:
+                end_memory = _get_current_memory(process, p.pid)
+            else:
+                end_memory = d["peak"]
+
+            current, peak = end_memory - start_memory, end_memory - start_memory
+
         end = time.perf_counter_ns()
-        tracemalloc.stop()
+
+        if legacy:
+            tracemalloc.stop()
+        else:
+            p.terminate()
 
         stats["duration"] = end - start
         stats["current"] = current
