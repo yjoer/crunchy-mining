@@ -17,6 +17,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
 
 if typing.TYPE_CHECKING:
     pass
@@ -54,6 +55,46 @@ def trace_memory():
         stats["peak"] = peak
 
 
+def evaluate_roc(estimator, X_test, y_test, fixed_fpr: float):
+    y_prob = estimator.predict_proba(X_test)
+    y_score = y_prob[:, 1]
+    fprs, tprs, thresholds = roc_curve(y_test, y_score)
+
+    # Find the index of the closest FPR to the fixed FPR.
+    idx = np.where(fprs <= fixed_fpr)[-1][-1]
+    tpr = tprs[idx]
+    fpr = fprs[idx]
+    threshold = thresholds[idx]
+
+    return (
+        y_prob,
+        {
+            "true_positive_rates": tprs.tolist(),
+            "false_positive_rates": fprs.tolist(),
+            "thresholds": thresholds.tolist(),
+        },
+        {
+            "true_positive_rate": tpr,
+            "false_positive_rate": fpr,
+            "threshold": threshold,
+        },
+    )
+
+
+def custom_predict(estimator=None, X_test=None, y_prob=None, threshold=0.5):
+    # Allow reusing the probabilities from the preceding steps.
+    if estimator is not None and X_test is not None:
+        y_prob = estimator.predict_proba(X_test)
+
+    # It is possible to have two true classes if the threshold is low, but we
+    # want to predict the instance as positive if the probability of the
+    # positive class is higher than the threshold.
+    # predictions = np.argmax(y_prob >= threshold, axis=1)
+    predictions = (y_prob[:, 1] >= threshold).astype(int)
+
+    return predictions
+
+
 def evaluate_classification(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
 
@@ -76,6 +117,8 @@ def evaluate_classification(y_true, y_pred):
     r_weighted = (r_pos * sup_pos + r_neg * sup_neg) / (sup_pos + sup_neg)
     f1_weighted = (f1_pos * sup_pos + f1_neg * sup_neg) / (sup_pos + sup_neg)
 
+    mcc = (tp * tn - fp * fn) / np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+
     return {
         "true_positive": tp,
         "true_negative": tn,
@@ -97,6 +140,7 @@ def evaluate_classification(y_true, y_pred):
         "support_1": sup_pos,
         "support_0": sup_neg,
         "roc_auc": roc_auc_score(y_true, y_pred),
+        "mcc": mcc,
     }
 
 

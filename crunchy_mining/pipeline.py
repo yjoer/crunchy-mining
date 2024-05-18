@@ -21,7 +21,9 @@ from tqdm.auto import tqdm
 from xgboost import XGBClassifier
 
 from . import mlflow_util
+from .util import custom_predict
 from .util import evaluate_classification
+from .util import evaluate_roc
 from .util import trace_memory
 
 if typing.TYPE_CHECKING:
@@ -118,7 +120,7 @@ def train_logistic_regression(X_train, y_train):
     return logreg
 
 
-def validate_logistic_regression(train_val_sets: dict):
+def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
     with mlflow.start_run(run_name="Logistic Regression"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
             if name == "testing":
@@ -129,7 +131,25 @@ def validate_logistic_regression(train_val_sets: dict):
                     logreg = train_logistic_regression(X_train, y_train)
 
                 with trace_memory() as score_trace:
-                    y_logreg = logreg.predict(X_val)
+                    fixed_fpr = cfg.validation.metrics.fixed_fpr
+
+                    if fixed_fpr:
+                        y_logreg_p, roc_raw, roc = evaluate_roc(
+                            estimator=logreg,
+                            X_test=X_val,
+                            y_test=y_val,
+                            fixed_fpr=fixed_fpr,
+                        )
+
+                        y_logreg = custom_predict(
+                            y_prob=y_logreg_p,
+                            threshold=roc["threshold"],
+                        )
+
+                        mlflow.log_dict(roc_raw, artifact_file="roc.json")
+                        mlflow.log_metrics(roc)
+                    else:
+                        y_logreg = logreg.predict(X_val)
 
                 mlflow.log_metrics(evaluate_classification(y_val, y_logreg))
                 mlflow.log_metric("fit_time", fit_trace["duration"])
