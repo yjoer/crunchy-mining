@@ -84,6 +84,7 @@ def train_knn(X_train, y_train):
 
 def validate_knn(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="KNN"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -91,10 +92,10 @@ def validate_knn(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     knn = train_knn(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_knn_p, roc_raw, roc = evaluate_roc(
                             estimator=knn,
@@ -144,6 +145,7 @@ def train_logistic_regression(X_train, y_train):
 
 def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="Logistic Regression"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -151,10 +153,10 @@ def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     logreg = train_logistic_regression(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_logreg_p, roc_raw, roc = evaluate_roc(
                             estimator=logreg,
@@ -199,6 +201,7 @@ def train_gaussian_nb(X_train, y_train):
 
 def validate_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="Gaussian NB"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -206,10 +209,10 @@ def validate_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     gnb = train_gaussian_nb(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_gnb_p, roc_raw, roc = evaluate_roc(
                             estimator=gnb,
@@ -270,6 +273,7 @@ def train_calibrated_linear_svc(X_train, y_train):
 
 def validate_linear_svc(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="Linear SVC"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -277,13 +281,13 @@ def validate_linear_svc(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     if fixed_fpr:
                         svc = train_calibrated_linear_svc(X_train, y_train)
                     else:
                         svc = train_linear_svc(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_svc_p, roc_raw, roc = evaluate_roc(
                             estimator=svc,
@@ -332,6 +336,7 @@ def train_decision_tree(X_train, y_train):
 
 def validate_decision_tree(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="Decision Tree"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -339,10 +344,10 @@ def validate_decision_tree(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     dt = train_decision_tree(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_dt_p, roc_raw, roc = evaluate_roc(
                             estimator=dt,
@@ -392,6 +397,7 @@ def train_random_forest(X_train, y_train):
 
 def validate_random_forest(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="Random Forest"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -399,10 +405,10 @@ def validate_random_forest(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     rf = train_random_forest(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_rf_p, roc_raw, roc = evaluate_roc(
                             estimator=rf,
@@ -452,6 +458,7 @@ def train_adaboost(X_train, y_train):
 
 def validate_adaboost(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="AdaBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -459,10 +466,10 @@ def validate_adaboost(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     ab = train_adaboost(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_ab_p, roc_raw, roc = evaluate_roc(
                             estimator=ab,
@@ -512,6 +519,7 @@ def train_xgboost(X_train, y_train):
 
 def validate_xgboost(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="XGBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -519,10 +527,10 @@ def validate_xgboost(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     xgb = train_xgboost(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_xgb_p, roc_raw, roc = evaluate_roc(
                             estimator=xgb,
@@ -573,6 +581,7 @@ def train_lightgbm(X_train, y_train):
 
 def validate_lightgbm(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="LightGBM"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -580,10 +589,10 @@ def validate_lightgbm(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     lgb = train_lightgbm(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_lgb_p, roc_raw, roc = evaluate_roc(
                             estimator=lgb,
@@ -633,6 +642,7 @@ def train_catboost(X_train, y_train):
 
 def validate_catboost(cfg: DictConfig, train_val_sets: dict):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
+    memory_legacy = cfg.validation.metrics.memory_usage.legacy
 
     with mlflow.start_run(run_name="CatBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
@@ -640,10 +650,10 @@ def validate_catboost(cfg: DictConfig, train_val_sets: dict):
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
-                with trace_memory() as fit_trace:
+                with trace_memory(legacy=memory_legacy) as fit_trace:
                     catb = train_catboost(X_train, y_train)
 
-                with trace_memory() as score_trace:
+                with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
                         y_catb_p, roc_raw, roc = evaluate_roc(
                             estimator=catb,

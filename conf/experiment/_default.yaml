@@ -52,6 +52,8 @@ resampling:
   variant: 0
 validation:
   metrics:
+    memory_usage:
+      legacy: true
     fixed_fpr: False
   models:
     knn: false
