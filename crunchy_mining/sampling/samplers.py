@@ -35,7 +35,9 @@ class SamplerV2(BaseSampler):
         counts = df[self.cfg.vars.target].value_counts()
         majority_class = counts.index[np.argmax(counts)]
         minority_class = counts.index[np.argmin(counts)]
-        n_minority_class = np.min(counts)
+
+        downsampling_factor = self.cfg.sampling.negative_downsampling_factor
+        n_minority_class = np.min(counts) * downsampling_factor
 
         # Align the rows of the majority class to the minority class.
         df_majority = df[df[self.cfg.vars.target] == majority_class]
