@@ -51,6 +51,8 @@ preprocessing:
 resampling:
   variant: 0
 validation:
+  metrics:
+    fixed_fpr: False
   models:
     knn: false
     logistic_regression: false
