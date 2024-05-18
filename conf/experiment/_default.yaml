@@ -46,6 +46,7 @@ vars:
   target: MIS_Status
 sampling:
   variant: 1
+  negative_downsampling_factor: 1
 preprocessing:
   variant: 1
 resampling:
