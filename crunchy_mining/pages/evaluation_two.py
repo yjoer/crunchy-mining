@@ -5,7 +5,7 @@ from mlflow import MlflowClient
 from crunchy_mining import mlflow_util
 from crunchy_mining.pages.fragments import create_experiment_selector
 from crunchy_mining.pages.fragments import create_fold_selector
-from crunchy_mining.pages.fragments import create_model_selector
+from crunchy_mining.pages.fragments import create_experiment_model_selector
 from crunchy_mining.util import plot_confusion_matrix
 from crunchy_mining.util import plot_evaluation_stability
 from crunchy_mining.util import plot_resource_stability
@@ -81,7 +81,7 @@ with tabs[0]:
 
 
 with tabs[1]:
-    experiment, model = create_model_selector()
+    experiment, model = create_experiment_model_selector()
     task_name, experiment_file = experiment.split("/")[:2]
     mlflow.set_experiment(experiment)
 
