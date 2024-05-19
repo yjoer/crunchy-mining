@@ -1,3 +1,6 @@
+import altair as alt
+import numpy as np
+import pandas as pd
 import streamlit as st
 
 task_names = {
@@ -120,13 +123,24 @@ def experiment_selector(experiments):
     return cols[0].selectbox(label="Experiments", options=experiments, key=0)
 
 
-def fold_selector(experiments, model_names, folds):
+def experiment_model_selector(experiments, model_names):
     cols = st.columns([1, 1, 1])
     experiment = cols[0].selectbox(label="Experiments", options=experiments, key=1)
     task_name = experiment.split("/")[0]
 
     model_names = model_names[task_name]
     model = cols[1].selectbox(label="Models", options=model_names, key=2)
+
+    return experiment, model
+
+
+def fold_selector(experiments, model_names, folds):
+    cols = st.columns([1, 1, 1])
+    experiment = cols[0].selectbox(label="Experiments", options=experiments, key=3)
+    task_name = experiment.split("/")[0]
+
+    model_names = model_names[task_name]
+    model = cols[1].selectbox(label="Models", options=model_names, key=4)
 
     fold = cols[2].selectbox(
         label="Folds",
@@ -137,17 +151,6 @@ def fold_selector(experiments, model_names, folds):
     return experiment, model, fold
 
 
-def model_selector(experiments, model_names):
-    cols = st.columns([1, 1, 1])
-    experiment = cols[0].selectbox(label="Experiments", options=experiments, key=3)
-    task_name = experiment.split("/")[0]
-
-    model_names = model_names[task_name]
-    model = cols[1].selectbox(label="Models", options=model_names, key=4)
-
-    return experiment, model
-
-
 def create_task_model_selector():
     return task_model_selector(task_names, model_names)
 
@@ -156,9 +159,201 @@ def create_experiment_selector():
     return experiment_selector(experiments)
 
 
+def create_experiment_model_selector():
+    return experiment_model_selector(experiments, model_names)
+
+
 def create_fold_selector():
     return fold_selector(experiments, model_names, folds)
 
 
-def create_model_selector():
-    return model_selector(experiments, model_names)
+def plot_f_score_by_experiments(df_cv_metrics: pd.DataFrame):
+    return st.altair_chart(
+        alt.Chart(
+            data=df_cv_metrics,
+            title=alt.TitleParams(
+                text="Sampling and Preprocessing Techniques by Macro F1 Score Across Experiments",
+                anchor="start",
+            ),
+        )
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                shorthand="experiment_idx:N",
+                title="Experiments",
+                axis=alt.Axis(labelAngle=0),
+                sort=alt.Sort("x"),
+            ),
+            y=alt.Y("f1_macro:Q", title="Macro F1 Score"),
+        ),
+        use_container_width=True,
+        theme=None,
+    )
+
+
+def plot_auc_score_by_experiments(df_cv_metrics: pd.DataFrame):
+    return st.altair_chart(
+        alt.Chart(
+            data=df_cv_metrics,
+            title=alt.TitleParams(
+                text="Sampling and Preprocessing Techniques by AUC Score Across Experiments",
+                anchor="start",
+            ),
+        )
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                shorthand="experiment_idx:N",
+                title="Experiments",
+                axis=alt.Axis(labelAngle=0),
+                sort=alt.Sort("x"),
+            ),
+            y=alt.Y("roc_auc:Q", title="AUC Score"),
+        ),
+        use_container_width=True,
+        theme=None,
+    )
+
+
+def plot_mae_by_experiments(df_cv_metrics: pd.DataFrame):
+    return st.altair_chart(
+        alt.Chart(
+            data=df_cv_metrics,
+            title=alt.TitleParams(
+                text="Sampling and Preprocessing Techniques by MAE Across Experiments",
+                anchor="start",
+            ),
+        )
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                shorthand="experiment_idx:N",
+                title="Experiments",
+                axis=alt.Axis(labelAngle=0),
+                sort=alt.Sort("x"),
+            ),
+            y=alt.Y("mae:Q", title="Mean Absolute Error", scale=alt.Scale(type="log")),
+        ),
+        use_container_width=True,
+        theme=None,
+    )
+
+
+def plot_mape_by_experiments(df_cv_metrics: pd.DataFrame):
+    return st.altair_chart(
+        alt.Chart(
+            data=df_cv_metrics,
+            title=alt.TitleParams(
+                text="Sampling and Preprocessing Techniques by MAPE Across Experiments",
+                anchor="start",
+            ),
+        )
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                shorthand="experiment_idx:N",
+                title="Experiments",
+                axis=alt.Axis(labelAngle=0),
+                sort=alt.Sort("x"),
+            ),
+            y=alt.Y(
+                shorthand="mape:Q",
+                title="Mean Absolute Percentage Error",
+                scale=alt.Scale(type="log"),
+            ),
+        ),
+        use_container_width=True,
+        theme=None,
+    )
+
+
+def plot_r_squared_score_by_experiments(df_cv_metrics: pd.DataFrame):
+    capped = np.where(df_cv_metrics["r_squared"] < -1, -1, df_cv_metrics["r_squared"])
+    df_cv_metrics["r_squared_capped"] = capped
+
+    st.altair_chart(
+        alt.Chart(
+            data=df_cv_metrics,
+            title=alt.TitleParams(
+                text="Sampling and Preprocessing Techniques by R-Squared Score Across Experiments",
+                anchor="start",
+            ),
+        )
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                shorthand="experiment_idx:N",
+                title="Experiments",
+                axis=alt.Axis(labelAngle=0),
+                sort=alt.Sort("x"),
+            ),
+            y=alt.Y("r_squared_capped:Q", title="R-Squared Score"),
+        ),
+        use_container_width=True,
+        theme=None,
+    )
+
+
+def plot_time_by_experiments(df_cv_metrics: pd.DataFrame):
+    df_cv_time = (
+        df_cv_metrics[["experiment_idx", "fit_time", "score_time"]]
+        .melt(id_vars="experiment_idx", var_name="metrics", value_name="value")
+        .assign(value=lambda x: x["value"] / 1_000_000)
+    )
+
+    return st.altair_chart(
+        alt.Chart(
+            data=df_cv_time,
+            title=alt.TitleParams(
+                text="Sampling and Preprocessing Techniques by Training and Scoring Time Across Experiments",
+                anchor="start",
+            ),
+        )
+        .mark_bar(width={"band": 1})
+        .encode(
+            x=alt.X(
+                shorthand="experiment_idx:N",
+                title="Experiments",
+                axis=alt.Axis(labelAngle=0),
+                sort=alt.Sort("x"),
+            ),
+            y=alt.Y("value:Q", title="Time Taken (ms)", scale=alt.Scale(type="log")),
+            xOffset=alt.XOffset("metrics:N", title="Metrics"),
+            color=alt.Color("metrics:N", title="Metrics"),
+        ),
+        use_container_width=True,
+        theme=None,
+    )
+
+
+def plot_memory_by_experiments(df_cv_metrics: pd.DataFrame):
+    df_cv_memory = (
+        df_cv_metrics[["experiment_idx", "fit_memory_peak", "score_memory_peak"]]
+        .rename(lambda x: x.replace("_peak", ""), axis=1)
+        .melt(id_vars="experiment_idx", var_name="metrics", value_name="value")
+        .assign(value=lambda x: x["value"] / 1_000_000)
+    )
+
+    return st.altair_chart(
+        alt.Chart(
+            data=df_cv_memory,
+            title=alt.TitleParams(
+                text="Sampling and Preprocessing Techniques by Training and Scoring Memory Usage Across Experiments",
+                anchor="start",
+            ),
+        )
+        .mark_bar(width={"band": 1})
+        .encode(
+            x=alt.X(
+                shorthand="experiment_idx:N",
+                title="Experiments",
+                axis=alt.Axis(labelAngle=0),
+                sort=alt.Sort("x"),
+            ),
+            y=alt.Y("value:Q", title="Memory Usage (MB)"),
+            xOffset=alt.XOffset("metrics:N", title="Metrics"),
+            color=alt.Color("metrics:N", title="Metrics"),
+        ),
+        use_container_width=True,
+        theme=None,
+    )
