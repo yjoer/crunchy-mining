@@ -296,7 +296,13 @@ def summarize_classification(df: pd.DataFrame):
     outputs = {}
 
     outputs["f1_macro_chart"] = (
-        alt.Chart(df_f1_macro, title="Best Models by Macro F1 Score Across Experiments")
+        alt.Chart(
+            data=df_f1_macro,
+            title=alt.TitleParams(
+                text="Best Models by Macro F1 Score Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -308,7 +314,10 @@ def summarize_classification(df: pd.DataFrame):
     outputs["f1_macro_min_chart"] = (
         alt.Chart(
             data=df_f1_macro_min,
-            title="Worst Models by Macro F1 Score Across Experiments",
+            title=alt.TitleParams(
+                text="Worst Models by Macro F1 Score Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -319,7 +328,13 @@ def summarize_classification(df: pd.DataFrame):
     )
 
     outputs["auc_chart"] = (
-        alt.Chart(df_auc, title="Best Models by AUC Score Across Experiments")
+        alt.Chart(
+            data=df_auc,
+            title=alt.TitleParams(
+                text="Best Models by AUC Score Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -329,7 +344,13 @@ def summarize_classification(df: pd.DataFrame):
     )
 
     outputs["auc_min_chart"] = (
-        alt.Chart(df_auc_min, title="Worst Models by AUC Score Across Experiments")
+        alt.Chart(
+            data=df_auc_min,
+            title=alt.TitleParams(
+                text="Worst Models by AUC Score Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -339,7 +360,13 @@ def summarize_classification(df: pd.DataFrame):
     )
 
     outputs["fit_time_chart"] = (
-        alt.Chart(df_fit_time, title="Best Models by Fit Time Across Experiments")
+        alt.Chart(
+            data=df_fit_time,
+            title=alt.TitleParams(
+                text="Best Models by Fit Time Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -349,7 +376,13 @@ def summarize_classification(df: pd.DataFrame):
     )
 
     outputs["fit_time_max_chart"] = (
-        alt.Chart(df_fit_time_max, title="Worst Models by Fit Time Across Experiments")
+        alt.Chart(
+            data=df_fit_time_max,
+            title=alt.TitleParams(
+                text="Worst Models by Fit Time Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -359,7 +392,13 @@ def summarize_classification(df: pd.DataFrame):
     )
 
     outputs["score_time_chart"] = (
-        alt.Chart(df_score_time, title="Best Models by Score Time Across Experiments")
+        alt.Chart(
+            data=df_score_time,
+            title=alt.TitleParams(
+                text="Best Models by Score Time Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -371,7 +410,10 @@ def summarize_classification(df: pd.DataFrame):
     outputs["score_time_max_chart"] = (
         alt.Chart(
             data=df_score_time_max,
-            title="Worst Models by Score Time Across Experiments",
+            title=alt.TitleParams(
+                text="Worst Models by Score Time Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -382,7 +424,13 @@ def summarize_classification(df: pd.DataFrame):
     )
 
     outputs["fit_memory_chart"] = (
-        alt.Chart(df_fit_memory, title="Best Models by Fit Memory Across Experiments")
+        alt.Chart(
+            data=df_fit_memory,
+            title=alt.TitleParams(
+                text="Best Models by Fit Memory Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -394,7 +442,10 @@ def summarize_classification(df: pd.DataFrame):
     outputs["fit_memory_max_chart"] = (
         alt.Chart(
             data=df_fit_memory_max,
-            title="Worst Models by Fit Memory Across Experiments",
+            title=alt.TitleParams(
+                text="Worst Models by Fit Memory Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -407,7 +458,10 @@ def summarize_classification(df: pd.DataFrame):
     outputs["score_memory_chart"] = (
         alt.Chart(
             data=df_score_memory,
-            title="Best Models by Score Memory Across Experiments",
+            title=alt.TitleParams(
+                text="Best Models by Score Memory Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -420,7 +474,10 @@ def summarize_classification(df: pd.DataFrame):
     outputs["score_memory_max_chart"] = (
         alt.Chart(
             data=df_score_memory_max,
-            title="Worst Models by Score Memory Across Experiments",
+            title=alt.TitleParams(
+                text="Worst Models by Score Memory Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -531,7 +588,13 @@ def summarize_regression(df: pd.DataFrame):
     outputs = {}
 
     outputs["mae_chart"] = (
-        alt.Chart(df_mae, title="Best Models by MAE Across Experiments")
+        alt.Chart(
+            data=df_mae,
+            title=alt.TitleParams(
+                text="Best Models by MAE Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -541,7 +604,13 @@ def summarize_regression(df: pd.DataFrame):
     )
 
     outputs["mae_max_chart"] = (
-        alt.Chart(df_mae_max, title="Worst Models by MAE Across Experiments")
+        alt.Chart(
+            data=df_mae_max,
+            title=alt.TitleParams(
+                text="Worst Models by MAE Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -551,7 +620,13 @@ def summarize_regression(df: pd.DataFrame):
     )
 
     outputs["mape_chart"] = (
-        alt.Chart(df_mape, title="Best Models by MAPE Across Experiments")
+        alt.Chart(
+            data=df_mape,
+            title=alt.TitleParams(
+                text="Best Models by MAPE Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -561,7 +636,13 @@ def summarize_regression(df: pd.DataFrame):
     )
 
     outputs["mape_max_chart"] = (
-        alt.Chart(df_mape_max, title="Worst Models by MAPE Across Experiments")
+        alt.Chart(
+            data=df_mape_max,
+            title=alt.TitleParams(
+                text="Worst Models by MAPE Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -571,7 +652,13 @@ def summarize_regression(df: pd.DataFrame):
     )
 
     outputs["rsq_chart"] = (
-        alt.Chart(df_rsq, title="Best Models by R-Squared Score Across Experiments")
+        alt.Chart(
+            data=df_rsq,
+            title=alt.TitleParams(
+                text="Best Models by R-Squared Score Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -583,7 +670,10 @@ def summarize_regression(df: pd.DataFrame):
     outputs["rsq_min_chart"] = (
         alt.Chart(
             data=df_rsq_min,
-            title="Worst Models by R-Squared Score Across Experiments",
+            title=alt.TitleParams(
+                text="Worst Models by R-Squared Score Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -594,7 +684,13 @@ def summarize_regression(df: pd.DataFrame):
     )
 
     outputs["fit_time_chart"] = (
-        alt.Chart(df_fit_time, title="Best Models by Fit Time Across Experiments")
+        alt.Chart(
+            data=df_fit_time,
+            title=alt.TitleParams(
+                text="Best Models by Fit Time Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -604,7 +700,13 @@ def summarize_regression(df: pd.DataFrame):
     )
 
     outputs["fit_time_max_chart"] = (
-        alt.Chart(df_fit_time_max, title="Worst Models by Fit Time Across Experiments")
+        alt.Chart(
+            data=df_fit_time_max,
+            title=alt.TitleParams(
+                text="Worst Models by Fit Time Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -614,7 +716,13 @@ def summarize_regression(df: pd.DataFrame):
     )
 
     outputs["score_time_chart"] = (
-        alt.Chart(df_score_time, title="Best Models by Score Time Across Experiments")
+        alt.Chart(
+            data=df_score_time,
+            title=alt.TitleParams(
+                text="Best Models by Score Time Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -626,7 +734,10 @@ def summarize_regression(df: pd.DataFrame):
     outputs["score_time_max_chart"] = (
         alt.Chart(
             data=df_score_time_max,
-            title="Worst Models by Score Time Across Experiments",
+            title=alt.TitleParams(
+                text="Worst Models by Score Time Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -637,7 +748,13 @@ def summarize_regression(df: pd.DataFrame):
     )
 
     outputs["fit_memory_chart"] = (
-        alt.Chart(df_fit_memory, title="Best Models by Fit Memory Across Experiments")
+        alt.Chart(
+            data=df_fit_memory,
+            title=alt.TitleParams(
+                text="Best Models by Fit Memory Across Experiments",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
@@ -649,7 +766,10 @@ def summarize_regression(df: pd.DataFrame):
     outputs["fit_memory_max_chart"] = (
         alt.Chart(
             data=df_fit_memory_max,
-            title="Worst Models by Fit Memory Across Experiments",
+            title=alt.TitleParams(
+                text="Worst Models by Fit Memory Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -662,7 +782,10 @@ def summarize_regression(df: pd.DataFrame):
     outputs["score_memory_chart"] = (
         alt.Chart(
             data=df_score_memory,
-            title="Best Models by Score Memory Across Experiments",
+            title=alt.TitleParams(
+                text="Best Models by Score Memory Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
@@ -675,7 +798,10 @@ def summarize_regression(df: pd.DataFrame):
     outputs["score_memory_max_chart"] = (
         alt.Chart(
             data=df_score_memory_max,
-            title="Worst Models by Score Memory Across Experiments",
+            title=alt.TitleParams(
+                text="Worst Models by Score Memory Across Experiments",
+                anchor="start",
+            ),
         )
         .mark_bar()
         .encode(
