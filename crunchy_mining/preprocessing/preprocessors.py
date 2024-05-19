@@ -61,6 +61,28 @@ class PreprocessorV2(BasePreprocessor):
         self.encoders["label"] = le
 
 
+# One-Hot Encoding (Dense) + No Scaling
+class PreprocessorV2D(BasePreprocessor):
+    def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
+        hot = OneHotEncoder(sparse_output=False, handle_unknown="infrequent_if_exist")
+        X_train_cat = hot.fit_transform(df_train[self.cfg.vars.categorical])
+        X_test_cat = hot.transform(df_test[self.cfg.vars.categorical])
+
+        X_train_num = df_train[self.cfg.vars.numerical]
+        X_test_num = df_test[self.cfg.vars.numerical]
+
+        X_train = np.hstack((X_train_cat, X_train_num))
+        X_test = np.hstack((X_test_cat, X_test_num))
+
+        le = LabelEncoder()
+        y_train = le.fit_transform(df_train[self.cfg.vars.target])
+        y_test = le.transform(df_test[self.cfg.vars.target])
+
+        self.train_val_sets[name] = (X_train, y_train, X_test, y_test)
+        self.encoders["one_hot"] = hot
+        self.encoders["label"] = le
+
+
 # Target Encoder + No Scaling
 class PreprocessorV3(BasePreprocessor):
     def fit(self, df_train: pd.DataFrame, df_test: pd.DataFrame, name: str):
