@@ -135,6 +135,10 @@ def get_cv_metrics_by_model(task_name: str, model_name: str):
             df = future.result()
             dfs.append(df)
 
+    def rename_columns(df: pd.DataFrame):
+        df.columns = ["_".join(col).strip() for col in df.columns.values]
+        return df
+
     df_agg = (
         pd.concat(dfs, axis=0)
         .rename(columns={"tags.mlflow.runName": "nested_run_name"})
@@ -143,11 +147,16 @@ def get_cv_metrics_by_model(task_name: str, model_name: str):
             {
                 "experiment_id": "first",
                 "nested_run_name": list,
-                **{col: "mean" for col in df.columns if col.startswith("metrics")},
+                **{
+                    col: ["mean", "std"]
+                    for col in df.columns
+                    if col.startswith("metrics")
+                },
             },
         )
+        .pipe(rename_columns)
         .rename(lambda x: x.replace("metrics.", ""), axis=1)
-        .assign(experiment_name=lambda x: x["experiment_id"].map(experiments_map))
+        .assign(experiment_name=lambda x: x["experiment_id_first"].map(experiments_map))
     )
 
     return df_agg

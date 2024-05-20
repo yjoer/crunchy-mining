@@ -399,7 +399,7 @@ def summarize_regression(df: pd.DataFrame):
     create_experiment_idx(df_mae)
 
     df_mae_max = df.loc[df.groupby("experiment_id_first")["mae_mean"].idxmax()]
-    df_mae_max["mae_std_capped"] = np.where(df_mae_max["mae_std"] > df_mae_max["mae_mean"], 0.99 * df_mae_max["mae_mean"], df_mae_max["mae_std"])  # fmt: skip
+    df_mae_max["mae_std_capped"] = np.where(df_mae_max["mae_std"] >= df_mae_max["mae_mean"], 0.99 * df_mae_max["mae_mean"], df_mae_max["mae_std"])  # fmt: skip
     create_formatted_values(df_mae_max, prefix="mae")
     create_experiment_idx(df_mae_max)
 
@@ -408,7 +408,7 @@ def summarize_regression(df: pd.DataFrame):
     create_experiment_idx(df_mape)
 
     df_mape_max = df.loc[df.groupby("experiment_id_first")["mape_mean"].idxmax()]
-    df_mape_max["mape_std_capped"] = np.where(df_mape_max["mape_std"] > df_mape_max["mape_mean"], 0.99 * df_mape_max["mape_mean"], df_mape_max["mape_std"])  # fmt: skip
+    df_mape_max["mape_std_capped"] = np.where(df_mape_max["mape_std"] >= df_mape_max["mape_mean"], 0.99 * df_mape_max["mape_mean"], df_mape_max["mape_std"])  # fmt: skip
     create_formatted_values(df_mape_max, prefix="mape")
     create_experiment_idx(df_mape_max)
 
@@ -418,7 +418,7 @@ def summarize_regression(df: pd.DataFrame):
 
     df_rsq_min = df.loc[df.groupby("experiment_id_first")["r_squared_mean"].idxmin()]
     df_rsq_min["r_squared_capped"] = np.where(df_rsq_min["r_squared_mean"] < -1, -1, df_rsq_min["r_squared_mean"])  # fmt: skip
-    df_rsq_min["r_squared_std_capped"] = np.where(np.abs(df_rsq_min["r_squared_std"]) > np.abs(df_rsq_min["r_squared_capped"]), 0.99 * np.abs(df_rsq_min["r_squared_capped"]), df_rsq_min["r_squared_std"])  # fmt: skip
+    df_rsq_min["r_squared_std_capped"] = np.where(np.abs(df_rsq_min["r_squared_std"]) >= np.abs(df_rsq_min["r_squared_capped"]), 0.99 * np.abs(df_rsq_min["r_squared_capped"]), df_rsq_min["r_squared_std"])  # fmt: skip
     create_formatted_values(df_rsq_min, prefix="r_squared")
     create_experiment_idx(df_rsq_min)
 
@@ -568,7 +568,7 @@ def summarize_regression(df: pd.DataFrame):
             tooltip=[
                 alt.Tooltip("experiment_idx", title="Experiments"),
                 alt.Tooltip("parent_run_name_first", title="Models"),
-                alt.Tooltip("formatted_values", title="R-Squared"),
+                alt.Tooltip("formatted_values", title="R-Squared Score"),
             ],
         )
     )
@@ -578,7 +578,7 @@ def summarize_regression(df: pd.DataFrame):
         .mark_errorbar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments"),
-            y=alt.Y("r_squared_mean:Q", title="R-Squared"),
+            y=alt.Y("r_squared_mean:Q", title="R-Squared Score"),
             yError=alt.YError("r_squared_std:Q"),
         )
     )
@@ -594,12 +594,12 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("r_squared_capped:Q", title="R-Squared"),
+            y=alt.Y("r_squared_capped:Q", title="R-Squared Score"),
             color=alt.Color("parent_run_name_first:N", title="Models"),
             tooltip=[
                 alt.Tooltip("experiment_idx", title="Experiments"),
                 alt.Tooltip("parent_run_name_first", title="Models"),
-                alt.Tooltip("formatted_values", title="R-Squared"),
+                alt.Tooltip("formatted_values", title="R-Squared Score"),
             ],
         )
     )
