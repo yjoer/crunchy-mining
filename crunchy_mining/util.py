@@ -1081,13 +1081,19 @@ def plot_confusion_matrix(metrics: dict):
 
 def plot_evaluation_stability(df: pd.DataFrame):
     return (
-        alt.Chart(df, title="Stability of Evaluation Scores Across Folds")
+        alt.Chart(
+            data=df,
+            title=alt.TitleParams(
+                text="Stability of Evaluation Scores Across Folds",
+                anchor="start",
+            ),
+        )
         .mark_bar(width={"band": 1})
         .encode(
             x=alt.X(
                 shorthand="metrics:N",
                 title="Metrics",
-                axis=alt.Axis(labelAngle=0, labelPadding=8),
+                axis=alt.Axis(labelAngle=0),
             ),
             y=alt.Y("value:Q", title="Scores", axis=alt.Axis(labelPadding=8)),
             xOffset=alt.XOffset("folds:N", title="Folds"),
@@ -1098,13 +1104,19 @@ def plot_evaluation_stability(df: pd.DataFrame):
 
 def plot_resource_stability(df_time: pd.DataFrame, df_memory: pd.DataFrame):
     chart_t = (
-        alt.Chart(df_time, title="Stability of Time Taken Across Folds")
+        alt.Chart(
+            data=df_time,
+            title=alt.TitleParams(
+                text="Stability of Time Taken Across Folds",
+                anchor="start",
+            ),
+        )
         .mark_bar(width={"band": 1})
         .encode(
             x=alt.X(
                 shorthand="metrics:N",
                 title="Metrics",
-                axis=alt.Axis(labelAngle=0, labelPadding=8),
+                axis=alt.Axis(labelAngle=0),
             ),
             y=alt.Y(
                 shorthand="value:Q",
@@ -1118,13 +1130,19 @@ def plot_resource_stability(df_time: pd.DataFrame, df_memory: pd.DataFrame):
     )
 
     chart_m = (
-        alt.Chart(df_memory, title="Stability of Memory Usage Across Folds")
+        alt.Chart(
+            data=df_memory,
+            title=alt.TitleParams(
+                text="Stability of Memory Usage Across Folds",
+                anchor="start",
+            ),
+        )
         .mark_bar(width={"band": 1})
         .encode(
             x=alt.X(
                 shorthand="metrics:N",
                 title="Metrics",
-                axis=alt.Axis(labelAngle=0, labelPadding=8),
+                axis=alt.Axis(labelAngle=0),
             ),
             y=alt.Y(
                 shorthand="value:Q",
