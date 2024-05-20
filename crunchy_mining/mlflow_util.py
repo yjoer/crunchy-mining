@@ -219,3 +219,66 @@ def get_cv_metrics_by_task(task_name: str):
     )
 
     return df_agg
+
+
+def get_val_cv_metrics_by_experiment(experiment_name: str):
+    df = mlflow.search_runs(experiment_names=[experiment_name])
+
+    df_parent_runs = (
+        df.query("`tags.mlflow.parentRunId`.isnull()")
+        .query("`tags.mlflow.runName` != 'Encoders'")
+        .sort_values(by=["experiment_id", "start_time"], ascending=[True, False])
+        .drop_duplicates(subset=["experiment_id", "tags.mlflow.runName"], keep="first")
+        .loc[:, ["run_id", "tags.mlflow.runName"]]
+    )
+
+    df_val = (
+        mlflow.search_runs(
+            experiment_names=[experiment_name],
+            filter_string="run_name = 'validation'",
+        )
+        .set_index("tags.mlflow.parentRunId")
+        .loc[:, [col for col in df.columns if col.startswith("metrics")]]
+        .rename(lambda x: x.replace("metrics.", ""), axis=1)
+    )
+
+    df_val_out = df_parent_runs.merge(
+        right=df_val,
+        how="left",
+        left_on="run_id",
+        right_index=True,
+    ).set_index("tags.mlflow.runName")
+
+    def rename_columns(df: pd.DataFrame):
+        df.columns = ["_".join(col).strip() for col in df.columns.values]
+        return df
+
+    df_cv = (
+        mlflow.search_runs(
+            experiment_names=[experiment_name],
+            filter_string="run_name LIKE 'fold%'",
+        )
+        .rename(columns={"tags.mlflow.runName": "nested_run_name"})
+        .groupby("tags.mlflow.parentRunId")
+        .agg(
+            {
+                "nested_run_name": list,
+                **{
+                    col: ["mean", "std"]
+                    for col in df.columns
+                    if col.startswith("metrics")
+                },
+            },
+        )
+        .pipe(rename_columns)
+        .rename(lambda x: x.replace("metrics.", ""), axis=1)
+    )
+
+    df_cv_out = df_parent_runs.merge(
+        right=df_cv,
+        how="left",
+        left_on="run_id",
+        right_index=True,
+    ).set_index("tags.mlflow.runName")
+
+    return df_val_out, df_cv_out
