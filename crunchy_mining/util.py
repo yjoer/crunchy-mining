@@ -1159,7 +1159,13 @@ def plot_resource_stability(df_time: pd.DataFrame, df_memory: pd.DataFrame):
 
 def plot_intrinsic_importances(importances: pd.DataFrame, name: str):
     return (
-        alt.Chart(importances, title=f"Feature Importance for {name}")
+        alt.Chart(
+            data=importances,
+            title=alt.TitleParams(
+                text=f"Feature Importance for {name}",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("importances:Q", title="Degree of Importance"),
