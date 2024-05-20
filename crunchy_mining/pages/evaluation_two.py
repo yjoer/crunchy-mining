@@ -141,12 +141,12 @@ with tabs[1]:
 
         st.divider()
         eval_stb_chart = plot_evaluation_stability(cv_folds_eval)
-        st.altair_chart(eval_stb_chart, use_container_width=True)
+        st.altair_chart(eval_stb_chart, use_container_width=True, theme=None)
 
         res_stb_charts = plot_resource_stability(cv_folds_time, cv_folds_memory)
         cols = st.columns([1, 1])
-        cols[0].altair_chart(res_stb_charts[0], use_container_width=True)
-        cols[1].altair_chart(res_stb_charts[1], use_container_width=True)
+        cols[0].altair_chart(res_stb_charts[0], use_container_width=True, theme=None)
+        cols[1].altair_chart(res_stb_charts[1], use_container_width=True, theme=None)
 
 with tabs[2]:
     experiment, model, fold = create_fold_selector()
