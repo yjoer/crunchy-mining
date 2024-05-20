@@ -212,6 +212,8 @@ def plot_f_score_by_experiments(df_cv_metrics: pd.DataFrame):
 
 
 def plot_auc_score_by_experiments(df_cv_metrics: pd.DataFrame):
+    _create_formatted_values(df_cv_metrics, prefix="roc_auc")
+
     return st.altair_chart(
         alt.Chart(
             data=df_cv_metrics,
