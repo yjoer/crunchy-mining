@@ -3,9 +3,9 @@ import streamlit as st
 from mlflow import MlflowClient
 
 from crunchy_mining import mlflow_util
+from crunchy_mining.pages.fragments import create_experiment_model_selector
 from crunchy_mining.pages.fragments import create_experiment_selector
 from crunchy_mining.pages.fragments import create_fold_selector
-from crunchy_mining.pages.fragments import create_experiment_model_selector
 from crunchy_mining.util import plot_confusion_matrix
 from crunchy_mining.util import plot_evaluation_stability
 from crunchy_mining.util import plot_resource_stability
@@ -19,66 +19,13 @@ tabs = st.tabs(["Experiments", "Model-Specific", "Fold-Specific"])
 
 with tabs[0]:
     experiment = create_experiment_selector()
-    task_name, experiment_file = experiment.split("/")[:2]
-    mlflow.set_experiment(experiment)
-
-    df = mlflow.search_runs(experiment_names=[experiment])
-
-    df_parent_runs = (
-        df.query("`tags.mlflow.parentRunId`.isnull()")
-        .query("`tags.mlflow.runName` != 'Encoders'")
-        .sort_values(by=["experiment_id", "start_time"], ascending=[True, False])
-        .drop_duplicates(subset=["experiment_id", "tags.mlflow.runName"], keep="first")
-        .loc[:, ["run_id", "tags.mlflow.runName"]]
-    )
-
-    df_val = (
-        mlflow.search_runs(
-            experiment_names=[experiment],
-            filter_string="run_name = 'validation'",
-        )
-        .set_index("tags.mlflow.parentRunId")
-        .loc[:, [col for col in df.columns if col.startswith("metrics")]]
-        .rename(lambda x: x.replace("metrics.", ""), axis=1)
-    )
-
-    df_val_out = df_parent_runs.merge(
-        right=df_val,
-        how="left",
-        left_on="run_id",
-        right_index=True,
-    ).set_index("tags.mlflow.runName")
+    df_val, df_cv = mlflow_util.get_val_cv_metrics_by_experiment(experiment)
 
     st.markdown("**Validation**")
-    st.dataframe(df_val_out)
-
-    df_cv = mlflow.search_runs(
-        experiment_names=[experiment],
-        filter_string="run_name LIKE 'fold%'",
-    )
-
-    df_cv_agg = (
-        df_cv.rename(columns={"tags.mlflow.runName": "nested_run_name"})
-        .groupby("tags.mlflow.parentRunId")
-        .agg(
-            {
-                "nested_run_name": list,
-                **{col: "mean" for col in df.columns if col.startswith("metrics")},
-            },
-        )
-        .rename(lambda x: x.replace("metrics.", ""), axis=1)
-    )
-
-    df_cv_out = df_parent_runs.merge(
-        right=df_cv_agg,
-        how="left",
-        left_on="run_id",
-        right_index=True,
-    ).set_index("tags.mlflow.runName")
+    st.dataframe(df_val)
 
     st.markdown("**Cross-Validation**")
-    st.dataframe(df_cv_out)
-
+    st.dataframe(df_cv)
 
 with tabs[1]:
     experiment, model = create_experiment_model_selector()
