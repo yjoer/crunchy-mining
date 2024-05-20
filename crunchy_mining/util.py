@@ -225,73 +225,30 @@ def evaluate_regression(y_true, y_pred):
 
 
 def summarize_classification(df: pd.DataFrame):
-    df_f1_macro = df.loc[df.groupby("experiment_id")["f1_macro"].idxmax()]
-    df_f1_macro["experiment_id"] = df_f1_macro["experiment_id"].astype(int)
-    df_f1_macro.sort_values(by="experiment_id", inplace=True)
-    df_f1_macro["experiment_idx"] = np.arange(1, len(df_f1_macro) + 1)
+    def create_formatted_values(df: pd.DataFrame, prefix: str):
+        v = df[f"{prefix}_mean"].astype(str) + " ± " + df[f"{prefix}_std"].astype(str)
+        df["formatted_values"] = v
 
-    df_f1_macro_min = df.loc[df.groupby("experiment_id")["f1_macro"].idxmin()]
-    df_f1_macro_min["experiment_id"] = df_f1_macro_min["experiment_id"].astype(int)
-    df_f1_macro_min.sort_values(by="experiment_id", inplace=True)
-    df_f1_macro_min["experiment_idx"] = np.arange(1, len(df_f1_macro_min) + 1)
+    def create_experiment_idx(df_sub: pd.DataFrame):
+        df_sub["experiment_id_first"] = df_sub["experiment_id_first"].astype(int)
+        df_sub.sort_values(by="experiment_id_first", inplace=True)
+        df_sub["experiment_idx"] = np.arange(1, len(df_sub) + 1)
 
-    df_auc = df.loc[df.groupby("experiment_id")["roc_auc"].idxmax()]
-    df_auc["experiment_id"] = df_auc["experiment_id"].astype(int)
-    df_auc.sort_values(by="experiment_id", inplace=True)
-    df_auc["experiment_idx"] = np.arange(1, len(df_auc) + 1)
+    df_f1_macro = df.loc[df.groupby("experiment_id_first")["f1_macro_mean"].idxmax()]
+    create_formatted_values(df_f1_macro, prefix="f1_macro")
+    create_experiment_idx(df_f1_macro)
 
-    df_auc_min = df.loc[df.groupby("experiment_id")["roc_auc"].idxmin()]
-    df_auc_min["experiment_id"] = df_auc_min["experiment_id"].astype(int)
-    df_auc_min.sort_values(by="experiment_id", inplace=True)
-    df_auc_min["experiment_idx"] = np.arange(1, len(df_auc_min) + 1)
+    df_f1_macro_min = df.loc[df.groupby("experiment_id_first")["f1_macro_mean"].idxmin()]  # fmt: skip
+    create_formatted_values(df_f1_macro_min, prefix="f1_macro")
+    create_experiment_idx(df_f1_macro_min)
 
-    df_fit_time = df.loc[df.groupby("experiment_id")["fit_time"].idxmin()]
-    df_fit_time["experiment_id"] = df_fit_time["experiment_id"].astype(int)
-    df_fit_time.sort_values(by="experiment_id", inplace=True)
-    df_fit_time["experiment_idx"] = np.arange(1, len(df_fit_time) + 1)
-    df_fit_time["fit_time"] = df_fit_time["fit_time"] / 1_000_000
+    df_auc = df.loc[df.groupby("experiment_id_first")["roc_auc_mean"].idxmax()]
+    create_formatted_values(df_auc, prefix="roc_auc")
+    create_experiment_idx(df_auc)
 
-    df_fit_time_max = df.loc[df.groupby("experiment_id")["fit_time"].idxmax()]
-    df_fit_time_max["experiment_id"] = df_fit_time_max["experiment_id"].astype(int)
-    df_fit_time_max.sort_values(by="experiment_id", inplace=True)
-    df_fit_time_max["experiment_idx"] = np.arange(1, len(df_fit_time_max) + 1)
-    df_fit_time_max["fit_time"] = df_fit_time_max["fit_time"] / 1_000_000
-
-    df_score_time = df.loc[df.groupby("experiment_id")["score_time"].idxmin()]
-    df_score_time["experiment_id"] = df_score_time["experiment_id"].astype(int)
-    df_score_time.sort_values(by="experiment_id", inplace=True)
-    df_score_time["experiment_idx"] = np.arange(1, len(df_score_time) + 1)
-    df_score_time["score_time"] = df_score_time["score_time"] / 1_000_000
-
-    df_score_time_max = df.loc[df.groupby("experiment_id")["score_time"].idxmax()]
-    df_score_time_max["experiment_id"] = df_score_time_max["experiment_id"].astype(int)
-    df_score_time_max.sort_values(by="experiment_id", inplace=True)
-    df_score_time_max["experiment_idx"] = np.arange(1, len(df_score_time_max) + 1)
-    df_score_time_max["score_time"] = df_score_time_max["score_time"] / 1_000_000
-
-    df_fit_memory = df.loc[df.groupby("experiment_id")["fit_memory_peak"].idxmin()]
-    df_fit_memory["experiment_id"] = df_fit_memory["experiment_id"].astype(int)
-    df_fit_memory.sort_values(by="experiment_id", inplace=True)
-    df_fit_memory["experiment_idx"] = np.arange(1, len(df_fit_memory) + 1)
-    df_fit_memory["fit_memory_peak"] = df_fit_memory["fit_memory_peak"] / 1_000_000
-
-    df_fit_memory_max = df.loc[df.groupby("experiment_id")["fit_memory_peak"].idxmax()]
-    df_fit_memory_max["experiment_id"] = df_fit_memory_max["experiment_id"].astype(int)
-    df_fit_memory_max.sort_values(by="experiment_id", inplace=True)
-    df_fit_memory_max["experiment_idx"] = np.arange(1, len(df_fit_memory_max) + 1)
-    df_fit_memory_max["fit_memory_peak"] = df_fit_memory_max["fit_memory_peak"] / 1_000_000  # fmt: skip
-
-    df_score_memory = df.loc[df.groupby("experiment_id")["score_memory_peak"].idxmin()]
-    df_score_memory["experiment_id"] = df_score_memory["experiment_id"].astype(int)
-    df_score_memory.sort_values(by="experiment_id", inplace=True)
-    df_score_memory["experiment_idx"] = np.arange(1, len(df_score_memory) + 1)
-    df_score_memory["score_memory_peak"] = df_score_memory["score_memory_peak"] / 1_000_000  # fmt: skip
-
-    df_score_memory_max = df.loc[df.groupby("experiment_id")["score_memory_peak"].idxmax()]  # fmt: skip
-    df_score_memory_max["experiment_id"] = df_score_memory_max["experiment_id"].astype(int)  # fmt: skip
-    df_score_memory_max.sort_values(by="experiment_id", inplace=True)
-    df_score_memory_max["experiment_idx"] = np.arange(1, len(df_score_memory_max) + 1)
-    df_score_memory_max["score_memory_peak"] = df_score_memory_max["score_memory_peak"] / 1_000_000  # fmt: skip
+    df_auc_min = df.loc[df.groupby("experiment_id_first")["roc_auc_mean"].idxmin()]
+    create_formatted_values(df_auc_min, prefix="roc_auc")
+    create_experiment_idx(df_auc_min)
 
     outputs = {}
 
@@ -306,8 +263,23 @@ def summarize_classification(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("f1_macro:Q", title="Macro F1 Score"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("f1_macro_mean:Q", title="Macro F1 Score"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Macro F1 Score"),
+            ],
+        )
+    )
+
+    outputs["f1_macro_chart"] += (
+        alt.Chart(df_f1_macro)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("f1_macro_mean:Q", title="Macro F1 Score"),
+            yError=alt.YError("f1_macro_std:Q"),
         )
     )
 
@@ -322,8 +294,23 @@ def summarize_classification(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("f1_macro:Q", title="Macro F1 Score"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("f1_macro_mean:Q", title="Macro F1 Score"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Macro F1 Score"),
+            ],
+        )
+    )
+
+    outputs["f1_macro_min_chart"] += (
+        alt.Chart(df_f1_macro_min)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("f1_macro_mean:Q", title="Macro F1 Score"),
+            yError=alt.YError("f1_macro_std:Q"),
         )
     )
 
@@ -338,8 +325,23 @@ def summarize_classification(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("roc_auc:Q", title="ROC AUC"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("roc_auc_mean:Q", title="AUC Score"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="AUC Score"),
+            ],
+        )
+    )
+
+    outputs["auc_chart"] += (
+        alt.Chart(df_auc)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("roc_auc_mean:Q", title="AUC Score"),
+            yError=alt.YError("roc_auc_std:Q"),
         )
     )
 
@@ -354,136 +356,23 @@ def summarize_classification(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("roc_auc:Q", title="ROC AUC"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("roc_auc_mean:Q", title="AUC Score"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="AUC Score"),
+            ],
         )
     )
 
-    outputs["fit_time_chart"] = (
-        alt.Chart(
-            data=df_fit_time,
-            title=alt.TitleParams(
-                text="Best Models by Fit Time Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
+    outputs["auc_min_chart"] += (
+        alt.Chart(df_auc_min)
+        .mark_errorbar()
         .encode(
-            x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("fit_time:Q", title="Fit Time (ms)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
-        )
-    )
-
-    outputs["fit_time_max_chart"] = (
-        alt.Chart(
-            data=df_fit_time_max,
-            title=alt.TitleParams(
-                text="Worst Models by Fit Time Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
-        .encode(
-            x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("fit_time:Q", title="Fit Time (ms)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
-        )
-    )
-
-    outputs["score_time_chart"] = (
-        alt.Chart(
-            data=df_score_time,
-            title=alt.TitleParams(
-                text="Best Models by Score Time Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
-        .encode(
-            x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("score_time:Q", title="Score Time (ms)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
-        )
-    )
-
-    outputs["score_time_max_chart"] = (
-        alt.Chart(
-            data=df_score_time_max,
-            title=alt.TitleParams(
-                text="Worst Models by Score Time Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
-        .encode(
-            x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("score_time:Q", title="Score Time (ms)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
-        )
-    )
-
-    outputs["fit_memory_chart"] = (
-        alt.Chart(
-            data=df_fit_memory,
-            title=alt.TitleParams(
-                text="Best Models by Fit Memory Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
-        .encode(
-            x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("fit_memory_peak:Q", title="Fit Memory (MB)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
-        )
-    )
-
-    outputs["fit_memory_max_chart"] = (
-        alt.Chart(
-            data=df_fit_memory_max,
-            title=alt.TitleParams(
-                text="Worst Models by Fit Memory Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
-        .encode(
-            x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("fit_memory_peak:Q", title="Fit Memory (MB)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
-        )
-    )
-
-    outputs["score_memory_chart"] = (
-        alt.Chart(
-            data=df_score_memory,
-            title=alt.TitleParams(
-                text="Best Models by Score Memory Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
-        .encode(
-            x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("score_memory_peak:Q", title="Score Memory (MB)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
-        )
-    )
-
-    outputs["score_memory_max_chart"] = (
-        alt.Chart(
-            data=df_score_memory_max,
-            title=alt.TitleParams(
-                text="Worst Models by Score Memory Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
-        .encode(
-            x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("score_memory_peak:Q", title="Score Memory (MB)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("roc_auc_mean:Q", title="AUC Score"),
+            yError=alt.YError("roc_auc_std:Q"),
         )
     )
 
@@ -491,99 +380,47 @@ def summarize_classification(df: pd.DataFrame):
     outputs["f1_macro_min"] = df_f1_macro_min
     outputs["auc"] = df_auc
     outputs["auc_min"] = df_auc_min
-    outputs["fit_time"] = df_fit_time
-    outputs["fit_time_max"] = df_fit_time_max
-    outputs["score_time"] = df_score_time
-    outputs["score_time_max"] = df_score_time_max
-    outputs["fit_memory"] = df_fit_memory
-    outputs["fit_memory_max"] = df_fit_memory_max
-    outputs["score_memory"] = df_score_memory
-    outputs["score_memory_max"] = df_score_memory_max
 
     return outputs
 
 
 def summarize_regression(df: pd.DataFrame):
-    df_mae = df.loc[df.groupby("experiment_id")["mae"].idxmin()]
-    df_mae["experiment_id"] = df_mae["experiment_id"].astype(int)
-    df_mae.sort_values(by="experiment_id", inplace=True)
-    df_mae["experiment_idx"] = np.arange(1, len(df_mae) + 1)
+    def create_formatted_values(df: pd.DataFrame, prefix: str):
+        v = df[f"{prefix}_mean"].astype(str) + " ± " + df[f"{prefix}_std"].astype(str)
+        df["formatted_values"] = v
 
-    df_mae_max = df.loc[df.groupby("experiment_id")["mae"].idxmax()]
-    df_mae_max["experiment_id"] = df_mae_max["experiment_id"].astype(int)
-    df_mae_max.sort_values(by="experiment_id", inplace=True)
-    df_mae_max["experiment_idx"] = np.arange(1, len(df_mae_max) + 1)
+    def create_experiment_idx(df_sub: pd.DataFrame):
+        df_sub["experiment_id_first"] = df_sub["experiment_id_first"].astype(int)
+        df_sub.sort_values(by="experiment_id_first", inplace=True)
+        df_sub["experiment_idx"] = np.arange(1, len(df_sub) + 1)
 
-    df_mape = df.loc[df.groupby("experiment_id")["mape"].idxmin()]
-    df_mape["experiment_id"] = df_mape["experiment_id"].astype(int)
-    df_mape.sort_values(by="experiment_id", inplace=True)
-    df_mape["experiment_idx"] = np.arange(1, len(df_mape) + 1)
+    df_mae = df.loc[df.groupby("experiment_id_first")["mae_mean"].idxmin()]
+    create_formatted_values(df_mae, prefix="mae")
+    create_experiment_idx(df_mae)
 
-    df_mape_max = df.loc[df.groupby("experiment_id")["mape"].idxmax()]
-    df_mape_max["experiment_id"] = df_mape_max["experiment_id"].astype(int)
-    df_mape_max.sort_values(by="experiment_id", inplace=True)
-    df_mape_max["experiment_idx"] = np.arange(1, len(df_mape_max) + 1)
+    df_mae_max = df.loc[df.groupby("experiment_id_first")["mae_mean"].idxmax()]
+    df_mae_max["mae_std_capped"] = np.where(df_mae_max["mae_std"] > df_mae_max["mae_mean"], 0.99 * df_mae_max["mae_mean"], df_mae_max["mae_std"])  # fmt: skip
+    create_formatted_values(df_mae_max, prefix="mae")
+    create_experiment_idx(df_mae_max)
 
-    df_rsq = df.loc[df.groupby("experiment_id")["r_squared"].idxmax()]
-    df_rsq["experiment_id"] = df_rsq["experiment_id"].astype(int)
-    df_rsq.sort_values(by="experiment_id", inplace=True)
-    df_rsq["experiment_idx"] = np.arange(1, len(df_rsq) + 1)
+    df_mape = df.loc[df.groupby("experiment_id_first")["mape_mean"].idxmin()]
+    create_formatted_values(df_mape, prefix="mape")
+    create_experiment_idx(df_mape)
 
-    df_rsq_min = df.loc[df.groupby("experiment_id")["r_squared"].idxmin()]
-    df_rsq_min["experiment_id"] = df_rsq_min["experiment_id"].astype(int)
-    df_rsq_min.sort_values(by="experiment_id", inplace=True)
-    df_rsq_min["experiment_idx"] = np.arange(1, len(df_rsq_min) + 1)
-    df_rsq_min["r_squared_capped"] = np.where(
-        df_rsq_min["r_squared"] < -1, -1, df_rsq_min["r_squared"]
-    )
+    df_mape_max = df.loc[df.groupby("experiment_id_first")["mape_mean"].idxmax()]
+    df_mape_max["mape_std_capped"] = np.where(df_mape_max["mape_std"] > df_mape_max["mape_mean"], 0.99 * df_mape_max["mape_mean"], df_mape_max["mape_std"])  # fmt: skip
+    create_formatted_values(df_mape_max, prefix="mape")
+    create_experiment_idx(df_mape_max)
 
-    df_fit_time = df.loc[df.groupby("experiment_id")["fit_time"].idxmin()]
-    df_fit_time["experiment_id"] = df_fit_time["experiment_id"].astype(int)
-    df_fit_time.sort_values(by="experiment_id", inplace=True)
-    df_fit_time["experiment_idx"] = np.arange(1, len(df_fit_time) + 1)
-    df_fit_time["fit_time"] = df_fit_time["fit_time"] / 1_000_000
+    df_rsq = df.loc[df.groupby("experiment_id_first")["r_squared_mean"].idxmax()]
+    create_formatted_values(df_rsq, prefix="r_squared")
+    create_experiment_idx(df_rsq)
 
-    df_fit_time_max = df.loc[df.groupby("experiment_id")["fit_time"].idxmax()]
-    df_fit_time_max["experiment_id"] = df_fit_time_max["experiment_id"].astype(int)
-    df_fit_time_max.sort_values(by="experiment_id", inplace=True)
-    df_fit_time_max["experiment_idx"] = np.arange(1, len(df_fit_time_max) + 1)
-    df_fit_time_max["fit_time"] = df_fit_time_max["fit_time"] / 1_000_000
-
-    df_score_time = df.loc[df.groupby("experiment_id")["score_time"].idxmin()]
-    df_score_time["experiment_id"] = df_score_time["experiment_id"].astype(int)
-    df_score_time.sort_values(by="experiment_id", inplace=True)
-    df_score_time["experiment_idx"] = np.arange(1, len(df_score_time) + 1)
-    df_score_time["score_time"] = df_score_time["score_time"] / 1_000_000
-
-    df_score_time_max = df.loc[df.groupby("experiment_id")["score_time"].idxmax()]
-    df_score_time_max["experiment_id"] = df_score_time_max["experiment_id"].astype(int)
-    df_score_time_max.sort_values(by="experiment_id", inplace=True)
-    df_score_time_max["experiment_idx"] = np.arange(1, len(df_score_time_max) + 1)
-    df_score_time_max["score_time"] = df_score_time_max["score_time"] / 1_000_000
-
-    df_fit_memory = df.loc[df.groupby("experiment_id")["fit_memory_peak"].idxmin()]
-    df_fit_memory["experiment_id"] = df_fit_memory["experiment_id"].astype(int)
-    df_fit_memory.sort_values(by="experiment_id", inplace=True)
-    df_fit_memory["experiment_idx"] = np.arange(1, len(df_fit_memory) + 1)
-    df_fit_memory["fit_memory_peak"] = df_fit_memory["fit_memory_peak"] / 1_000_000
-
-    df_fit_memory_max = df.loc[df.groupby("experiment_id")["fit_memory_peak"].idxmax()]
-    df_fit_memory_max["experiment_id"] = df_fit_memory_max["experiment_id"].astype(int)
-    df_fit_memory_max.sort_values(by="experiment_id", inplace=True)
-    df_fit_memory_max["experiment_idx"] = np.arange(1, len(df_fit_memory_max) + 1)
-    df_fit_memory_max["fit_memory_peak"] = df_fit_memory_max["fit_memory_peak"] / 1_000_000  # fmt: skip
-
-    df_score_memory = df.loc[df.groupby("experiment_id")["score_memory_peak"].idxmin()]
-    df_score_memory["experiment_id"] = df_score_memory["experiment_id"].astype(int)
-    df_score_memory.sort_values(by="experiment_id", inplace=True)
-    df_score_memory["experiment_idx"] = np.arange(1, len(df_score_memory) + 1)
-    df_score_memory["score_memory_peak"] = df_score_memory["score_memory_peak"] / 1_000_000  # fmt: skip
-
-    df_score_memory_max = df.loc[df.groupby("experiment_id")["score_memory_peak"].idxmax()]  # fmt: skip
-    df_score_memory_max["experiment_id"] = df_score_memory_max["experiment_id"].astype(int)  # fmt: skip
-    df_score_memory_max.sort_values(by="experiment_id", inplace=True)
-    df_score_memory_max["experiment_idx"] = np.arange(1, len(df_score_memory_max) + 1)
-    df_score_memory_max["score_memory_peak"] = df_score_memory_max["score_memory_peak"] / 1_000_000  # fmt: skip
+    df_rsq_min = df.loc[df.groupby("experiment_id_first")["r_squared_mean"].idxmin()]
+    df_rsq_min["r_squared_capped"] = np.where(df_rsq_min["r_squared_mean"] < -1, -1, df_rsq_min["r_squared_mean"])  # fmt: skip
+    df_rsq_min["r_squared_std_capped"] = np.where(np.abs(df_rsq_min["r_squared_std"]) > np.abs(df_rsq_min["r_squared_capped"]), 0.99 * np.abs(df_rsq_min["r_squared_capped"]), df_rsq_min["r_squared_std"])  # fmt: skip
+    create_formatted_values(df_rsq_min, prefix="r_squared")
+    create_experiment_idx(df_rsq_min)
 
     outputs = {}
 
@@ -598,8 +435,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("mae:Q", title="Mean Absolute Error"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("mae_mean:Q", title="Mean Absolute Error"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Mean Absolute Error"),
+            ],
+        )
+    )
+
+    outputs["mae_chart"] += (
+        alt.Chart(df_mae)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("mae_mean:Q", title="Mean Absolute Error"),
+            yError=alt.YError("mae_std:Q"),
         )
     )
 
@@ -614,8 +466,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("mae:Q", title="Mean Absolute Error").scale(type="log"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("mae_mean:Q", title="Mean Absolute Error").scale(type="log"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Mean Absolute Error"),
+            ],
+        )
+    )
+
+    outputs["mae_max_chart"] += (
+        alt.Chart(df_mae_max)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("mae_mean:Q", title="Mean Absolute Error"),
+            yError=alt.YError("mae_std_capped:Q"),
         )
     )
 
@@ -630,8 +497,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("mape:Q", title="Mean Absolute Percentage Error"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("mape_mean:Q", title="Mean Absolute Percentage Error"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Mean Absolute Percentage Error"),
+            ],
+        )
+    )
+
+    outputs["mape_chart"] += (
+        alt.Chart(df_mape)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("mape_mean:Q", title="Mean Absolute Percentage Error"),
+            yError=alt.YError("mape_std:Q"),
         )
     )
 
@@ -646,8 +528,27 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("mape:Q", title="Mean Absolute Percentage Error").scale(type="log"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y(
+                shorthand="mape_mean:Q",
+                title="Mean Absolute Percentage Error",
+                scale=alt.Scale(type="log"),
+            ),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Mean Absolute Percentage Error"),
+            ],
+        )
+    )
+
+    outputs["mape_max_chart"] += (
+        alt.Chart(df_mape_max)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("mape_mean:Q", title="Mean Absolute Percentage Error"),
+            yError=alt.YError("mape_std_capped:Q"),
         )
     )
 
@@ -662,8 +563,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("r_squared:Q", title="R-Squared"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("r_squared_mean:Q", title="R-Squared"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="R-Squared"),
+            ],
+        )
+    )
+
+    outputs["rsq_chart"] += (
+        alt.Chart(df_rsq)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("r_squared_mean:Q", title="R-Squared"),
+            yError=alt.YError("r_squared_std:Q"),
         )
     )
 
@@ -679,9 +595,94 @@ def summarize_regression(df: pd.DataFrame):
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
             y=alt.Y("r_squared_capped:Q", title="R-Squared"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="R-Squared"),
+            ],
         )
     )
+
+    outputs["rsq_min_chart"] += (
+        alt.Chart(df_rsq_min)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("r_squared_capped:Q", title="R-Squared"),
+            yError=alt.YError("r_squared_std_capped:Q"),
+        )
+    )
+
+    outputs["mae"] = df_mae
+    outputs["mae_max"] = df_mae_max
+    outputs["mape"] = df_mape
+    outputs["mape_max"] = df_mape_max
+    outputs["rsq"] = df_rsq
+    outputs["rsq_min"] = df_rsq_min
+
+    return outputs
+
+
+def summarize_resource(df: pd.DataFrame):
+    def create_formatted_values(df: pd.DataFrame, prefix: str):
+        v = df[f"{prefix}_mean"].astype(str) + " ± " + df[f"{prefix}_std"].astype(str)
+        df["formatted_values"] = v
+
+    def create_experiment_idx(df_sub: pd.DataFrame):
+        df_sub["experiment_id_first"] = df_sub["experiment_id_first"].astype(int)
+        df_sub.sort_values(by="experiment_id_first", inplace=True)
+        df_sub["experiment_idx"] = np.arange(1, len(df_sub) + 1)
+
+    df_fit_time = df.loc[df.groupby("experiment_id_first")["fit_time_mean"].idxmin()]
+    df_fit_time["fit_time_mean"] = df_fit_time["fit_time_mean"] / 1_000_000
+    df_fit_time["fit_time_std"] = df_fit_time["fit_time_std"] / 1_000_000
+    create_formatted_values(df_fit_time, prefix="fit_time")
+    create_experiment_idx(df_fit_time)
+
+    df_fit_time_max = df.loc[df.groupby("experiment_id_first")["fit_time_mean"].idxmax()]  # fmt: skip
+    df_fit_time_max["fit_time_mean"] = df_fit_time_max["fit_time_mean"] / 1_000_000
+    df_fit_time_max["fit_time_std"] = df_fit_time_max["fit_time_std"] / 1_000_000
+    create_formatted_values(df_fit_time_max, prefix="fit_time")
+    create_experiment_idx(df_fit_time_max)
+
+    df_score_time = df.loc[df.groupby("experiment_id_first")["score_time_mean"].idxmin()]  # fmt: skip
+    df_score_time["score_time_mean"] = df_score_time["score_time_mean"] / 1_000_000
+    df_score_time["score_time_std"] = df_score_time["score_time_std"] / 1_000_000
+    create_formatted_values(df_score_time, prefix="score_time")
+    create_experiment_idx(df_score_time)
+
+    df_score_time_max = df.loc[df.groupby("experiment_id_first")["score_time_mean"].idxmax()]  # fmt: skip
+    df_score_time_max["score_time_mean"] = df_score_time_max["score_time_mean"] / 1_000_000  # fmt: skip
+    df_score_time_max["score_time_std"] = df_score_time_max["score_time_std"] / 1_000_000  # fmt: skip
+    create_formatted_values(df_score_time_max, prefix="score_time")
+    create_experiment_idx(df_score_time_max)
+
+    df_fit_memory = df.loc[df.groupby("experiment_id_first")["fit_memory_peak_mean"].idxmin()]  # fmt: skip
+    df_fit_memory["fit_memory_peak_mean"] = df_fit_memory["fit_memory_peak_mean"] / 1_000_000  # fmt: skip
+    df_fit_memory["fit_memory_peak_std"] = df_fit_memory["fit_memory_peak_std"] / 1_000_000  # fmt: skip
+    create_formatted_values(df_fit_memory, prefix="fit_memory_peak")
+    create_experiment_idx(df_fit_memory)
+
+    df_fit_memory_max = df.loc[df.groupby("experiment_id_first")["fit_memory_peak_mean"].idxmax()]  # fmt: skip
+    df_fit_memory_max["fit_memory_peak_mean"] = df_fit_memory_max["fit_memory_peak_mean"] / 1_000_000  # fmt: skip
+    df_fit_memory_max["fit_memory_peak_std"] = df_fit_memory_max["fit_memory_peak_std"] / 1_000_000  # fmt: skip
+    create_formatted_values(df_fit_memory_max, prefix="fit_memory_peak")
+    create_experiment_idx(df_fit_memory_max)
+
+    df_score_memory = df.loc[df.groupby("experiment_id_first")["score_memory_peak_mean"].idxmin()]  # fmt: skip
+    df_score_memory["score_memory_peak_mean"] = df_score_memory["score_memory_peak_mean"] / 1_000_000  # fmt: skip
+    df_score_memory["score_memory_peak_std"] = df_score_memory["score_memory_peak_std"] / 1_000_000  # fmt: skip
+    create_formatted_values(df_score_memory, prefix="score_memory_peak")
+    create_experiment_idx(df_score_memory)
+
+    df_score_memory_max = df.loc[df.groupby("experiment_id_first")["score_memory_peak_mean"].idxmax()]  # fmt: skip
+    df_score_memory_max["score_memory_peak_mean"] = df_score_memory_max["score_memory_peak_mean"] / 1_000_000  # fmt: skip
+    df_score_memory_max["score_memory_peak_std"] = df_score_memory_max["score_memory_peak_std"] / 1_000_000  # fmt: skip
+    create_formatted_values(df_score_memory_max, prefix="score_memory_peak")
+    create_experiment_idx(df_score_memory_max)
+
+    outputs = {}
 
     outputs["fit_time_chart"] = (
         alt.Chart(
@@ -694,8 +695,27 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("fit_time:Q", title="Fit Time (ms)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y(
+                shorthand="fit_time_mean:Q",
+                title="Fit Time (ms)",
+                scale=alt.Scale(type="log"),
+            ),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Fit Time (ms)"),
+            ],
+        )
+    )
+
+    outputs["fit_time_chart"] += (
+        alt.Chart(df_fit_time)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("fit_time_mean:Q", title="Fit Time (ms)"),
+            yError=alt.YError("fit_time_std:Q"),
         )
     )
 
@@ -710,8 +730,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("fit_time:Q", title="Fit Time (ms)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("fit_time_mean:Q", title="Fit Time (ms)"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Fit Time (ms)"),
+            ],
+        )
+    )
+
+    outputs["fit_time_max_chart"] += (
+        alt.Chart(df_fit_time_max)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("fit_time_mean:Q", title="Fit Time (ms)"),
+            yError=alt.YError("fit_time_std:Q"),
         )
     )
 
@@ -726,8 +761,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("score_time:Q", title="Score Time (ms)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("score_time_mean:Q", title="Score Time (ms)"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Score Time (ms)"),
+            ],
+        )
+    )
+
+    outputs["score_time_chart"] += (
+        alt.Chart(df_score_time)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("score_time_mean:Q", title="Score Time (ms)"),
+            yError=alt.YError("score_time_std:Q"),
         )
     )
 
@@ -742,8 +792,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("score_time:Q", title="Score Time (ms)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("score_time_mean:Q", title="Score Time (ms)"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Score Time (ms)"),
+            ],
+        )
+    )
+
+    outputs["score_time_max_chart"] += (
+        alt.Chart(df_score_time_max)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("score_time_mean:Q", title="Score Time (ms)"),
+            yError=alt.YError("score_time_std:Q"),
         )
     )
 
@@ -758,8 +823,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("fit_memory_peak:Q", title="Fit Memory (MB)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("fit_memory_peak_mean:Q", title="Fit Memory (MB)"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Fit Memory (MB)"),
+            ],
+        )
+    )
+
+    outputs["fit_memory_chart"] += (
+        alt.Chart(df_fit_memory)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("fit_memory_peak_mean:Q", title="Fit Memory (MB)"),
+            yError=alt.YError("fit_memory_peak_std:Q"),
         )
     )
 
@@ -774,8 +854,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("fit_memory_peak:Q", title="Fit Memory (MB)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("fit_memory_peak_mean:Q", title="Fit Memory (MB)"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Fit Memory (MB)"),
+            ],
+        )
+    )
+
+    outputs["fit_memory_max_chart"] += (
+        alt.Chart(df_fit_memory_max)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("fit_memory_peak_mean:Q", title="Fit Memory (MB)"),
+            yError=alt.YError("fit_memory_peak_std:Q"),
         )
     )
 
@@ -790,8 +885,23 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("score_memory_peak:Q", title="Score Memory (MB)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("score_memory_peak_mean:Q", title="Score Memory (MB)"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Score Memory (MB)"),
+            ],
+        )
+    )
+
+    outputs["score_memory_chart"] += (
+        alt.Chart(df_score_memory)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("score_memory_peak_mean:Q", title="Score Memory (MB)"),
+            yError=alt.YError("score_memory_peak_std:Q"),
         )
     )
 
@@ -806,17 +916,26 @@ def summarize_regression(df: pd.DataFrame):
         .mark_bar()
         .encode(
             x=alt.X("experiment_idx:N", title="Experiments").sort("x"),
-            y=alt.Y("score_memory_peak:Q", title="Score Memory (MB)"),
-            color=alt.Color("parent_run_name:N", title="Models"),
+            y=alt.Y("score_memory_peak_mean:Q", title="Score Memory (MB)"),
+            color=alt.Color("parent_run_name_first:N", title="Models"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("parent_run_name_first", title="Models"),
+                alt.Tooltip("formatted_values", title="Score Memory (MB)"),
+            ],
         )
     )
 
-    outputs["mae"] = df_mae
-    outputs["mae_max"] = df_mae_max
-    outputs["mape"] = df_mape
-    outputs["mape_max"] = df_mape_max
-    outputs["rsq"] = df_rsq
-    outputs["rsq_min"] = df_rsq_min
+    outputs["score_memory_max_chart"] += (
+        alt.Chart(df_score_memory_max)
+        .mark_errorbar()
+        .encode(
+            x=alt.X("experiment_idx:N", title="Experiments"),
+            y=alt.Y("score_memory_peak_mean:Q", title="Score Memory (MB)"),
+            yError=alt.YError("score_memory_peak_std:Q"),
+        )
+    )
+
     outputs["fit_time"] = df_fit_time
     outputs["fit_time_max"] = df_fit_time_max
     outputs["score_time"] = df_score_time
