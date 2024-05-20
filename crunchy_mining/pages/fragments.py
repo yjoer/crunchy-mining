@@ -167,12 +167,19 @@ def create_fold_selector():
     return fold_selector(experiments, model_names, folds)
 
 
+def _create_formatted_values(df: pd.DataFrame, prefix: str):
+    v = df[f"{prefix}_mean"].astype(str) + " ± " + df[f"{prefix}_std"].astype(str)
+    df["formatted_values"] = v
+
+
 def plot_f_score_by_experiments(df_cv_metrics: pd.DataFrame):
+    _create_formatted_values(df_cv_metrics, prefix="f1_macro")
+
     return st.altair_chart(
         alt.Chart(
             data=df_cv_metrics,
             title=alt.TitleParams(
-                text="Sampling and Preprocessing Techniques by Macro F1 Score Across Experiments",
+                text="Macro F1 Score Across Experiments",
                 anchor="start",
             ),
         )
@@ -184,7 +191,20 @@ def plot_f_score_by_experiments(df_cv_metrics: pd.DataFrame):
                 axis=alt.Axis(labelAngle=0),
                 sort=alt.Sort("x"),
             ),
-            y=alt.Y("f1_macro:Q", title="Macro F1 Score"),
+            y=alt.Y("f1_macro_mean:Q", title="Macro F1 Score"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("formatted_values", title="Macro F1 Score"),
+            ],
+        )
+        + (
+            alt.Chart(df_cv_metrics)
+            .mark_errorbar()
+            .encode(
+                x=alt.X("experiment_idx:N", title="Experiments"),
+                y=alt.Y("f1_macro_mean:Q", title="Macro F1 Score"),
+                yError=alt.YError("f1_macro_std:Q"),
+            )
         ),
         use_container_width=True,
         theme=None,
@@ -196,7 +216,7 @@ def plot_auc_score_by_experiments(df_cv_metrics: pd.DataFrame):
         alt.Chart(
             data=df_cv_metrics,
             title=alt.TitleParams(
-                text="Sampling and Preprocessing Techniques by AUC Score Across Experiments",
+                text="AUC Score Across Experiments",
                 anchor="start",
             ),
         )
@@ -208,7 +228,20 @@ def plot_auc_score_by_experiments(df_cv_metrics: pd.DataFrame):
                 axis=alt.Axis(labelAngle=0),
                 sort=alt.Sort("x"),
             ),
-            y=alt.Y("roc_auc:Q", title="AUC Score"),
+            y=alt.Y("roc_auc_mean:Q", title="AUC Score"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("formatted_values", title="AUC Score"),
+            ],
+        )
+        + (
+            alt.Chart(df_cv_metrics)
+            .mark_errorbar()
+            .encode(
+                x=alt.X("experiment_idx:N", title="Experiments"),
+                y=alt.Y("roc_auc_mean:Q", title="AUC Score"),
+                yError=alt.YError("roc_auc_std:Q"),
+            )
         ),
         use_container_width=True,
         theme=None,
@@ -216,35 +249,14 @@ def plot_auc_score_by_experiments(df_cv_metrics: pd.DataFrame):
 
 
 def plot_mae_by_experiments(df_cv_metrics: pd.DataFrame):
+    _create_formatted_values(df_cv_metrics, prefix="mae")
+    df_cv_metrics["mae_std_capped"] = np.where(df_cv_metrics["mae_std"] > df_cv_metrics["mae_mean"], 0.99 * df_cv_metrics["mae_mean"], df_cv_metrics["mae_std"])  # fmt: skip
+
     return st.altair_chart(
         alt.Chart(
             data=df_cv_metrics,
             title=alt.TitleParams(
-                text="Sampling and Preprocessing Techniques by MAE Across Experiments",
-                anchor="start",
-            ),
-        )
-        .mark_bar()
-        .encode(
-            x=alt.X(
-                shorthand="experiment_idx:N",
-                title="Experiments",
-                axis=alt.Axis(labelAngle=0),
-                sort=alt.Sort("x"),
-            ),
-            y=alt.Y("mae:Q", title="Mean Absolute Error", scale=alt.Scale(type="log")),
-        ),
-        use_container_width=True,
-        theme=None,
-    )
-
-
-def plot_mape_by_experiments(df_cv_metrics: pd.DataFrame):
-    return st.altair_chart(
-        alt.Chart(
-            data=df_cv_metrics,
-            title=alt.TitleParams(
-                text="Sampling and Preprocessing Techniques by MAPE Across Experiments",
+                text="MAE Across Experiments",
                 anchor="start",
             ),
         )
@@ -257,10 +269,67 @@ def plot_mape_by_experiments(df_cv_metrics: pd.DataFrame):
                 sort=alt.Sort("x"),
             ),
             y=alt.Y(
-                shorthand="mape:Q",
+                shorthand="mae_mean:Q",
+                title="Mean Absolute Error",
+                scale=alt.Scale(type="log"),
+            ),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("formatted_values", title="Mean Absolute Error"),
+            ],
+        )
+        + (
+            alt.Chart(df_cv_metrics)
+            .mark_errorbar()
+            .encode(
+                x=alt.X("experiment_idx:N", title="Experiments"),
+                y=alt.Y("mae_mean:Q", title="Mean Absolute Error"),
+                yError=alt.YError("mae_std_capped:Q"),
+            )
+        ),
+        use_container_width=True,
+        theme=None,
+    )
+
+
+def plot_mape_by_experiments(df_cv_metrics: pd.DataFrame):
+    _create_formatted_values(df_cv_metrics, prefix="mape")
+    df_cv_metrics["mape_std_capped"] = np.where(df_cv_metrics["mape_std"] > df_cv_metrics["mape_mean"], 0.99 * df_cv_metrics["mape_mean"], df_cv_metrics["mape_std"])  # fmt: skip
+
+    return st.altair_chart(
+        alt.Chart(
+            data=df_cv_metrics,
+            title=alt.TitleParams(
+                text="MAPE Across Experiments",
+                anchor="start",
+            ),
+        )
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                shorthand="experiment_idx:N",
+                title="Experiments",
+                axis=alt.Axis(labelAngle=0),
+                sort=alt.Sort("x"),
+            ),
+            y=alt.Y(
+                shorthand="mape_mean:Q",
                 title="Mean Absolute Percentage Error",
                 scale=alt.Scale(type="log"),
             ),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("formatted_values", title="Mean Absolute Percentage Error"),
+            ],
+        )
+        + (
+            alt.Chart(df_cv_metrics)
+            .mark_errorbar()
+            .encode(
+                x=alt.X("experiment_idx:N", title="Experiments"),
+                y=alt.Y("mape_mean:Q", title="Mean Absolute Percentage Error"),
+                yError=alt.YError("mape_std_capped:Q"),
+            )
         ),
         use_container_width=True,
         theme=None,
@@ -268,14 +337,15 @@ def plot_mape_by_experiments(df_cv_metrics: pd.DataFrame):
 
 
 def plot_r_squared_score_by_experiments(df_cv_metrics: pd.DataFrame):
-    capped = np.where(df_cv_metrics["r_squared"] < -1, -1, df_cv_metrics["r_squared"])
-    df_cv_metrics["r_squared_capped"] = capped
+    _create_formatted_values(df_cv_metrics, prefix="r_squared")
+    df_cv_metrics["r_squared_capped"] = np.where(df_cv_metrics["r_squared_mean"] < -1, -1, df_cv_metrics["r_squared_mean"])  # fmt: skip
+    df_cv_metrics["r_squared_std_capped"] = np.where(np.abs(df_cv_metrics["r_squared_std"]) > np.abs(df_cv_metrics["r_squared_capped"]), 0.99 * np.abs(df_cv_metrics["r_squared_capped"]), df_cv_metrics["r_squared_std"])  # fmt: skip
 
     st.altair_chart(
         alt.Chart(
             data=df_cv_metrics,
             title=alt.TitleParams(
-                text="Sampling and Preprocessing Techniques by R-Squared Score Across Experiments",
+                text="R-Squared Score Across Experiments",
                 anchor="start",
             ),
         )
@@ -288,6 +358,19 @@ def plot_r_squared_score_by_experiments(df_cv_metrics: pd.DataFrame):
                 sort=alt.Sort("x"),
             ),
             y=alt.Y("r_squared_capped:Q", title="R-Squared Score"),
+            tooltip=[
+                alt.Tooltip("experiment_idx", title="Experiments"),
+                alt.Tooltip("formatted_values", title="R-Squared Score"),
+            ],
+        )
+        + (
+            alt.Chart(df_cv_metrics)
+            .mark_errorbar()
+            .encode(
+                x=alt.X("experiment_idx:N", title="Experiments"),
+                y=alt.Y("r_squared_capped:Q", title="R-Squared Score"),
+                yError=alt.YError("r_squared_std_capped:Q"),
+            )
         ),
         use_container_width=True,
         theme=None,
@@ -295,17 +378,40 @@ def plot_r_squared_score_by_experiments(df_cv_metrics: pd.DataFrame):
 
 
 def plot_time_by_experiments(df_cv_metrics: pd.DataFrame):
-    df_cv_time = (
-        df_cv_metrics[["experiment_idx", "fit_time", "score_time"]]
-        .melt(id_vars="experiment_idx", var_name="metrics", value_name="value")
-        .assign(value=lambda x: x["value"] / 1_000_000)
+    df_cv_metrics["fit_time_std_capped"] = np.where(df_cv_metrics["fit_time_std"] >= df_cv_metrics["fit_time_mean"], 0.99 * df_cv_metrics["fit_time_mean"], df_cv_metrics["fit_time_std"])  # fmt: skip
+    df_cv_metrics["score_time_std_capped"] = np.where(df_cv_metrics["score_time_std"] >= df_cv_metrics["score_time_mean"], 0.99 * df_cv_metrics["score_time_mean"], df_cv_metrics["score_time_std"])  # fmt: skip
+
+    cols_mean = ["experiment_idx", "fit_time_mean", "score_time_mean"]
+    cols_std = ["experiment_idx", "fit_time_std_capped", "score_time_std_capped"]
+
+    to_replace = {
+        "fit_time_mean": "fit_time",
+        "score_time_mean": "score_time",
+        "fit_time_std_capped": "fit_time",
+        "score_time_std_capped": "score_time",
+    }
+
+    df_cv_mean = (
+        df_cv_metrics[cols_mean]
+        .melt(id_vars="experiment_idx", var_name="metrics", value_name="mean")
+        .replace(to_replace)
+        .assign(mean=lambda x: x["mean"] / 1_000_000)
     )
+
+    df_cv_std = (
+        df_cv_metrics[cols_std]
+        .melt(id_vars="experiment_idx", var_name="metrics", value_name="std")
+        .replace(to_replace)
+        .assign(std=lambda x: x["std"] / 1_000_000)
+    )
+
+    df_cv = df_cv_mean.merge(df_cv_std, on=["experiment_idx", "metrics"])
 
     return st.altair_chart(
         alt.Chart(
-            data=df_cv_time,
+            data=df_cv,
             title=alt.TitleParams(
-                text="Sampling and Preprocessing Techniques by Training and Scoring Time Across Experiments",
+                text="Training and Scoring Time Across Experiments",
                 anchor="start",
             ),
         )
@@ -317,9 +423,19 @@ def plot_time_by_experiments(df_cv_metrics: pd.DataFrame):
                 axis=alt.Axis(labelAngle=0),
                 sort=alt.Sort("x"),
             ),
-            y=alt.Y("value:Q", title="Time Taken (ms)", scale=alt.Scale(type="log")),
+            y=alt.Y("mean:Q", title="Time Taken (ms)", scale=alt.Scale(type="log")),
             xOffset=alt.XOffset("metrics:N", title="Metrics"),
             color=alt.Color("metrics:N", title="Metrics"),
+        )
+        + (
+            alt.Chart(df_cv)
+            .mark_errorbar()
+            .encode(
+                x=alt.X("experiment_idx:N", title="Experiments"),
+                xOffset=alt.XOffset("metrics:N", title="Metrics"),
+                y=alt.Y("mean:Q", title="Time Taken (ms)"),
+                yError=alt.YError("std:Q"),
+            )
         ),
         use_container_width=True,
         theme=None,
@@ -327,18 +443,40 @@ def plot_time_by_experiments(df_cv_metrics: pd.DataFrame):
 
 
 def plot_memory_by_experiments(df_cv_metrics: pd.DataFrame):
-    df_cv_memory = (
-        df_cv_metrics[["experiment_idx", "fit_memory_peak", "score_memory_peak"]]
-        .rename(lambda x: x.replace("_peak", ""), axis=1)
-        .melt(id_vars="experiment_idx", var_name="metrics", value_name="value")
-        .assign(value=lambda x: x["value"] / 1_000_000)
+    df_cv_metrics["fit_memory_peak_std_capped"] = np.where(df_cv_metrics["fit_memory_peak_std"] >= df_cv_metrics["fit_memory_peak_mean"], 0.99 * df_cv_metrics["fit_memory_peak_mean"], df_cv_metrics["fit_memory_peak_std"])  # fmt: skip
+    df_cv_metrics["score_memory_peak_std_capped"] = np.where(df_cv_metrics["score_memory_peak_std"] >= df_cv_metrics["score_memory_peak_mean"], 0.99 * df_cv_metrics["score_memory_peak_mean"], df_cv_metrics["score_memory_peak_std"])  # fmt: skip
+
+    cols_mean = ["experiment_idx", "fit_memory_peak_mean", "score_memory_peak_mean"]
+    cols_std = ["experiment_idx", "fit_memory_peak_std_capped", "score_memory_peak_std_capped"]  # fmt: skip
+
+    to_replace = {
+        "fit_memory_peak_mean": "fit_memory_peak",
+        "score_memory_peak_mean": "score_memory_peak",
+        "fit_memory_peak_std_capped": "fit_memory_peak",
+        "score_memory_peak_std_capped": "score_memory_peak",
+    }
+
+    df_cv_mean = (
+        df_cv_metrics[cols_mean]
+        .melt(id_vars="experiment_idx", var_name="metrics", value_name="mean")
+        .replace(to_replace)
+        .assign(mean=lambda x: x["mean"] / 1_000_000)
     )
+
+    df_cv_std = (
+        df_cv_metrics[cols_std]
+        .melt(id_vars="experiment_idx", var_name="metrics", value_name="std")
+        .replace(to_replace)
+        .assign(std=lambda x: x["std"] / 1_000_000)
+    )
+
+    df_cv = df_cv_mean.merge(df_cv_std, on=["experiment_idx", "metrics"])
 
     return st.altair_chart(
         alt.Chart(
-            data=df_cv_memory,
+            data=df_cv,
             title=alt.TitleParams(
-                text="Sampling and Preprocessing Techniques by Training and Scoring Memory Usage Across Experiments",
+                text="Training and Scoring Memory Usage Across Experiments",
                 anchor="start",
             ),
         )
@@ -350,9 +488,19 @@ def plot_memory_by_experiments(df_cv_metrics: pd.DataFrame):
                 axis=alt.Axis(labelAngle=0),
                 sort=alt.Sort("x"),
             ),
-            y=alt.Y("value:Q", title="Memory Usage (MB)"),
             xOffset=alt.XOffset("metrics:N", title="Metrics"),
+            y=alt.Y("mean:Q", title="Memory Usage (MB)"),
             color=alt.Color("metrics:N", title="Metrics"),
+        )
+        + (
+            alt.Chart(df_cv)
+            .mark_errorbar()
+            .encode(
+                x=alt.X("experiment_idx:N", title="Experiments"),
+                xOffset=alt.XOffset("metrics:N", title="Metrics"),
+                y=alt.Y("mean:Q", title="Memory Usage (MB)"),
+                yError=alt.YError("std:Q"),
+            )
         ),
         use_container_width=True,
         theme=None,
