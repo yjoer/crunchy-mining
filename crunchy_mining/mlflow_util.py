@@ -172,6 +172,10 @@ def get_cv_metrics_by_task(task_name: str):
         .loc[:, ["experiment_id", "run_id", "tags.mlflow.runName"]]
     )
 
+    def rename_columns(df: pd.DataFrame):
+        df.columns = ["_".join(col).strip() for col in df.columns.values]
+        return df
+
     df_agg = (
         # Select nested runs of selected parent runs.
         df.merge(
@@ -193,11 +197,16 @@ def get_cv_metrics_by_task(task_name: str):
                 "experiment_id": "first",
                 "parent_run_name": "first",
                 "nested_run_name": list,
-                **{col: "mean" for col in df.columns if col.startswith("metrics")},
+                **{
+                    col: ["mean", "std"]
+                    for col in df.columns
+                    if col.startswith("metrics")
+                },
             },
         )
+        .pipe(rename_columns)
         .rename(lambda x: x.replace("metrics.", ""), axis=1)
-        .assign(experiment_name=lambda x: x["experiment_id"].map(experiments_map))
+        .assign(experiment_name=lambda x: x["experiment_id_first"].map(experiments_map))
     )
 
     return df_agg
