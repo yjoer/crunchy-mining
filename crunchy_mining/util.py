@@ -224,6 +224,24 @@ def evaluate_regression(y_true, y_pred):
     }
 
 
+def aggregate_cv_metrics(metrics_list: list[dict]):
+    def rename_columns(df: pd.DataFrame):
+        df.columns = ["_".join(col).strip() for col in df.columns.values]
+        return df
+
+    metrics_dict = (
+        pd.DataFrame(metrics_list)
+        .agg(["mean", "std"])
+        .unstack()
+        .to_frame()
+        .T.pipe(rename_columns)
+        .iloc[0]
+        .to_dict()
+    )
+
+    return metrics_dict
+
+
 def summarize_classification(df: pd.DataFrame):
     def create_formatted_values(df: pd.DataFrame, prefix: str):
         v = df[f"{prefix}_mean"].astype(str) + " ± " + df[f"{prefix}_std"].astype(str)
