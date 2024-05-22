@@ -14,6 +14,7 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import ParameterGrid
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
@@ -22,6 +23,7 @@ from tqdm.auto import tqdm
 from xgboost import XGBClassifier
 
 from . import mlflow_util
+from .util import aggregate_cv_metrics
 from .util import custom_predict
 from .util import evaluate_classification
 from .util import evaluate_roc
@@ -128,7 +130,72 @@ def validate_knn(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_knn),
                 )
 
-            del knn, fit_trace, y_knn, y_knn_p, roc_raw, roc, score_trace
+            for v in ["knn", "fit_trace", "y_knn", "y_knn_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
+
+
+def tune_knn(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    param_grid = ParameterGrid(
+        {
+            "n_neighbors": [3, 5, 7, 9],
+            "weights": ["uniform", "distance"],
+            "p": [1, 2],
+        }
+    )
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        knn = KNeighborsClassifier(**params)
+                        knn.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_knn_p, roc_raw, roc = evaluate_roc(
+                                estimator=knn,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_knn = custom_predict(
+                                y_prob=y_knn_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_knn = knn.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_knn))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = knn.get_params()
+
+                    for v in ["knn", "fit_trace", "y_knn", "y_knn_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
 
 
 def train_logistic_regression(X_train, y_train):
@@ -189,7 +256,9 @@ def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_logreg),
                 )
 
-            del logreg, fit_trace, y_logreg, y_logreg_p, roc_raw, roc, score_trace
+            for v in ["logreg", "fit_trace", "y_logreg", "y_logreg_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def train_gaussian_nb(X_train, y_train):
@@ -245,7 +314,9 @@ def validate_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_gnb),
                 )
 
-            del gnb, fit_trace, y_gnb, y_gnb_p, roc_raw, roc, score_trace
+            for v in ["gnb", "fit_trace", "y_gnb", "y_gnb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def train_linear_svc(X_train, y_train):
@@ -320,7 +391,9 @@ def validate_linear_svc(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_svc),
                 )
 
-            del svc, fit_trace, y_svc, y_svc_p, roc_raw, roc, score_trace
+            for v in ["svc", "fit_trace", "y_svc", "y_svc_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def train_decision_tree(X_train, y_train):
@@ -380,7 +453,9 @@ def validate_decision_tree(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_dt),
                 )
 
-            del dt, fit_trace, y_dt, y_dt_p, roc_raw, roc, score_trace
+            for v in ["dt", "fit_trace", "y_dt", "y_dt_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def train_random_forest(X_train, y_train):
@@ -441,7 +516,9 @@ def validate_random_forest(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_rf),
                 )
 
-            del rf, fit_trace, y_rf, y_rf_p, roc_raw, roc, score_trace
+            for v in ["rf", "fit_trace", "y_rf", "y_rf_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def train_adaboost(X_train, y_train):
@@ -502,7 +579,9 @@ def validate_adaboost(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_ab),
                 )
 
-            del ab, fit_trace, y_ab, y_ab_p, roc_raw, roc, score_trace
+            for v in ["ab", "fit_trace", "y_ab", "y_ab_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def train_xgboost(X_train, y_train):
@@ -564,7 +643,9 @@ def validate_xgboost(cfg: DictConfig, train_val_sets: dict):
                     model_format="json",
                 )
 
-            del xgb, fit_trace, y_xgb, y_xgb_p, roc_raw, roc, score_trace
+            for v in ["xgb", "fit_trace", "y_xgb", "y_xgb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def train_lightgbm(X_train, y_train):
@@ -625,7 +706,9 @@ def validate_lightgbm(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_lgb),
                 )
 
-            del lgb, fit_trace, y_lgb, y_lgb_p, roc_raw, roc, score_trace
+            for v in ["lgb", "fit_trace", "y_lgb", "y_lgb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def train_catboost(X_train, y_train):
@@ -686,7 +769,9 @@ def validate_catboost(cfg: DictConfig, train_val_sets: dict):
                     signature=mlflow.models.infer_signature(X_val, y_catb),
                 )
 
-            del catb, fit_trace, y_catb, y_catb_p, roc_raw, roc, score_trace
+            for v in ["catb", "fit_trace", "y_catb", "y_catb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                if v in locals():
+                    del locals()[v]
 
 
 def intrinsic_linear(cfg: DictConfig, train_val_sets: dict, model_name: str):

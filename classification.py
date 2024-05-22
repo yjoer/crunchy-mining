@@ -6,6 +6,7 @@ import altair as alt
 import mlflow
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
 from hydra import compose
 from hydra import initialize
 
@@ -47,6 +48,8 @@ from crunchy_mining.sampling.samplers import ResamplerV7
 from crunchy_mining.sampling.samplers import ResamplerV8
 from crunchy_mining.sampling.samplers import SamplerV1
 from crunchy_mining.sampling.samplers import SamplerV2
+
+load_dotenv()
 
 # %load_ext autoreload
 # %autoreload 2
