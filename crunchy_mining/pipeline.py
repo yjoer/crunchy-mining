@@ -261,6 +261,94 @@ def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
                     del locals()[v]
 
 
+def tune_logistic_regression(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    param_grid = ParameterGrid(
+        {
+            "penalty": ["l1", "l2", "elasticnet", None],
+            "C": np.logspace(start=-2, stop=2, num=5),
+            "class_weight": ["balanced", None],
+            "solver": ["lbfgs", "newton-cholesky", "newton-cg", "sag", "saga"],
+            "max_iter": [100, 1000],
+            "l1_ratio": [0.1, 0.5, 0.9, None],
+        }
+    )
+
+    param_grid = list(param_grid)
+
+    for params in reversed(param_grid):
+        if params["solver"] == "lbfgs" and params["penalty"] not in ["l2", None]:
+            param_grid.remove(params)
+        elif params["solver"] == "newton-cg" and params["penalty"] not in ["l2", None]:
+            param_grid.remove(params)
+        elif params["solver"] == "newton-cholesky" and params["penalty"] not in ["l2", None]:  # fmt: skip
+            param_grid.remove(params)
+        elif params["solver"] == "sag" and params["penalty"] not in ["l2", None]:
+            param_grid.remove(params)
+        elif params["penalty"] == "elasticnet" and params["l1_ratio"] is None:
+            param_grid.remove(params)
+        elif params["penalty"] != "elasticnet" and params["l1_ratio"] is not None:
+            param_grid.remove(params)
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            params = {
+                **params,
+                "random_state": 12345,
+                "n_jobs": -1,
+            }
+
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        logreg = LogisticRegression(**params)
+                        logreg.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_logreg_p, roc_raw, roc = evaluate_roc(
+                                estimator=logreg,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_logreg = custom_predict(
+                                y_prob=y_logreg_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_logreg = logreg.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_logreg))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = logreg.get_params()
+
+                    for v in ["logreg", "fit_trace", "y_logreg", "y_logreg_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
+
+
 def train_gaussian_nb(X_train, y_train):
     gnb = GaussianNB()
     gnb.fit(X_train, y_train)
@@ -317,6 +405,67 @@ def validate_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
             for v in ["gnb", "fit_trace", "y_gnb", "y_gnb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
                 if v in locals():
                     del locals()[v]
+
+
+def tune_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    param_grid = ParameterGrid(
+        {
+            "var_smoothing": np.logspace(start=0, stop=-9, num=10),
+        }
+    )
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        gnb = GaussianNB(**params)
+                        gnb.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_gnb_p, roc_raw, roc = evaluate_roc(
+                                estimator=gnb,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_gnb = custom_predict(
+                                y_prob=y_gnb_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_gnb = gnb.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_gnb))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = gnb.get_params()
+
+                    for v in ["gnb", "fit_trace", "y_gnb", "y_gnb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
 
 
 def train_linear_svc(X_train, y_train):
@@ -394,6 +543,91 @@ def validate_linear_svc(cfg: DictConfig, train_val_sets: dict):
             for v in ["svc", "fit_trace", "y_svc", "y_svc_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
                 if v in locals():
                     del locals()[v]
+
+
+def tune_linear_svc(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    param_grid = ParameterGrid(
+        {
+            "penalty": ["l1", "l2"],
+            "loss": ["hinge", "squared_hinge"],
+            "C": np.logspace(start=-2, stop=2, num=5),
+            "class_weight": ["balanced", None],
+            "method": ["sigmoid", "isotonic"],
+        }
+    )
+
+    param_grid = list(param_grid)
+
+    for params in reversed(param_grid):
+        if params["penalty"] == "l1" and params["loss"] == "hinge":
+            param_grid.remove(params)
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            params_svc = {
+                "method": params["method"],
+                "n_jobs": -1,
+            }
+
+            del params["method"]
+
+            params_base = {
+                **params,
+                "dual": "auto",
+                "random_state": 12345,
+            }
+
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        base = LinearSVC(**params_base)
+                        svc = CalibratedClassifierCV(estimator=base, **params_svc)
+                        svc.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_svc_p, roc_raw, roc = evaluate_roc(
+                                estimator=svc,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_svc = custom_predict(
+                                y_prob=y_svc_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_svc = svc.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_svc))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = svc.get_params()
+
+                    for v in ["svc", "fit_trace", "y_svc", "y_svc_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
 
 
 def train_decision_tree(X_train, y_train):
