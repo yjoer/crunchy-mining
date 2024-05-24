@@ -77,25 +77,29 @@ def inspect_cv_split_size(train_val_sets: dict, target_variable: str):
     )
 
 
-def train_knn(X_train, y_train):
-    knn = KNeighborsClassifier()
+def train_knn(X_train, y_train, params={}):
+    knn = KNeighborsClassifier(**params)
     knn.fit(X_train, y_train)
 
     return knn
 
 
-def validate_knn(cfg: DictConfig, train_val_sets: dict):
+def validate_knn(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.knn.parameters or {}
 
     with mlflow.start_run(run_name="KNN"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    knn = train_knn(X_train, y_train)
+                    knn = train_knn(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -198,10 +202,11 @@ def tune_knn(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_logistic_regression(X_train, y_train):
+def train_logistic_regression(X_train, y_train, params={}):
     params = {
         "random_state": 12345,
         "n_jobs": -1,
+        **params,
     }
 
     logreg = LogisticRegression(**params)
@@ -210,18 +215,22 @@ def train_logistic_regression(X_train, y_train):
     return logreg
 
 
-def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict):
+def validate_logistic_regression(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.logistic_regression.parameters or {}
 
     with mlflow.start_run(run_name="Logistic Regression"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    logreg = train_logistic_regression(X_train, y_train)
+                    logreg = train_logistic_regression(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -349,25 +358,29 @@ def tune_logistic_regression(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_gaussian_nb(X_train, y_train):
-    gnb = GaussianNB()
+def train_gaussian_nb(X_train, y_train, params={}):
+    gnb = GaussianNB(**params)
     gnb.fit(X_train, y_train)
 
     return gnb
 
 
-def validate_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
+def validate_gaussian_nb(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.gaussian_nb.parameters or {}
 
     with mlflow.start_run(run_name="Gaussian NB"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    gnb = train_gaussian_nb(X_train, y_train)
+                    gnb = train_gaussian_nb(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -468,10 +481,11 @@ def tune_gaussian_nb(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_linear_svc(X_train, y_train):
+def train_linear_svc(X_train, y_train, params={}):
     params = {
         "dual": "auto",
         "random_state": 12345,
+        **params,
     }
 
     svc = LinearSVC(**params)
@@ -480,9 +494,10 @@ def train_linear_svc(X_train, y_train):
     return svc
 
 
-def train_calibrated_linear_svc(X_train, y_train):
+def train_calibrated_linear_svc(X_train, y_train, params={}):
     params = {
         "n_jobs": -1,
+        **params,
     }
 
     svc = CalibratedClassifierCV(**params)
@@ -491,21 +506,25 @@ def train_calibrated_linear_svc(X_train, y_train):
     return svc
 
 
-def validate_linear_svc(cfg: DictConfig, train_val_sets: dict):
+def validate_linear_svc(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.linear_svc.parameters or {}
 
     with mlflow.start_run(run_name="Linear SVC"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
                     if fixed_fpr:
-                        svc = train_calibrated_linear_svc(X_train, y_train)
+                        svc = train_calibrated_linear_svc(X_train, y_train, params)
                     else:
-                        svc = train_linear_svc(X_train, y_train)
+                        svc = train_linear_svc(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -630,9 +649,10 @@ def tune_linear_svc(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_decision_tree(X_train, y_train):
+def train_decision_tree(X_train, y_train, params={}):
     params = {
         "random_state": 12345,
+        **params,
     }
 
     dt = DecisionTreeClassifier(**params)
@@ -641,18 +661,22 @@ def train_decision_tree(X_train, y_train):
     return dt
 
 
-def validate_decision_tree(cfg: DictConfig, train_val_sets: dict):
+def validate_decision_tree(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.decision_tree.parameters or {}
 
     with mlflow.start_run(run_name="Decision Tree"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    dt = train_decision_tree(X_train, y_train)
+                    dt = train_decision_tree(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -764,10 +788,11 @@ def tune_decision_tree(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_random_forest(X_train, y_train):
+def train_random_forest(X_train, y_train, params={}):
     params = {
         "n_jobs": -1,
         "random_state": 12345,
+        **params,
     }
 
     rf = RandomForestClassifier(**params)
@@ -776,18 +801,22 @@ def train_random_forest(X_train, y_train):
     return rf
 
 
-def validate_random_forest(cfg: DictConfig, train_val_sets: dict):
+def validate_random_forest(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.random_forest.parameters or {}
 
     with mlflow.start_run(run_name="Random Forest"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    rf = train_random_forest(X_train, y_train)
+                    rf = train_random_forest(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -901,10 +930,11 @@ def tune_random_forest(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_adaboost(X_train, y_train):
+def train_adaboost(X_train, y_train, params={}):
     params = {
         "algorithm": "SAMME",
         "random_state": 12345,
+        **params,
     }
 
     ab = AdaBoostClassifier(**params)
@@ -913,18 +943,22 @@ def train_adaboost(X_train, y_train):
     return ab
 
 
-def validate_adaboost(cfg: DictConfig, train_val_sets: dict):
+def validate_adaboost(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.adaboost.parameters or {}
 
     with mlflow.start_run(run_name="AdaBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    ab = train_adaboost(X_train, y_train)
+                    ab = train_adaboost(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -1032,10 +1066,11 @@ def tune_adaboost(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_xgboost(X_train, y_train):
+def train_xgboost(X_train, y_train, params={}):
     params = {
         "n_jobs": -1,
         "random_state": 12345,
+        **params,
     }
 
     xgb = XGBClassifier(**params)
@@ -1044,18 +1079,22 @@ def train_xgboost(X_train, y_train):
     return xgb
 
 
-def validate_xgboost(cfg: DictConfig, train_val_sets: dict):
+def validate_xgboost(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.xgboost.parameters or {}
 
     with mlflow.start_run(run_name="XGBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    xgb = train_xgboost(X_train, y_train)
+                    xgb = train_xgboost(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -1173,10 +1212,11 @@ def tune_xgboost(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_lightgbm(X_train, y_train):
+def train_lightgbm(X_train, y_train, params={}):
     params = {
         "random_state": 12345,
         "n_jobs": -1,
+        **params,
     }
 
     lgb = LGBMClassifier(**params)
@@ -1185,18 +1225,22 @@ def train_lightgbm(X_train, y_train):
     return lgb
 
 
-def validate_lightgbm(cfg: DictConfig, train_val_sets: dict):
+def validate_lightgbm(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.lightgbm.parameters or {}
 
     with mlflow.start_run(run_name="LightGBM"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    lgb = train_lightgbm(X_train, y_train)
+                    lgb = train_lightgbm(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
@@ -1309,10 +1353,11 @@ def tune_lightgbm(cfg: DictConfig, train_val_sets: dict):
                 mlflow.log_params(params_used)
 
 
-def train_catboost(X_train, y_train):
+def train_catboost(X_train, y_train, params={}):
     params = {
         "metric_period": 250,
         "random_state": 12345,
+        **params,
     }
 
     catb = CatBoostClassifier(**params)
@@ -1321,18 +1366,22 @@ def train_catboost(X_train, y_train):
     return catb
 
 
-def validate_catboost(cfg: DictConfig, train_val_sets: dict):
+def validate_catboost(cfg: DictConfig, train_val_sets: dict, retrain=False):
     fixed_fpr = cfg.validation.metrics.fixed_fpr
     memory_legacy = cfg.validation.metrics.memory_usage.legacy
+    params = {}
+
+    if retrain:
+        params = cfg.retrain.catboost.parameters or {}
 
     with mlflow.start_run(run_name="CatBoost"):
         for name, (X_train, y_train, X_val, y_val) in train_val_sets.items():
-            if name == "testing":
+            if not retrain and name == "testing":
                 continue
 
             with mlflow.start_run(run_name=name, nested=True):
                 with trace_memory(legacy=memory_legacy) as fit_trace:
-                    catb = train_catboost(X_train, y_train)
+                    catb = train_catboost(X_train, y_train, params)
 
                 with trace_memory(legacy=memory_legacy) as score_trace:
                     if fixed_fpr:
