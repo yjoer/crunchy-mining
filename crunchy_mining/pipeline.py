@@ -692,6 +692,78 @@ def validate_decision_tree(cfg: DictConfig, train_val_sets: dict):
                     del locals()[v]
 
 
+def tune_decision_tree(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    param_grid = ParameterGrid(
+        {
+            "criterion": ["gini", "entropy", "log_loss"],
+            "max_depth": [3, 9, 27, None],
+            "min_samples_split": [2, 8, 32],
+            "min_samples_leaf": [1, 5, 10],
+            "max_features": ["sqrt", "log2", None],
+            "max_leaf_nodes": [10, 50, 100, None],
+            "class_weight": ["balanced", None],
+        }
+    )
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            params = {
+                **params,
+                "random_state": 12345,
+            }
+
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        dt = DecisionTreeClassifier(**params)
+                        dt.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_dt_p, roc_raw, roc = evaluate_roc(
+                                estimator=dt,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_dt = custom_predict(
+                                y_prob=y_dt_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_dt = dt.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_dt))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = dt.get_params()
+
+                    for v in ["dt", "fit_trace", "y_dt", "y_dt_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
+
+
 def train_random_forest(X_train, y_train):
     params = {
         "n_jobs": -1,
@@ -755,6 +827,80 @@ def validate_random_forest(cfg: DictConfig, train_val_sets: dict):
                     del locals()[v]
 
 
+def tune_random_forest(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    param_grid = ParameterGrid(
+        {
+            "n_estimators": [50, 100, 200],
+            "criterion": ["gini", "entropy"],
+            "max_depth": [3, 30, None],
+            "min_samples_split": [2, 32],
+            "min_samples_leaf": [1, 10],
+            "max_features": ["sqrt", "log2", None],
+            "max_leaf_nodes": [10, 100, None],
+            "class_weight": [None],
+        }
+    )
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            params = {
+                **params,
+                "n_jobs": -1,
+                "random_state": 12345,
+            }
+
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        rf = RandomForestClassifier(**params)
+                        rf.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_rf_p, roc_raw, roc = evaluate_roc(
+                                estimator=rf,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_rf = custom_predict(
+                                y_prob=y_rf_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_rf = rf.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_rf))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = rf.get_params()
+
+                    for v in ["rf", "fit_trace", "y_rf", "y_rf_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
+
+
 def train_adaboost(X_train, y_train):
     params = {
         "algorithm": "SAMME",
@@ -816,6 +962,74 @@ def validate_adaboost(cfg: DictConfig, train_val_sets: dict):
             for v in ["ab", "fit_trace", "y_ab", "y_ab_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
                 if v in locals():
                     del locals()[v]
+
+
+def tune_adaboost(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    param_grid = ParameterGrid(
+        {
+            "n_estimators": [50, 100, 200],
+            "learning_rate": np.logspace(start=-5, stop=0, num=6),
+        }
+    )
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            params = {
+                **params,
+                "algorithm": "SAMME",
+                "random_state": 12345,
+            }
+
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        ab = AdaBoostClassifier(**params)
+                        ab.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_ab_p, roc_raw, roc = evaluate_roc(
+                                estimator=ab,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_ab = custom_predict(
+                                y_prob=y_ab_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_ab = ab.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_ab))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = ab.get_params()
+
+                    for v in ["ab", "fit_trace", "y_ab", "y_ab_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
 
 
 def train_xgboost(X_train, y_train):
@@ -882,6 +1096,83 @@ def validate_xgboost(cfg: DictConfig, train_val_sets: dict):
                     del locals()[v]
 
 
+def tune_xgboost(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    # https://xgboost.readthedocs.io/en/stable/parameter.html
+    # https://xgboost.readthedocs.io/en/stable/tutorials/param_tuning.html
+    param_grid = ParameterGrid(
+        {
+            "learning_rate": [0.01, 0.1, 0.2, 0.3],
+            "min_split_loss": [0, 5, 10],
+            "max_depth": [3, 6, 9],
+            "min_child_weight": [1, 5, 9],
+            "subsample": [0.5, 1],
+            "colsample_bytree": [0.5, 1],
+            # "reg_alpha": [],
+            # "reg_lambda": [],
+            # "scale_pos_weight": [],
+        }
+    )
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            params = {
+                **params,
+                "n_jobs": -1,
+                "random_state": 12345,
+            }
+
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        xgb = XGBClassifier(**params)
+                        xgb.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_xgb_p, roc_raw, roc = evaluate_roc(
+                                estimator=xgb,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_xgb = custom_predict(
+                                y_prob=y_xgb_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_xgb = xgb.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_xgb))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = xgb.get_params()
+
+                    for v in ["xgb", "fit_trace", "y_xgb", "y_xgb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
+
+
 def train_lightgbm(X_train, y_train):
     params = {
         "random_state": 12345,
@@ -945,6 +1236,79 @@ def validate_lightgbm(cfg: DictConfig, train_val_sets: dict):
                     del locals()[v]
 
 
+def tune_lightgbm(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    # https://lightgbm.readthedocs.io/en/latest/Parameters.html
+    param_grid = ParameterGrid(
+        {
+            "learning_rate": [0.01, 0.1, 0.2, 0.3],
+            "num_leaves": [8, 16, 32],
+            "max_depth": [-1, 3, 6, 9],
+            "subsample": [0.5, 1],
+            "colsample_bytree": [0.5, 1],
+            "is_unbalance": [True, False],
+        }
+    )
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            params = {
+                **params,
+                "random_state": 12345,
+                "n_jobs": -1,
+            }
+
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        lgb = LGBMClassifier(**params)
+                        lgb.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_lgb_p, roc_raw, roc = evaluate_roc(
+                                estimator=lgb,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_lgb = custom_predict(
+                                y_prob=y_lgb_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_lgb = lgb.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_lgb))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = lgb.get_params()
+
+                    for v in ["lgb", "fit_trace", "y_lgb", "y_lgb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
+
+
 def train_catboost(X_train, y_train):
     params = {
         "metric_period": 250,
@@ -1006,6 +1370,74 @@ def validate_catboost(cfg: DictConfig, train_val_sets: dict):
             for v in ["catb", "fit_trace", "y_catb", "y_catb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
                 if v in locals():
                     del locals()[v]
+
+
+def tune_catboost(cfg: DictConfig, train_val_sets: dict):
+    fixed_fpr = cfg.tuning.metrics.fixed_fpr
+    memory_legacy = cfg.tuning.metrics.memory_usage.legacy
+
+    param_grid = ParameterGrid(
+        {
+            "learning_rate": [0.001, 0.01, 0.03, 0.1],
+            "depth": [3, 6, 9],
+        }
+    )
+
+    with mlflow.start_run(run_name="Grid Search"):
+        for idx, params in enumerate(param_grid):
+            params = {
+                **params,
+                "metric_period": 250,
+                "random_state": 12345,
+            }
+
+            with mlflow.start_run(run_name=f"Combination {idx + 1}", nested=True):
+                metrics_list = []
+                params_used = {}
+
+                for name, (X_train, y_train, X_val, y_val) in tqdm(train_val_sets.items()):  # fmt: skip
+                    if name == "validation" or name == "testing":
+                        continue
+
+                    with trace_memory(legacy=memory_legacy) as fit_trace:
+                        catb = CatBoostClassifier(**params)
+                        catb.fit(X_train, y_train)
+
+                    with trace_memory(legacy=memory_legacy) as score_trace:
+                        if fixed_fpr:
+                            y_catb_p, roc_raw, roc = evaluate_roc(
+                                estimator=catb,
+                                X_test=X_val,
+                                y_test=y_val,
+                                fixed_fpr=fixed_fpr,
+                            )
+
+                            y_catb = custom_predict(
+                                y_prob=y_catb_p,
+                                threshold=roc["threshold"],
+                            )
+                        else:
+                            y_catb = catb.predict(X_val)
+
+                    metrics = {}
+
+                    if fixed_fpr:
+                        metrics.update(roc)
+
+                    metrics.update(evaluate_classification(y_val, y_catb))
+                    metrics["fit_time"] = fit_trace["duration"]
+                    metrics["fit_memory_peak"] = fit_trace["peak"]
+                    metrics["score_time"] = score_trace["duration"]
+                    metrics["score_memory_peak"] = score_trace["peak"]
+                    metrics_list.append(metrics)
+                    params_used = catb.get_params()
+
+                    for v in ["catb", "fit_trace", "y_catb", "y_catb_p", "roc_raw", "roc", "score_trace"]:  # fmt: skip
+                        if v in locals():
+                            del locals()[v]
+
+                mlflow.log_metrics(aggregate_cv_metrics(metrics_list))
+                mlflow.log_params(params_used)
 
 
 def intrinsic_linear(cfg: DictConfig, train_val_sets: dict, model_name: str):

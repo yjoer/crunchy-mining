@@ -37,13 +37,17 @@ def set_low_priority(pid: int):
 
 
 def _get_current_memory(process: psutil.Process, pid_monitor: int = None):
-    memory = process.memory_info().rss
+    try:
+        memory = process.memory_info().rss
 
-    for child_process in process.children(recursive=True):
-        if child_process.pid == pid_monitor:
-            continue
+        for child_process in process.children(recursive=True):
+            if child_process.pid == pid_monitor:
+                continue
 
-        memory += child_process.memory_info().rss
+            memory += child_process.memory_info().rss
+    except psutil.NoSuchProcess:
+        if "memory" not in locals():
+            memory = 0
 
     return memory
 
