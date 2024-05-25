@@ -1706,3 +1706,50 @@ def pdp(cfg: DictConfig, train_val_sets: dict, model_name: str):
 
             mlflow_util.log_pickle(fig, artifact_file=f"pdp/{idx}.pkl", run_id=run_id)
             plt.close(fig)
+
+
+def shap_explainer(cfg: DictConfig, train_val_sets: dict, model_name: str):
+    feature_names = cfg.vars.categorical + cfg.vars.numerical
+
+    for name, (X_train, _, _, _) in tqdm(train_val_sets.items()):
+        parent_run_id = mlflow_util.get_latest_run_id_by_name(model_name)
+        run_id = mlflow_util.get_nested_run_ids_by_parent_id(parent_run_id, name=name)
+        model_uri = f"runs:/{run_id}/model"
+
+        match model_name:
+            case "XGBoost":
+                model = mlflow.xgboost.load_model(model_uri)
+            case "LightGBM":
+                model = mlflow.lightgbm.load_model(model_uri)
+            case "CatBoost":
+                model = mlflow.catboost.load_model(model_uri)
+            case _:
+                model = mlflow.sklearn.load_model(model_uri)
+
+        tree_models = [
+            "Decision Tree",
+            "Random Forest",
+            "AdaBoost",
+            "XGBoost",
+            "LightGBM",
+            "CatBoost",
+        ]
+
+        if model_name in tree_models:
+            explainer = shap.TreeExplainer(
+                model,
+                X_train,
+                feature_names=feature_names,
+            )
+        else:
+            explainer = shap.Explainer(
+                model,
+                X_train,
+                feature_names=feature_names,
+                seed=12345,
+            )
+
+        with mlflow.start_run(run_id=run_id):
+            # 'TreeEnsemble' object has no attribute 'save'
+            # mlflow.shap.log_explainer(explainer, artifact_path="shap")
+            mlflow_util.log_pickle(explainer, artifact_file="shap.pkl")
