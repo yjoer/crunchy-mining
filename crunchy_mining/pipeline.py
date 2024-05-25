@@ -495,12 +495,26 @@ def train_linear_svc(X_train, y_train, params={}):
 
 
 def train_calibrated_linear_svc(X_train, y_train, params={}):
-    params = {
-        "n_jobs": -1,
-        **params,
+    base_params = {
+        "dual": "auto",
+        "random_state": 12345,
     }
 
-    svc = CalibratedClassifierCV(**params)
+    cv_params = {
+        "n_jobs": -1,
+    }
+
+    for k, v in params.items():
+        if "__" in k:
+            estimator, name = k.split("__")
+
+            if estimator == "estimator":
+                base_params[name] = v
+        else:
+            cv_params[k] = v
+
+    base = LinearSVC(**base_params)
+    svc = CalibratedClassifierCV(estimator=base, **cv_params)
     svc.fit(X_train, y_train)
 
     return svc
