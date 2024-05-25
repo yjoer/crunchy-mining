@@ -60,3 +60,7 @@ class BasePreprocessor(ABC):
     def save_encoders(self):
         with mlflow.start_run(run_name="Encoders"):
             mlflow_util.log_pickle(self.encoders, artifact_file="encoders.pkl")
+
+    def load_encoders(self):
+        run_id = mlflow_util.get_latest_run_id_by_name(name="Encoders")
+        self.encoders = mlflow_util.load_pickle(f"runs:/{run_id}/encoders.pkl")
