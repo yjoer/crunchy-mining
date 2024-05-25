@@ -105,6 +105,15 @@ class PreprocessorV3(BasePreprocessor):
         self.encoders["target"] = te
         self.encoders["label"] = le
 
+    def transform(self, X_new):
+        te = self.encoders["target"]
+        n_cat = len(self.cfg.vars.categorical)
+
+        X_cat = te.transform(X_new[:, :n_cat].tolist())
+        X_num = X_new[:, n_cat:]
+
+        return np.hstack((X_cat, X_num))
+
 
 # Ordinal Encoding + Standard Scaling
 class PreprocessorV4(BasePreprocessor):
@@ -153,6 +162,16 @@ class PreprocessorV5(BasePreprocessor):
         self.encoders["standard"] = ss
         self.encoders["label"] = le
 
+    def transform(self, X_new):
+        te = self.encoders["target"]
+        ss = self.encoders["standard"]
+        n_cat = len(self.cfg.vars.categorical)
+
+        X_cat = te.transform(X_new[:, :n_cat].tolist())
+        X_num = ss.transform(X_new[:, n_cat:])
+
+        return np.hstack((X_cat, X_num))
+
 
 # Ordinal Encoding + Standard Scaling + Min-Max Scaling
 class PreprocessorV6(BasePreprocessor):
@@ -182,6 +201,20 @@ class PreprocessorV6(BasePreprocessor):
         self.encoders["min_max"] = mm
         self.encoders["label"] = le
 
+    def transform(self, X_new):
+        oe = self.encoders["ordinal"]
+        ss = self.encoders["standard"]
+        mm = self.encoders["min_max"]
+        n_cat = len(self.cfg.vars.categorical)
+
+        X_cat = oe.transform(X_new[:, :n_cat].tolist())
+        X_num = ss.transform(X_new[:, n_cat:])
+
+        X_new = np.hstack((X_cat, X_num))
+        X_new_scaled = mm.transform(X_new)
+
+        return X_new_scaled
+
 
 # Target Encoder + Standard Scaling + Min-Max Scaling
 class PreprocessorV7(BasePreprocessor):
@@ -210,3 +243,17 @@ class PreprocessorV7(BasePreprocessor):
         self.encoders["standard"] = ss
         self.encoders["min_max"] = mm
         self.encoders["label"] = le
+
+    def transform(self, X_new):
+        te = self.encoders["target"]
+        ss = self.encoders["standard"]
+        mm = self.encoders["min_max"]
+        n_cat = len(self.cfg.vars.categorical)
+
+        X_cat = te.transform(X_new[:, :n_cat].tolist())
+        X_num = ss.transform(X_new[:, n_cat:])
+
+        X_new = np.hstack((X_cat, X_num))
+        X_new_scaled = mm.transform(X_new)
+
+        return X_new_scaled
