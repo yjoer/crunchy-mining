@@ -1207,7 +1207,13 @@ def plot_pimp_mean(feature_names: List[str], pimp):
     )
 
     return df, (
-        alt.Chart(df, title="Permutation Feature Importance (Mean)")
+        alt.Chart(
+            data=df,
+            title=alt.TitleParams(
+                text="Permutation Feature Importance (Mean)",
+                anchor="start",
+            ),
+        )
         .mark_bar()
         .encode(
             x=alt.X("importance:Q", title="Degree of Importance"),
@@ -1232,7 +1238,13 @@ def plot_pimp_boxplot(feature_names: List[str], pimp):
     )
 
     return (
-        alt.Chart(df, title="Permutation Feature Importance in Repeated Runs")
+        alt.Chart(
+            data=df,
+            title=alt.TitleParams(
+                text="Permutation Feature Importance in Repeated Runs",
+                anchor="start",
+            ),
+        )
         .mark_boxplot()
         .encode(
             x=alt.X("importance:Q", title="Degree of Importance"),
