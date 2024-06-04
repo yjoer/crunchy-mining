@@ -8,6 +8,8 @@ dist/
 *.lock
 
 # Datasets
+data/*.csv
+data/*.json
 data/*.npz
-data/output.parquet
-data/SBA.csv
+data/*.parquet
+data/*.xlsx
