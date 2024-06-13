@@ -9,7 +9,9 @@ dist/
 
 # Datasets
 data/*.csv
+data/*.db
 data/*.json
 data/*.npz
 data/*.parquet
+data/*.wal
 data/*.xlsx
