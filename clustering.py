@@ -236,6 +236,9 @@ dbscan_tp = DBSCAN(eps=1, min_samples=50)
 n_passengers_min["clusters"] = dbscan_tp.fit_predict(n_passengers_min)
 
 # %%
+n_passengers_min["day_name"] = n_passengers_min.index.map(lambda x: x.day_name())
+
+# %%
 show(n_passengers_min[n_passengers_min["clusters"] == -1], scrollX=True)
 
 # %%
