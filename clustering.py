@@ -274,3 +274,18 @@ plt.bar(n_passengers_min_noises_days.index, n_passengers_min_noises_days)
 plt.ylabel("Count")
 plt.xlabel("Days of the Week")
 plt.show()
+
+# %%
+hours = n_passengers_min_noises.index.hour
+n_passengers_min_noises_hours = n_passengers_min_noises.groupby(hours).size()
+
+show(n_passengers_min_noises_hours, scrollX=True)
+
+# %%
+plt.figure(figsize=(6, 3))
+
+plt.bar(n_passengers_min_noises_hours.index, n_passengers_min_noises_hours)
+plt.ylabel("Count")
+plt.xlabel("Hours of a Day")
+plt.xticks(n_passengers_min_noises_hours.index)
+plt.show()
