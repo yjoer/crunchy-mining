@@ -264,13 +264,19 @@ plt.legend()
 plt.show()
 
 # %%
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+days_ord = {day: i for i, day in enumerate(days)}
+
 n_passengers_min_noises_days = n_passengers_min_noises.groupby("day_name").size()
+n_passengers_min_noises_days = n_passengers_min_noises_days.to_frame()
+n_passengers_min_noises_days["order"] = n_passengers_min_noises_days.index.map(days_ord)
+n_passengers_min_noises_days.sort_values(by="order", inplace=True)
 show(n_passengers_min_noises_days, scrollX=True)
 
 # %%
 plt.figure(figsize=(6, 3))
 
-plt.bar(n_passengers_min_noises_days.index, n_passengers_min_noises_days)
+plt.bar(n_passengers_min_noises_days.index, n_passengers_min_noises_days[0])
 plt.ylabel("Count")
 plt.xlabel("Days of the Week")
 plt.show()
