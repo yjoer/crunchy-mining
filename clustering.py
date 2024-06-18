@@ -92,7 +92,10 @@ len(df_renamed) - len(df_deduped)
 # ### Filter Examples
 
 # %%
-df_filtered = df_renamed[df_deduped["tpep_pickup_datetime"] >= "2024-03-01"]
+start_date_mask = df_deduped["tpep_pickup_datetime"] >= "2024-03-01"
+end_date_mask = df_deduped["tpep_pickup_datetime"] < "2024-04-01"
+
+df_filtered = df_renamed[start_date_mask & end_date_mask]
 len(df_deduped) - len(df_filtered)
 
 # %% [markdown]
