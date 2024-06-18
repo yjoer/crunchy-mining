@@ -4,6 +4,7 @@ import gc
 import geopandas as gpd
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from itables import show
 from sklearn.cluster import DBSCAN
@@ -147,6 +148,73 @@ gc.collect()
 
 # %% [markdown]
 # ## Model
+
+# %% [markdown]
+# ### Time-Series Clustering
+
+# %%
+df_ts = df_do.set_index("tpep_pickup_datetime")
+n_passengers = df_ts["passenger_count"].resample("h").sum().to_frame()
+
+# %%
+n_passengers["date"] = n_passengers.index.strftime("%Y-%m-%d")
+n_passengers["time"] = n_passengers.index.strftime("%H:%M")
+
+n_passengers_daily = n_passengers.pivot(
+    index="date",
+    columns="time",
+    values="passenger_count",
+)
+
+# %%
+dbscan_ts = DBSCAN(eps=3500, min_samples=5)
+n_passengers_daily["clusters"] = dbscan_ts.fit_predict(n_passengers_daily)
+
+# %%
+n_passengers_daily["day_name"] = n_passengers_daily.index.map(
+    lambda x: pd.to_datetime(x).day_name()
+)
+
+# %%
+show(n_passengers_daily, scrollX=True)
+
+# %%
+plt.figure(figsize=(10, 6))
+colors = plt.cm.tab10(np.arange(10))
+anomalous_idx = n_passengers_daily["clusters"].max() + 1
+
+for i, day in enumerate(n_passengers_daily.index):
+    cluster = n_passengers_daily["clusters"].iloc[i]
+
+    if cluster == -1:
+        color = anomalous_idx
+        label = "Noises"
+    else:
+        label = f"Cluster {cluster}"
+        color = cluster
+
+    plt.plot(
+        n_passengers_daily.columns[:24],
+        n_passengers_daily.iloc[:, :24].loc[day],
+        color=colors[color],
+        label=label,
+    )
+
+handles, labels = plt.gca().get_legend_handles_labels()
+unique_labels = list(set(labels))
+unique_handles = [handles[labels.index(label)] for label in unique_labels]
+
+plt.ylabel("Passenger Count")
+plt.xlabel("Hours (March 2024)")
+plt.xticks(rotation=45)
+
+handles, labels = plt.gca().get_legend_handles_labels()
+unique_labels = sorted(list(set(labels)))
+unique_handles = [handles[labels.index(label)] for label in unique_labels]
+plt.legend(unique_handles, unique_labels)
+
+plt.show()
+
 # %% [markdown]
 # ### Anomaly Detection in Time Series
 
@@ -175,7 +243,7 @@ for cluster in n_passengers_min["clusters"].unique():
     plt.scatter(cluster_df.index, cluster_df["passenger_count"], label=label)
 
 plt.ylabel("Passenger Count")
-plt.xlabel("Date (2024)")
+plt.xlabel("Days (March 2024)")
 plt.xticks(pd.date_range("2024-03-01", "2024-04-01"), rotation=45)
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%m-%d"))
 plt.legend()
