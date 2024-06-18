@@ -239,7 +239,8 @@ n_passengers_min["clusters"] = dbscan_tp.fit_predict(n_passengers_min)
 n_passengers_min["day_name"] = n_passengers_min.index.map(lambda x: x.day_name())
 
 # %%
-show(n_passengers_min[n_passengers_min["clusters"] == -1], scrollX=True)
+n_passengers_min_noises = n_passengers_min[n_passengers_min["clusters"] == -1]
+show(n_passengers_min_noises, scrollX=True)
 
 # %%
 plt.figure(figsize=(12, 8))
@@ -263,3 +264,13 @@ plt.legend()
 plt.show()
 
 # %%
+n_passengers_min_noises_days = n_passengers_min_noises.groupby("day_name").size()
+show(n_passengers_min_noises_days, scrollX=True)
+
+# %%
+plt.figure(figsize=(6, 3))
+
+plt.bar(n_passengers_min_noises_days.index, n_passengers_min_noises_days)
+plt.ylabel("Count")
+plt.xlabel("Days of the Week")
+plt.show()
