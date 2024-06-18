@@ -215,6 +215,15 @@ plt.legend(unique_handles, unique_labels)
 
 plt.show()
 
+# %%
+n_passengers_daily_agg = (
+    n_passengers_daily.reset_index()
+    .groupby("clusters")
+    .agg({"date": list, "day_name": lambda x: list(set(x))})
+)
+
+show(n_passengers_daily_agg, scrollX=True)
+
 # %% [markdown]
 # ### Anomaly Detection in Time Series
 
