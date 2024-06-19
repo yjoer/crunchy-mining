@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from itables import show
 from sklearn.cluster import DBSCAN
+from tslearn.clustering import TimeSeriesKMeans
 
 # %matplotlib inline
 # %config InlineBackend.figure_formats = ['retina']
@@ -166,63 +167,97 @@ n_passengers_daily = n_passengers.pivot(
     values="passenger_count",
 )
 
-# %%
-dbscan_ts = DBSCAN(eps=3500, min_samples=5)
-n_passengers_daily["clusters"] = dbscan_ts.fit_predict(n_passengers_daily)
-
-# %%
 n_passengers_daily["day_name"] = n_passengers_daily.index.map(
     lambda x: pd.to_datetime(x).day_name()
 )
 
+n_passengers_daily_inp = n_passengers_daily.iloc[:, :24]
+
+# %% [markdown]
+# #### K-Means DTW
+
+# %%
+kmeans_ts = TimeSeriesKMeans(n_clusters=3, metric="dtw", random_state=12345)
+n_passengers_daily["kmeans_clusters"] = kmeans_ts.fit_predict(n_passengers_daily_inp)
+
+# %% [markdown]
+# #### DBSCAN
+
+# %%
+dbscan_ts = DBSCAN(eps=3500, min_samples=5)
+n_passengers_daily["dbscan_clusters"] = dbscan_ts.fit_predict(n_passengers_daily_inp)
+
+# %% [markdown]
+# #### Results
+
 # %%
 show(n_passengers_daily, scrollX=True)
 
+
 # %%
-plt.figure(figsize=(10, 6))
-colors = plt.cm.tab10(np.arange(10))
-anomalous_idx = n_passengers_daily["clusters"].max() + 1
+def plot_clusters_ts(algorithm: str):
+    col_name = f"{algorithm}_clusters"
 
-for i, day in enumerate(n_passengers_daily.index):
-    cluster = n_passengers_daily["clusters"].iloc[i]
+    plt.figure(figsize=(10, 6))
+    colors = plt.cm.tab10(np.arange(10))
+    anomalous_idx = n_passengers_daily[col_name].max() + 1
 
-    if cluster == -1:
-        color = anomalous_idx
-        label = "Noises"
-    else:
-        label = f"Cluster {cluster}"
-        color = cluster
+    for i, day in enumerate(n_passengers_daily.index):
+        cluster = n_passengers_daily[col_name].iloc[i]
 
-    plt.plot(
-        n_passengers_daily.columns[:24],
-        n_passengers_daily.iloc[:, :24].loc[day],
-        color=colors[color],
-        label=label,
+        if cluster == -1:
+            color = anomalous_idx
+            label = "Noises"
+        else:
+            label = f"Cluster {cluster}"
+            color = cluster
+
+        plt.plot(
+            n_passengers_daily.columns[:24],
+            n_passengers_daily.iloc[:, :24].loc[day],
+            color=colors[color],
+            label=label,
+        )
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    unique_labels = list(set(labels))
+    unique_handles = [handles[labels.index(label)] for label in unique_labels]
+
+    plt.ylabel("Passenger Count")
+    plt.xlabel("Hours (March 2024)")
+    plt.xticks(rotation=45)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    unique_labels = sorted(list(set(labels)))
+    unique_handles = [handles[labels.index(label)] for label in unique_labels]
+    plt.legend(unique_handles, unique_labels)
+
+    plt.show()
+
+
+# %%
+plot_clusters_ts(algorithm="kmeans")
+
+# %%
+plot_clusters_ts(algorithm="dbscan")
+
+
+# %%
+def tabulate_clusters_ts(algorithm: str):
+    n_passengers_daily_agg = (
+        n_passengers_daily.reset_index()
+        .groupby(f"{algorithm}_clusters")
+        .agg({"date": list, "day_name": lambda x: list(set(x))})
     )
 
-handles, labels = plt.gca().get_legend_handles_labels()
-unique_labels = list(set(labels))
-unique_handles = [handles[labels.index(label)] for label in unique_labels]
+    show(n_passengers_daily_agg, scrollX=True)
 
-plt.ylabel("Passenger Count")
-plt.xlabel("Hours (March 2024)")
-plt.xticks(rotation=45)
-
-handles, labels = plt.gca().get_legend_handles_labels()
-unique_labels = sorted(list(set(labels)))
-unique_handles = [handles[labels.index(label)] for label in unique_labels]
-plt.legend(unique_handles, unique_labels)
-
-plt.show()
 
 # %%
-n_passengers_daily_agg = (
-    n_passengers_daily.reset_index()
-    .groupby("clusters")
-    .agg({"date": list, "day_name": lambda x: list(set(x))})
-)
+tabulate_clusters_ts(algorithm="kmeans")
 
-show(n_passengers_daily_agg, scrollX=True)
+# %%
+tabulate_clusters_ts(algorithm="dbscan")
 
 # %% [markdown]
 # ### Anomaly Detection in Time Series
@@ -230,13 +265,17 @@ show(n_passengers_daily_agg, scrollX=True)
 # %%
 df_tp = df_do.set_index("tpep_pickup_datetime")
 n_passengers_min = df_tp["passenger_count"].resample("min").sum().to_frame()
+n_passengers_min["day_name"] = n_passengers_min.index.map(lambda x: x.day_name())
+
+# %% [markdown]
+# #### DBSCAN
 
 # %%
 dbscan_tp = DBSCAN(eps=1, min_samples=50)
-n_passengers_min["clusters"] = dbscan_tp.fit_predict(n_passengers_min)
+n_passengers_min["clusters"] = dbscan_tp.fit_predict(n_passengers_min.iloc[:, [0]])
 
-# %%
-n_passengers_min["day_name"] = n_passengers_min.index.map(lambda x: x.day_name())
+# %% [markdown]
+# #### Results
 
 # %%
 n_passengers_min_noises = n_passengers_min[n_passengers_min["clusters"] == -1]
