@@ -352,3 +352,75 @@ plt.ylabel("Count")
 plt.xlabel("Hours of a Day")
 plt.xticks(n_passengers_min_noises_hours.index)
 plt.show()
+
+# %% [markdown]
+# ### Hotspot Detection
+
+# %%
+n_trips_pu = df_do[df_do["tpep_pickup_datetime"].dt.hour == 18]
+
+
+# %%
+def stratified_sample_per_day(group, proportion=0.2):
+    n_samples = max(1, int(len(group) * proportion))
+
+    return group.sample(n=n_samples, random_state=12345)
+
+
+# %%
+n_trips_pu_sampled = (
+    n_trips_pu.groupby(n_trips_pu["tpep_pickup_datetime"].dt.date)
+    .apply(stratified_sample_per_day)
+    .reset_index(drop=True)
+)
+
+n_trips_pu_inp = n_trips_pu_sampled[["pick_up_x", "pick_up_y"]]
+
+# %% [markdown]
+# #### DBSCAN
+
+# %%
+dbscan_pu = DBSCAN(eps=3850, min_samples=50)
+n_trips_pu_sampled["clusters_pu"] = dbscan_pu.fit_predict(n_trips_pu_inp)
+
+# %% [markdown]
+# #### Results
+
+# %%
+show(n_trips_pu_sampled.iloc[:300], scrollX=True)
+
+# %%
+fig = plt.figure(figsize=(10, 10))
+ax = fig.gca()
+anomalous_idx = n_trips_pu_sampled["clusters_pu"].max() + 1
+
+gdf.plot(ax=ax, alpha=0.1)
+
+for cluster in np.sort(n_trips_pu_sampled["clusters_pu"].unique()):
+    if cluster == -1:
+        label = "Noises"
+    else:
+        label = f"Cluster {cluster}"
+
+    points = n_trips_pu_sampled[n_trips_pu_sampled["clusters_pu"] == cluster]
+    ax.scatter(points["pick_up_x"], points["pick_up_y"], label=label, marker="x")
+
+plt.legend()
+plt.show()
+
+# %%
+n_trips_clusters = n_trips_pu_sampled["clusters_pu"].value_counts().sort_index()
+show(n_trips_clusters, scrollX=True)
+
+# %%
+plt.figure(figsize=(6, 3))
+
+plt.bar(n_trips_clusters.index, n_trips_clusters)
+plt.ylabel("Number of Trips")
+plt.yscale("log")
+plt.xlabel("Clusters")
+plt.xticks(n_trips_clusters.index)
+
+plt.show()
+
+# %%
