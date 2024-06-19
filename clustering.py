@@ -177,6 +177,24 @@ n_passengers_daily_inp = n_passengers_daily.iloc[:, :24]
 # #### K-Means DTW
 
 # %%
+wcss = []
+
+for i in range(1, 11):
+    kmeans_ts = TimeSeriesKMeans(n_clusters=i, metric="dtw", random_state=12345)
+    kmeans_ts.fit(n_passengers_daily_inp)
+    wcss.append(kmeans_ts.inertia_)
+
+# %%
+plt.figure(figsize=(6, 3))
+
+plt.plot(range(1, 11), wcss)
+plt.ylabel("Within Cluster Sum of Squares")
+plt.xlabel("Clusters")
+plt.xticks(range(1, 11))
+
+plt.show()
+
+# %%
 kmeans_ts = TimeSeriesKMeans(n_clusters=3, metric="dtw", random_state=12345)
 n_passengers_daily["kmeans_clusters"] = kmeans_ts.fit_predict(n_passengers_daily_inp)
 
