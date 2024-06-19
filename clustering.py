@@ -35,7 +35,35 @@ gdf.borough.unique()
 
 
 # %%
-def plot_borough(borough: str, figsize: tuple):
+def plot_borough():
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.gca()
+    gdf.plot(ax=ax)
+
+    for borough in gdf.borough.unique():
+        gdf_subset = gdf[gdf["borough"] == borough]
+        centroid = gdf_subset["geometry"].centroid
+        centroid_x = centroid.x.mean()
+        centroid_y = centroid.y.mean()
+
+        ax.text(
+            centroid_x,
+            centroid_y,
+            borough,
+            color="white",
+            ha="center",
+            va="center",
+        )
+
+    plt.show()
+
+
+# %%
+plot_borough()
+
+
+# %%
+def plot_zones(borough: str, figsize: tuple):
     fig = plt.figure(figsize=figsize)
     ax = fig.gca()
 
@@ -62,8 +90,8 @@ def plot_borough(borough: str, figsize: tuple):
 
 
 # %%
-plot_borough("all", (12, 12))
-plot_borough("Manhattan", (12, 12))
+plot_zones("all", (12, 12))
+plot_zones("Manhattan", (12, 12))
 
 # %% [markdown]
 # ## Modify
